@@ -1,0 +1,21 @@
+{
+  "name": "chickenshed-master-repo",
+  "version": "1.0.0",
+  "description": "xAtom starter project",
+  "private": false,
+  "scripts": {
+    "start": "xatom dev",
+    "build": "xatom build"
+  },
+  "license": "MIT",
+  "dependencies": {
+    "@xatom/axios": "^1.0.0",
+    "@xatom/build-tool": "1.0.5",
+    "@xatom/core": "1.0.12",
+    "@xatom/image": "^1.0.0",
+    "@xatom/slider": "^1.0.0"
+  },
+  "devDependencies": {
+    "buffer": "^6.0.3"
+  }
+}
