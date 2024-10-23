@@ -634,7 +634,7 @@ function triggerSuccessEvent(selector) {
     if (successTrigger instanceof HTMLElement) successTrigger.click();
 }
 
-},{"@xatom/core":"j9zXV","@xatom/image":"ly8Ay","../../../api/apiConfig":"2Lx0S","../registration/components/cancelRegistrationDialog":"lWBXF","@parcel/transformer-js/src/esmodule-helpers.js":"5oERU","./components/listWorkshopFiles":"50Qun"}],"ly8Ay":[function(require,module,exports) {
+},{"@xatom/core":"j9zXV","@xatom/image":"ly8Ay","../../../api/apiConfig":"2Lx0S","../registration/components/cancelRegistrationDialog":"lWBXF","./components/listWorkshopFiles":"50Qun","@parcel/transformer-js/src/esmodule-helpers.js":"5oERU"}],"ly8Ay":[function(require,module,exports) {
 var t = require("d023971cccd819e3");
 var e, r, s, i, o, n, u = {};
 e = u, r = "WFImage", s = ()=>c, Object.defineProperty(e, r, {

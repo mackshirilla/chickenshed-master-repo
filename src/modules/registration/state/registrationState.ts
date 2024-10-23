@@ -1,5 +1,5 @@
 // state/registrationState.ts
-import { CheckoutPreviewResponse } from "../checkoutPreview"; // Add this line
+import { CheckoutPreviewResponse } from "../checkoutPreview"; // Ensure this import exists
 
 export interface RegistrationState {
   selectedProgramId?: string;
@@ -11,7 +11,7 @@ export interface RegistrationState {
   selectedWorkshopAgeRange?: string;
   selectedWorkshopImageUrl?: string;
   selectedPricingOption?: string;
-  secondaryPricingOption?: string; // Add this line
+  // Removed secondaryPricingOption
   selectedSessions?: { sessionId: string; studentIds: number[] }[];
   pendingStudents?: string[];
   fin_aid_requested?: boolean;
@@ -23,6 +23,8 @@ export interface RegistrationState {
     monthlyExpense: string;
     previousParticipant: string;
   };
+  early_registration?: boolean; // Added early_registration flag
+  start_date?: string; // Added start_date
 }
 
 export const loadState = (): RegistrationState => {

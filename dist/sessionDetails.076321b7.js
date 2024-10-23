@@ -489,7 +489,7 @@ async function initializePastInvoicesList(containerSelector, invoices) {
     }
 }
 
-},{"@xatom/core":"j9zXV","../../../api/apiConfig":"2Lx0S","./components/removeStudent":"9XFOy","@parcel/transformer-js/src/esmodule-helpers.js":"5oERU","./components/listSessionFiles":"3ophI"}],"9XFOy":[function(require,module,exports) {
+},{"@xatom/core":"j9zXV","../../../api/apiConfig":"2Lx0S","./components/removeStudent":"9XFOy","./components/listSessionFiles":"3ophI","@parcel/transformer-js/src/esmodule-helpers.js":"5oERU"}],"9XFOy":[function(require,module,exports) {
 // src/pages/removeStudent.ts
 var parcelHelpers = require("@parcel/transformer-js/src/esmodule-helpers.js");
 parcelHelpers.defineInteropFlag(exports);

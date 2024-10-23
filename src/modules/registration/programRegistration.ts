@@ -1,3 +1,4 @@
+// programRegistration.ts
 import { initializeProgramList } from "./programList";
 import { initializeWorkshopList } from "./workshopList";
 import {
@@ -28,7 +29,7 @@ interface BeginCheckout {
 }
 
 export const programRegistration = async () => {
-  //clear local storage
+  // Clear local storage
   window.onload = function () {
     // Clear the value of registrationState from local storage
     localStorage.removeItem("registrationState");

@@ -1,7 +1,7 @@
+// financialAid.ts
 import { WFComponent } from "@xatom/core";
 import { loadState, saveState } from "../state/registrationState";
 import { updateTotalAmount } from "./updateTotalAmount";
-import { updateSecondaryTotalAmount } from "./updateSecondaryTotalAmount";
 import { toggleError, setupValidation } from "../../../utils/formUtils";
 import {
   validateNotEmpty,
@@ -24,12 +24,12 @@ export const initializeFinancialAid = () => {
       // Reset financial aid-related state
       saveState({ fin_aid_requested: false, selected_discount: undefined });
 
-      // Update totals to reset to original values
-      if (state.selectedPricingOption === "Deposit") {
-        updateSecondaryTotalAmount(state.secondaryPricingOption);
-      } else {
-        updateTotalAmount();
-      }
+      // Determine if deposit is included
+      const includeDeposit =
+        state.pendingStudents?.length > 0 ||
+        (state.early_registration && state.selectedPricingOption === "Monthly");
+      // Update totals accordingly
+      updateTotalAmount(includeDeposit, state.selectedPricingOption);
     }
   });
 
@@ -269,6 +269,7 @@ const saveFinancialAidData = () => {
 
   saveState({
     fin_aid_requested: true,
+    selected_discount: "", // Placeholder; will be set when discount is applied
     financialAidData: {
       relationship,
       annualIncome,
@@ -308,13 +309,12 @@ const showSuccessState = () => {
       saveState({ selected_discount: discountValue });
       saveState({ fin_aid_requested: true });
 
-      if (state.selectedPricingOption === "Deposit") {
-        // Apply discount to secondary total amount
-        updateSecondaryTotalAmount(state.secondaryPricingOption);
-      } else {
-        // Apply discount to primary total amount
-        updateTotalAmount();
-      }
+      // Determine if deposit is included
+      const includeDeposit =
+        state.pendingStudents?.length > 0 ||
+        (state.early_registration && state.selectedPricingOption === "Monthly");
+
+      updateTotalAmount(includeDeposit, state.selectedPricingOption);
 
       console.log(`Discount applied: ${discountValue}%`);
 

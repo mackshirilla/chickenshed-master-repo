@@ -185,7 +185,7 @@ const initializeStudentProfilePage = async ()=>{
     });
 };
 
-},{"./getStudentDetails":"9XNF0","./editStudentDialog":"12vME","./editEmergencyDialog":"5ZUsd","./studentRegistrations":"jBSrU","./deleteStudent":"djYny","@parcel/transformer-js/src/esmodule-helpers.js":"5oERU","./caregiverView":"13mKP","./registrationBreadcrumbs":"8dIMf","./listStudentFiles":"jV8PV"}],"9XNF0":[function(require,module,exports) {
+},{"./getStudentDetails":"9XNF0","./editStudentDialog":"12vME","./editEmergencyDialog":"5ZUsd","./studentRegistrations":"jBSrU","./deleteStudent":"djYny","./caregiverView":"13mKP","./registrationBreadcrumbs":"8dIMf","./listStudentFiles":"jV8PV","@parcel/transformer-js/src/esmodule-helpers.js":"5oERU"}],"9XNF0":[function(require,module,exports) {
 // src/modules/pages/studentProfile/getStudentDetails.ts
 var parcelHelpers = require("@parcel/transformer-js/src/esmodule-helpers.js");
 parcelHelpers.defineInteropFlag(exports);

@@ -1,13 +1,16 @@
+// lineItems.ts
 import { WFComponent } from "@xatom/core";
 import { LineItem } from "../checkoutPreview";
 
-export const renderLineItems = (lineItems: LineItem[]) => {
+export const renderLineItems = (lineItems: LineItem[], isDeposit: boolean = false) => {
   const lineItemList = new WFComponent("#lineItemList");
   lineItemList.removeAllChildren(); // Clear previous line items
 
+  console.log(`Rendering ${isDeposit ? "Deposit" : "Primary"} Line Items:`, lineItems);
+
   lineItems.forEach((item) => {
     const lineItemRow = document.createElement("tr");
-    lineItemRow.className = "table_row";
+    lineItemRow.className = "table_row" + (isDeposit ? " deposit_row" : "");
 
     const productNameCell = document.createElement("td");
     productNameCell.className = "table_cell";
@@ -31,6 +34,16 @@ export const renderLineItems = (lineItems: LineItem[]) => {
 
     lineItemList.getElement().appendChild(lineItemRow);
   });
+
+  // If deposit line items are rendered, apply specific styles or classes if needed
+  if (isDeposit) {
+    // Example: Highlight deposit line items
+    lineItemList.getElement().classList.add("has-deposit");
+    console.log("Deposit line items have been added.");
+  } else {
+    lineItemList.getElement().classList.remove("has-deposit");
+    console.log("Primary line items have been added.");
+  }
 };
 
 export const getLineItemsForSelectedOption = (
@@ -44,8 +57,7 @@ export const getLineItemsForSelectedOption = (
       return lineItemsData.monthly_line_items;
     case "Pay-Per-Semester":
       return lineItemsData.semester_line_items;
-    case "Deposit":
-      return lineItemsData.deposit_line_items;
+    // Removed "Deposit" case
     default:
       console.warn("Unknown pricing option:", selectedPricingOption);
       return [];

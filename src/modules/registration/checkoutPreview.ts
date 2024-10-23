@@ -1,16 +1,17 @@
+// components/registration/checkoutPreview.ts
 import { WFComponent } from "@xatom/core";
 import { updateSelectedItemUI } from "./utils/updateUi";
 import { apiClient } from "../../api/apiConfig";
 import { loadState, saveState } from "./state/registrationState";
 import { initializeAlertBox } from "./components/alertBox";
 import { initializePrimaryPaymentRadios } from "./components/primaryPaymentRadios";
-import { initializeSecondaryPaymentRadios } from "./components/secondaryPaymentRadios";
 import {
   renderLineItems,
   getLineItemsForSelectedOption,
 } from "./components/lineItems";
 import { updateTotalAmount } from "./components/updateTotalAmount";
 import { initializeFinancialAid } from "./components/financialAid"; // Import financial aid initialization
+import { initializeAlertBoxEarly } from "./components/alertBoxEarly"; // Import the new alertBoxEarly
 
 export interface CheckoutPreviewResponse {
   selectedPricingOption: string;
@@ -22,6 +23,8 @@ export interface CheckoutPreviewResponse {
   monthly_amount_due: number;
   semester_amount_due: number;
   deposit_amount_due: number;
+  early_registration: boolean; // Added early_registration flag
+  start_date: string; // Added start_date field
 }
 
 export interface LineItem {
@@ -47,7 +50,7 @@ export const initializeCheckoutPreview = async () => {
     updateSelectedItemUI();
     initializeAlertBox();
 
-    const { selectedPricingOption } = response;
+    const { selectedPricingOption, early_registration, start_date } = response;
 
     // Extract line items data only
     const lineItemsOnly = {
@@ -57,20 +60,46 @@ export const initializeCheckoutPreview = async () => {
       deposit_line_items: response.deposit_line_items,
     };
 
-    // Save the entire response to state for later use
-    saveState({ checkoutPreview: response, selectedPricingOption });
+    // **Always** save 'early_registration' and 'start_date' to state
+    saveState({ 
+      checkoutPreview: response, 
+      selectedPricingOption, 
+      early_registration,
+      start_date: response.start_date, // Ensure start_date is saved
+    });
 
     initializePrimaryPaymentRadios(selectedPricingOption);
-    initializeSecondaryPaymentRadios(selectedPricingOption);
     initializeFinancialAid(); // Initialize financial aid components
 
-    const initialLineItems = getLineItemsForSelectedOption(
-      selectedPricingOption,
-      lineItemsOnly
-    );
-    renderLineItems(initialLineItems);
+    // Determine if deposit should be displayed
+    const hasPendingStudents = registrationState.pendingStudents?.length > 0;
+    const shouldShowDeposit =
+      (early_registration && selectedPricingOption === "Monthly") ||
+      hasPendingStudents;
 
-    updateTotalAmount();
+    console.log(`shouldShowDeposit: ${shouldShowDeposit}`);
+
+    if (shouldShowDeposit) {
+      // Display deposit line items
+      const depositLineItems = response.deposit_line_items;
+      console.log("Initial deposit line items:", depositLineItems);
+      renderLineItems(depositLineItems, true); // Pass a flag to indicate deposit items
+      // Update total amounts accordingly
+      updateTotalAmount(true, selectedPricingOption);
+      console.log("Initial deposit line items rendered.");
+    } else {
+      // Render primary line items
+      const primaryLineItems = getLineItemsForSelectedOption(
+        selectedPricingOption,
+        lineItemsOnly
+      );
+      renderLineItems(primaryLineItems);
+      updateTotalAmount(false, selectedPricingOption);
+      console.log("Initial primary line items rendered.");
+    }
+
+    // **Initialize the new early registration alert box**
+    initializeAlertBoxEarly();
   } catch (error) {
     console.error("Error fetching checkout preview data:", error);
   }

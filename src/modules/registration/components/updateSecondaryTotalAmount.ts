@@ -1,57 +1,57 @@
+// updateSecondaryTotalAmount.ts
 import { WFComponent } from "@xatom/core";
 import { loadState } from "../state/registrationState";
 import { formatCurrency } from "../utils/formatting";
 
-export const updateSecondaryTotalAmount = (secondaryPricingOption: string) => {
+export const updateSecondaryTotalAmount = () => {
   const state = loadState();
-  const totalAmountElement = new WFComponent("#secondaryTotalAmount");
-  const secondaryOriginalAmountElement = new WFComponent(
-    "#secondaryOriginalAmount"
-  );
+  const secondaryTotalAmountElement = new WFComponent("#secondaryTotalAmount");
+  const secondaryOriginalAmountElement = new WFComponent("#secondaryOriginalAmount");
   const secondaryDiscountPill = new WFComponent("#secondaryDiscountPill");
   const secondaryDiscountNumber = new WFComponent("#secondaryDiscountNumber");
 
-  let totalAmount: number | undefined;
-  let originalAmount: number | undefined;
-  let amountType: string = "";
+  const selectedPricingOption = state.selectedPricingOption;
+  let secondaryOriginalAmount: number | undefined;
+  let secondaryAmountType: string = "";
 
-  switch (secondaryPricingOption) {
+  switch (selectedPricingOption) {
     case "Annual":
-      originalAmount = state.checkoutPreview?.annual_amount_due;
-      amountType = "Per Year";
+      secondaryOriginalAmount = state.checkoutPreview?.annual_amount_due;
+      secondaryAmountType = "Per Year";
       break;
     case "Monthly":
-      originalAmount = state.checkoutPreview?.monthly_amount_due;
-      amountType = "Per Month";
+      secondaryOriginalAmount = state.checkoutPreview?.monthly_amount_due;
+      secondaryAmountType = "Per Month";
       break;
     case "Pay-Per-Semester":
-      originalAmount = state.checkoutPreview?.semester_amount_due;
-      amountType = "Per Semester";
+      secondaryOriginalAmount = state.checkoutPreview?.semester_amount_due;
+      secondaryAmountType = "Per Semester";
       break;
     default:
-      console.warn("Unknown secondary pricing option:", secondaryPricingOption);
+      console.warn("Unknown pricing option:", selectedPricingOption);
   }
 
-  if (state.selected_discount && state.selectedPricingOption === "Deposit") {
+  if (state.selected_discount && secondaryOriginalAmount !== undefined) {
     const discountValue = parseFloat(state.selected_discount);
-    totalAmount = originalAmount
-      ? originalAmount * (1 - discountValue / 100)
-      : 0;
+    const discountedTotal = secondaryOriginalAmount * (1 - discountValue / 100);
     secondaryDiscountPill.setStyle({ display: "block" });
     secondaryDiscountNumber.setText(`${discountValue}%`);
     secondaryOriginalAmountElement.setText(
-      `was ${formatCurrency(originalAmount!)} ${amountType}`
+      `was ${formatCurrency(secondaryOriginalAmount)} ${secondaryAmountType}`
     );
     secondaryOriginalAmountElement.setStyle({ display: "block" });
+    secondaryTotalAmountElement.setText(`${formatCurrency(discountedTotal)} ${secondaryAmountType}`);
+    console.log("Applied discount to secondary total.");
   } else {
-    totalAmount = originalAmount;
+    // No discount applied
+    if (secondaryOriginalAmount !== undefined) {
+      secondaryTotalAmountElement.setText(`${formatCurrency(secondaryOriginalAmount)} ${secondaryAmountType}`);
+    } else {
+      secondaryTotalAmountElement.setText(`$0.00 ${secondaryAmountType}`);
+    }
     secondaryDiscountPill.setStyle({ display: "none" });
     secondaryOriginalAmountElement.setStyle({ display: "none" });
-  }
-
-  if (totalAmount !== undefined) {
-    totalAmountElement.setText(`${formatCurrency(totalAmount)} ${amountType}`);
-  } else {
-    totalAmountElement.setText(`$0.00 ${amountType}`);
+    secondaryDiscountNumber.setText("");
+    console.log("No discount applied to secondary total.");
   }
 };

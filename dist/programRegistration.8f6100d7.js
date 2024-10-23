@@ -143,6 +143,7 @@
     }
   }
 })({"8DzTT":[function(require,module,exports) {
+// programRegistration.ts
 var parcelHelpers = require("@parcel/transformer-js/src/esmodule-helpers.js");
 parcelHelpers.defineInteropFlag(exports);
 parcelHelpers.export(exports, "programRegistration", ()=>programRegistration);
@@ -160,7 +161,7 @@ var _urlParamNavigator = require("./components/urlParamNavigator");
 var _registrationState = require("./state/registrationState"); // Import the registration state
 var _apiConfig = require("../../api/apiConfig"); // Import API client for submission
 const programRegistration = async ()=>{
-    //clear local storage
+    // Clear local storage
     window.onload = function() {
         // Clear the value of registrationState from local storage
         localStorage.removeItem("registrationState");
@@ -1123,6 +1124,7 @@ const updateSelectedSessions = (sessionId, studentId, checked)=>{
 };
 
 },{"@parcel/transformer-js/src/esmodule-helpers.js":"5oERU"}],"fXOWt":[function(require,module,exports) {
+// components/registration/checkoutPreview.ts
 var parcelHelpers = require("@parcel/transformer-js/src/esmodule-helpers.js");
 parcelHelpers.defineInteropFlag(exports);
 parcelHelpers.export(exports, "initializeCheckoutPreview", ()=>initializeCheckoutPreview);
@@ -1131,10 +1133,10 @@ var _apiConfig = require("../../api/apiConfig");
 var _registrationState = require("./state/registrationState");
 var _alertBox = require("./components/alertBox");
 var _primaryPaymentRadios = require("./components/primaryPaymentRadios");
-var _secondaryPaymentRadios = require("./components/secondaryPaymentRadios");
 var _lineItems = require("./components/lineItems");
 var _updateTotalAmount = require("./components/updateTotalAmount");
 var _financialAid = require("./components/financialAid"); // Import financial aid initialization
+var _alertBoxEarly = require("./components/alertBoxEarly"); // Import the new alertBoxEarly
 const initializeCheckoutPreview = async ()=>{
     try {
         const registrationState = (0, _registrationState.loadState)();
@@ -1144,7 +1146,7 @@ const initializeCheckoutPreview = async ()=>{
         console.log("Checkout Preview Data:", response);
         (0, _updateUi.updateSelectedItemUI)();
         (0, _alertBox.initializeAlertBox)();
-        const { selectedPricingOption } = response;
+        const { selectedPricingOption, early_registration, start_date } = response;
         // Extract line items data only
         const lineItemsOnly = {
             annual_line_items: response.annual_line_items,
@@ -1152,23 +1154,42 @@ const initializeCheckoutPreview = async ()=>{
             semester_line_items: response.semester_line_items,
             deposit_line_items: response.deposit_line_items
         };
-        // Save the entire response to state for later use
+        // **Always** save 'early_registration' and 'start_date' to state
         (0, _registrationState.saveState)({
             checkoutPreview: response,
-            selectedPricingOption
+            selectedPricingOption,
+            early_registration,
+            start_date: response.start_date
         });
         (0, _primaryPaymentRadios.initializePrimaryPaymentRadios)(selectedPricingOption);
-        (0, _secondaryPaymentRadios.initializeSecondaryPaymentRadios)(selectedPricingOption);
         (0, _financialAid.initializeFinancialAid)(); // Initialize financial aid components
-        const initialLineItems = (0, _lineItems.getLineItemsForSelectedOption)(selectedPricingOption, lineItemsOnly);
-        (0, _lineItems.renderLineItems)(initialLineItems);
-        (0, _updateTotalAmount.updateTotalAmount)();
+        // Determine if deposit should be displayed
+        const hasPendingStudents = registrationState.pendingStudents?.length > 0;
+        const shouldShowDeposit = early_registration && selectedPricingOption === "Monthly" || hasPendingStudents;
+        console.log(`shouldShowDeposit: ${shouldShowDeposit}`);
+        if (shouldShowDeposit) {
+            // Display deposit line items
+            const depositLineItems = response.deposit_line_items;
+            console.log("Initial deposit line items:", depositLineItems);
+            (0, _lineItems.renderLineItems)(depositLineItems, true); // Pass a flag to indicate deposit items
+            // Update total amounts accordingly
+            (0, _updateTotalAmount.updateTotalAmount)(true, selectedPricingOption);
+            console.log("Initial deposit line items rendered.");
+        } else {
+            // Render primary line items
+            const primaryLineItems = (0, _lineItems.getLineItemsForSelectedOption)(selectedPricingOption, lineItemsOnly);
+            (0, _lineItems.renderLineItems)(primaryLineItems);
+            (0, _updateTotalAmount.updateTotalAmount)(false, selectedPricingOption);
+            console.log("Initial primary line items rendered.");
+        }
+        // **Initialize the new early registration alert box**
+        (0, _alertBoxEarly.initializeAlertBoxEarly)();
     } catch (error) {
         console.error("Error fetching checkout preview data:", error);
     }
 };
 
-},{"./utils/updateUi":"gyQJE","../../api/apiConfig":"2Lx0S","./state/registrationState":"jIQ60","./components/alertBox":"kOgMy","./components/primaryPaymentRadios":"40hDJ","./components/secondaryPaymentRadios":"2CoPv","./components/lineItems":"4Hqur","./components/updateTotalAmount":"73URz","./components/financialAid":"8HFcq","@parcel/transformer-js/src/esmodule-helpers.js":"5oERU"}],"kOgMy":[function(require,module,exports) {
+},{"./utils/updateUi":"gyQJE","../../api/apiConfig":"2Lx0S","./state/registrationState":"jIQ60","./components/alertBox":"kOgMy","./components/primaryPaymentRadios":"40hDJ","./components/lineItems":"4Hqur","./components/updateTotalAmount":"73URz","./components/financialAid":"8HFcq","./components/alertBoxEarly":"gsqzm","@parcel/transformer-js/src/esmodule-helpers.js":"5oERU"}],"kOgMy":[function(require,module,exports) {
 // components/registration/initializeAlertBox.ts
 var parcelHelpers = require("@parcel/transformer-js/src/esmodule-helpers.js");
 parcelHelpers.defineInteropFlag(exports);
@@ -1189,6 +1210,7 @@ const initializeAlertBox = ()=>{
 };
 
 },{"../state/registrationState":"jIQ60","@parcel/transformer-js/src/esmodule-helpers.js":"5oERU"}],"40hDJ":[function(require,module,exports) {
+// components/registration/components/primaryPaymentRadios.ts
 var parcelHelpers = require("@parcel/transformer-js/src/esmodule-helpers.js");
 parcelHelpers.defineInteropFlag(exports);
 parcelHelpers.export(exports, "initializePrimaryPaymentRadios", ()=>initializePrimaryPaymentRadios);
@@ -1196,6 +1218,7 @@ var _core = require("@xatom/core");
 var _registrationState = require("../state/registrationState");
 var _lineItems = require("./lineItems");
 var _updateTotalAmount = require("./updateTotalAmount");
+var _alertBoxEarly = require("./alertBoxEarly"); // Import the new alertBoxEarly
 const initializePrimaryPaymentRadios = (selectedPricingOption)=>{
     const paymentPlans = [
         {
@@ -1212,13 +1235,9 @@ const initializePrimaryPaymentRadios = (selectedPricingOption)=>{
             key: "Pay-Per-Semester",
             id: "semesterPlan",
             wrapId: "semesterRadioWrap"
-        },
-        {
-            key: "Deposit",
-            id: "deposit",
-            wrapId: "depositRadioWrap"
         }
     ];
+    // Initialize the radio buttons based on the selected option
     paymentPlans.forEach((plan)=>{
         const planElement = new (0, _core.WFComponent)(`#${plan.id}`).getElement();
         const planWrapElement = new (0, _core.WFComponent)(`#${plan.wrapId}`).getElement();
@@ -1226,59 +1245,82 @@ const initializePrimaryPaymentRadios = (selectedPricingOption)=>{
             planElement.checked = true;
             planWrapElement.classList.remove("is-disabled");
             planElement.disabled = false;
-        } else if (selectedPricingOption === "Deposit") {
-            if (plan.key !== "Deposit") {
-                planWrapElement.classList.add("is-disabled");
-                planElement.disabled = true;
-            } else {
-                planWrapElement.classList.remove("is-disabled");
-                planElement.disabled = false;
-                planElement.checked = true;
-            }
-        } else if (plan.key === "Deposit") {
-            planWrapElement.classList.add("is-disabled");
-            planElement.disabled = true;
         } else {
             planWrapElement.classList.remove("is-disabled");
             planElement.disabled = false;
         }
     });
+    // Attach event listeners to each payment option
     paymentPlans.forEach((plan)=>{
         const input = new (0, _core.WFComponent)(`#${plan.id}`).getElement();
         input.addEventListener("change", (event)=>{
             const target = event.target;
             if (target.checked) {
+                // Save the selected pricing option to state
                 (0, _registrationState.saveState)({
                     selectedPricingOption: target.value
                 });
+                // Load the current registration state
                 const registrationState = (0, _registrationState.loadState)();
+                // Debugging: Log the current state
+                console.log("Current Registration State:", registrationState);
+                // Extract the necessary line items from the state
                 const lineItemsOnly = {
                     annual_line_items: registrationState.checkoutPreview?.annual_line_items ?? [],
                     monthly_line_items: registrationState.checkoutPreview?.monthly_line_items ?? [],
-                    semester_line_items: registrationState.checkoutPreview?.semester_line_items ?? [],
-                    deposit_line_items: registrationState.checkoutPreview?.deposit_line_items ?? []
+                    semester_line_items: registrationState.checkoutPreview?.semester_line_items ?? []
                 };
-                const lineItems = (0, _lineItems.getLineItemsForSelectedOption)(target.value, lineItemsOnly);
-                (0, _lineItems.renderLineItems)(lineItems);
-                (0, _updateTotalAmount.updateTotalAmount)();
+                // Determine if deposit conditions are met
+                const shouldShowDeposit = registrationState.early_registration && target.value === "Monthly" || registrationState.pendingStudents?.length > 0;
+                // Debugging: Log the value of shouldShowDeposit
+                console.log(`shouldShowDeposit: ${shouldShowDeposit}`);
+                if (shouldShowDeposit) {
+                    // **Only** render deposit line items
+                    const depositLineItems = registrationState.checkoutPreview?.deposit_line_items ?? [];
+                    // **Ensure** that deposit line items are available
+                    if (depositLineItems.length > 0) {
+                        console.log("Rendering Deposit Line Items:", depositLineItems);
+                        (0, _lineItems.renderLineItems)(depositLineItems, true); // Pass a flag to indicate deposit items
+                        // Update total amounts accordingly
+                        (0, _updateTotalAmount.updateTotalAmount)(true, target.value);
+                        console.log(`Deposit line items rendered for ${target.value}`);
+                    } else {
+                        console.warn("Deposit line items are empty or undefined.");
+                        // Fallback: Render primary line items if deposit line items are unavailable
+                        const primaryLineItems = (0, _lineItems.getLineItemsForSelectedOption)(target.value, lineItemsOnly);
+                        (0, _lineItems.renderLineItems)(primaryLineItems);
+                        (0, _updateTotalAmount.updateTotalAmount)(false, target.value);
+                        console.log(`Primary line items rendered for ${target.value} due to missing deposit items.`);
+                    }
+                } else {
+                    // **Only** render primary line items
+                    const primaryLineItems = (0, _lineItems.getLineItemsForSelectedOption)(target.value, lineItemsOnly);
+                    (0, _lineItems.renderLineItems)(primaryLineItems);
+                    (0, _updateTotalAmount.updateTotalAmount)(false, target.value);
+                    console.log(`Primary line items rendered for ${target.value}`);
+                }
                 console.log(`Primary pricing option selected: ${target.value}`);
+                // **Initialize alertBoxEarly after changing pricing option**
+                (0, _alertBoxEarly.initializeAlertBoxEarly)();
             }
         });
     });
 };
 
-},{"@xatom/core":"j9zXV","../state/registrationState":"jIQ60","./lineItems":"4Hqur","./updateTotalAmount":"73URz","@parcel/transformer-js/src/esmodule-helpers.js":"5oERU"}],"4Hqur":[function(require,module,exports) {
+},{"@xatom/core":"j9zXV","../state/registrationState":"jIQ60","./lineItems":"4Hqur","./updateTotalAmount":"73URz","./alertBoxEarly":"gsqzm","@parcel/transformer-js/src/esmodule-helpers.js":"5oERU"}],"4Hqur":[function(require,module,exports) {
+// lineItems.ts
 var parcelHelpers = require("@parcel/transformer-js/src/esmodule-helpers.js");
 parcelHelpers.defineInteropFlag(exports);
 parcelHelpers.export(exports, "renderLineItems", ()=>renderLineItems);
 parcelHelpers.export(exports, "getLineItemsForSelectedOption", ()=>getLineItemsForSelectedOption);
 var _core = require("@xatom/core");
-const renderLineItems = (lineItems)=>{
+const renderLineItems = (lineItems, isDeposit = false)=>{
     const lineItemList = new (0, _core.WFComponent)("#lineItemList");
     lineItemList.removeAllChildren(); // Clear previous line items
+    console.log(`Rendering ${isDeposit ? "Deposit" : "Primary"} Line Items:`, lineItems);
     lineItems.forEach((item)=>{
         const lineItemRow = document.createElement("tr");
-        lineItemRow.className = "table_row";
+        lineItemRow.className = "table_row" + (isDeposit ? " deposit_row" : "");
         const productNameCell = document.createElement("td");
         productNameCell.className = "table_cell";
         productNameCell.textContent = item.product_name;
@@ -1297,6 +1339,15 @@ const renderLineItems = (lineItems)=>{
         lineItemRow.appendChild(totalAmountCell);
         lineItemList.getElement().appendChild(lineItemRow);
     });
+    // If deposit line items are rendered, apply specific styles or classes if needed
+    if (isDeposit) {
+        // Example: Highlight deposit line items
+        lineItemList.getElement().classList.add("has-deposit");
+        console.log("Deposit line items have been added.");
+    } else {
+        lineItemList.getElement().classList.remove("has-deposit");
+        console.log("Primary line items have been added.");
+    }
 };
 const getLineItemsForSelectedOption = (selectedPricingOption, lineItemsData)=>{
     switch(selectedPricingOption){
@@ -1306,8 +1357,7 @@ const getLineItemsForSelectedOption = (selectedPricingOption, lineItemsData)=>{
             return lineItemsData.monthly_line_items;
         case "Pay-Per-Semester":
             return lineItemsData.semester_line_items;
-        case "Deposit":
-            return lineItemsData.deposit_line_items;
+        // Removed "Deposit" case
         default:
             console.warn("Unknown pricing option:", selectedPricingOption);
             return [];
@@ -1315,66 +1365,114 @@ const getLineItemsForSelectedOption = (selectedPricingOption, lineItemsData)=>{
 };
 
 },{"@xatom/core":"j9zXV","@parcel/transformer-js/src/esmodule-helpers.js":"5oERU"}],"73URz":[function(require,module,exports) {
+// updateTotalAmount.ts
 var parcelHelpers = require("@parcel/transformer-js/src/esmodule-helpers.js");
 parcelHelpers.defineInteropFlag(exports);
 parcelHelpers.export(exports, "updateTotalAmount", ()=>updateTotalAmount);
 var _core = require("@xatom/core");
 var _registrationState = require("../state/registrationState");
 var _formatting = require("../utils/formatting");
-const updateTotalAmount = ()=>{
+var _updateSecondaryTotalAmount = require("./updateSecondaryTotalAmount");
+const updateTotalAmount = (includeDeposit = false, selectedPricingOption)=>{
     const state = (0, _registrationState.loadState)();
     const totalAmountElement = new (0, _core.WFComponent)("#primaryTotalAmount");
     const primaryOriginalAmountElement = new (0, _core.WFComponent)("#primaryOriginalAmount");
     const primaryDiscountPill = new (0, _core.WFComponent)("#primaryDiscountPill");
     const primaryDiscountNumber = new (0, _core.WFComponent)("#primaryDiscountNumber");
-    let totalAmount;
-    let originalAmount;
-    let amountType = ""; // To hold the type of amount (e.g., "Per Year")
-    switch(state.selectedPricingOption){
+    // Elements for secondary total
+    const secondaryAmountWrap = new (0, _core.WFComponent)("#secondaryAmountWrap");
+    const secondaryTotalAmountElement = new (0, _core.WFComponent)("#secondaryTotalAmount");
+    const secondaryOriginalAmountElement = new (0, _core.WFComponent)("#secondaryOriginalAmount");
+    const secondaryDiscountPill = new (0, _core.WFComponent)("#secondaryDiscountPill");
+    const secondaryDiscountNumber = new (0, _core.WFComponent)("#secondaryDiscountNumber");
+    console.log(`updateTotalAmount called with includeDeposit=${includeDeposit} and selectedPricingOption=${selectedPricingOption}`);
+    let primaryTotal;
+    let primaryOriginal;
+    let primaryAmountType = ""; // e.g., "Per Year"
+    const pricingOption = selectedPricingOption || state.selectedPricingOption;
+    switch(pricingOption){
         case "Annual":
-            originalAmount = state.checkoutPreview?.annual_amount_due;
-            amountType = "Per Year";
+            primaryOriginal = state.checkoutPreview?.annual_amount_due;
+            primaryAmountType = "Per Year";
             break;
         case "Monthly":
-            originalAmount = state.checkoutPreview?.monthly_amount_due;
-            amountType = "Per Month";
+            primaryOriginal = state.checkoutPreview?.monthly_amount_due;
+            primaryAmountType = "Per Month";
             break;
         case "Pay-Per-Semester":
-            originalAmount = state.checkoutPreview?.semester_amount_due;
-            amountType = "Per Semester";
-            break;
-        case "Deposit":
-            originalAmount = state.checkoutPreview?.deposit_amount_due;
-            amountType = ""; // Deposit might not need a period label
+            primaryOriginal = state.checkoutPreview?.semester_amount_due;
+            primaryAmountType = "Per Semester";
             break;
         default:
-            console.warn("Unknown pricing option:", state.selectedPricingOption);
+            console.warn("Unknown pricing option:", pricingOption);
     }
-    if (state.selected_discount && state.selectedPricingOption !== "Deposit") {
-        const discountValue = parseFloat(state.selected_discount);
-        totalAmount = originalAmount ? originalAmount * (1 - discountValue / 100) : 0;
-        primaryDiscountPill.setStyle({
-            display: "block"
+    if (!includeDeposit) {
+        // No deposit; apply discounts to primary total if applicable
+        if (state.selected_discount) {
+            const discountValue = parseFloat(state.selected_discount);
+            primaryTotal = primaryOriginal ? primaryOriginal * (1 - discountValue / 100) : 0;
+            primaryDiscountPill.setStyle({
+                display: "block"
+            });
+            primaryDiscountNumber.setText(`${discountValue}%`);
+            primaryOriginalAmountElement.setText(`was ${(0, _formatting.formatCurrency)(primaryOriginal)} ${primaryAmountType}`);
+            primaryOriginalAmountElement.setStyle({
+                display: "block"
+            });
+            console.log("Applied discount to primary total.");
+        } else {
+            primaryTotal = primaryOriginal;
+            primaryDiscountPill.setStyle({
+                display: "none"
+            });
+            primaryOriginalAmountElement.setStyle({
+                display: "none"
+            });
+            primaryDiscountNumber.setText("");
+            console.log("No discount applied to primary total.");
+        }
+        if (primaryTotal !== undefined) totalAmountElement.setText(`${(0, _formatting.formatCurrency)(primaryTotal)} ${primaryAmountType}`);
+        else totalAmountElement.setText(`$0.00 ${primaryAmountType}`);
+        // Hide secondary total elements if previously shown
+        secondaryAmountWrap.setStyle({
+            display: "none"
         });
-        primaryDiscountNumber.setText(`${discountValue}%`);
-        primaryOriginalAmountElement.setText(`was ${(0, _formatting.formatCurrency)(originalAmount)} ${amountType}`);
-        primaryOriginalAmountElement.setStyle({
-            display: "block"
+        console.log("SecondaryAmountWrap hidden.");
+        // Clear secondary totals
+        secondaryTotalAmountElement.setText(`$0.00 ${primaryAmountType}`);
+        secondaryOriginalAmountElement.setStyle({
+            display: "none"
         });
+        secondaryDiscountPill.setStyle({
+            display: "none"
+        });
+        secondaryDiscountNumber.setText("");
     } else {
-        totalAmount = originalAmount;
+        // Deposit is included; primary total reflects deposit total, secondary total reflects main payment option
+        const depositAmount = state.checkoutPreview?.deposit_amount_due;
+        if (depositAmount !== undefined) totalAmountElement.setText(`${(0, _formatting.formatCurrency)(depositAmount)} Total`);
+        else totalAmountElement.setText(`$0.00 Total`);
+        // Calculate and display secondary total with discount if applicable
+        (0, _updateSecondaryTotalAmount.updateSecondaryTotalAmount)();
+        // Show secondary total elements
+        secondaryAmountWrap.setStyle({
+            display: "flex",
+            flexDirection: "column"
+        });
+        console.log("SecondaryAmountWrap displayed as flex.");
+        // Hide primary discount pill since discounts are applied to secondary total
         primaryDiscountPill.setStyle({
             display: "none"
         });
+        primaryDiscountNumber.setText("");
         primaryOriginalAmountElement.setStyle({
             display: "none"
         });
+        console.log("Primary discount pill hidden.");
     }
-    if (totalAmount !== undefined) totalAmountElement.setText(`${(0, _formatting.formatCurrency)(totalAmount)} ${amountType}`);
-    else totalAmountElement.setText(`$0.00 ${amountType}`);
 };
 
-},{"@xatom/core":"j9zXV","../state/registrationState":"jIQ60","../utils/formatting":"iRhp7","@parcel/transformer-js/src/esmodule-helpers.js":"5oERU"}],"iRhp7":[function(require,module,exports) {
+},{"@xatom/core":"j9zXV","../state/registrationState":"jIQ60","../utils/formatting":"iRhp7","./updateSecondaryTotalAmount":"gVZQe","@parcel/transformer-js/src/esmodule-helpers.js":"5oERU"}],"iRhp7":[function(require,module,exports) {
 // utils/formatting.ts
 var parcelHelpers = require("@parcel/transformer-js/src/esmodule-helpers.js");
 parcelHelpers.defineInteropFlag(exports);
@@ -1390,120 +1488,114 @@ const formatCurrency = (amount)=>{
     return "$0.00"; // Default value in case of error
 };
 
-},{"@parcel/transformer-js/src/esmodule-helpers.js":"5oERU"}],"2CoPv":[function(require,module,exports) {
-var parcelHelpers = require("@parcel/transformer-js/src/esmodule-helpers.js");
-parcelHelpers.defineInteropFlag(exports);
-parcelHelpers.export(exports, "initializeSecondaryPaymentRadios", ()=>initializeSecondaryPaymentRadios);
-var _core = require("@xatom/core");
-var _registrationState = require("../state/registrationState");
-var _updateSecondaryTotalAmount = require("./updateSecondaryTotalAmount"); // Import the new function
-const initializeSecondaryPaymentRadios = (selectedPricingOption)=>{
-    const hiddenSecondaryPricing = new (0, _core.WFComponent)("#hiddenSecondaryPricing");
-    const secondaryAmountWrap = new (0, _core.WFComponent)("#secondaryAmountWrap");
-    const state = (0, _registrationState.loadState)();
-    if (!state.secondaryPricingOption) (0, _registrationState.saveState)({
-        secondaryPricingOption: "Annual"
-    });
-    if (selectedPricingOption === "Deposit") {
-        hiddenSecondaryPricing.setStyle({
-            display: "flex"
-        });
-        secondaryAmountWrap.setStyle({
-            display: "flex"
-        }); // Show the secondary amount wrap
-        const initialSecondaryOption = state.secondaryPricingOption || "Annual";
-        const initialRadio = new (0, _core.WFComponent)(`input[name='secondaryPricing'][value='${initialSecondaryOption}']`).getElement();
-        initialRadio.checked = true;
-        // Update the secondary total amount based on the initial secondary option
-        (0, _updateSecondaryTotalAmount.updateSecondaryTotalAmount)(initialSecondaryOption);
-    } else {
-        hiddenSecondaryPricing.setStyle({
-            display: "none"
-        });
-        secondaryAmountWrap.setStyle({
-            display: "none"
-        }); // Hide the secondary amount wrap
-    }
-    document.querySelectorAll("input[name='secondaryPricing']").forEach((input)=>{
-        input.addEventListener("change", (event)=>{
-            const target = event.target;
-            if (target.checked) {
-                const secondaryPricingOption = target.value;
-                (0, _registrationState.saveState)({
-                    secondaryPricingOption
-                });
-                console.log(`Secondary pricing option selected: ${secondaryPricingOption}`);
-                // Update the secondary total amount when a different option is selected
-                (0, _updateSecondaryTotalAmount.updateSecondaryTotalAmount)(secondaryPricingOption);
-            }
-        });
-    });
-};
-
-},{"@xatom/core":"j9zXV","../state/registrationState":"jIQ60","./updateSecondaryTotalAmount":"gVZQe","@parcel/transformer-js/src/esmodule-helpers.js":"5oERU"}],"gVZQe":[function(require,module,exports) {
+},{"@parcel/transformer-js/src/esmodule-helpers.js":"5oERU"}],"gVZQe":[function(require,module,exports) {
+// updateSecondaryTotalAmount.ts
 var parcelHelpers = require("@parcel/transformer-js/src/esmodule-helpers.js");
 parcelHelpers.defineInteropFlag(exports);
 parcelHelpers.export(exports, "updateSecondaryTotalAmount", ()=>updateSecondaryTotalAmount);
 var _core = require("@xatom/core");
 var _registrationState = require("../state/registrationState");
 var _formatting = require("../utils/formatting");
-const updateSecondaryTotalAmount = (secondaryPricingOption)=>{
+const updateSecondaryTotalAmount = ()=>{
     const state = (0, _registrationState.loadState)();
-    const totalAmountElement = new (0, _core.WFComponent)("#secondaryTotalAmount");
+    const secondaryTotalAmountElement = new (0, _core.WFComponent)("#secondaryTotalAmount");
     const secondaryOriginalAmountElement = new (0, _core.WFComponent)("#secondaryOriginalAmount");
     const secondaryDiscountPill = new (0, _core.WFComponent)("#secondaryDiscountPill");
     const secondaryDiscountNumber = new (0, _core.WFComponent)("#secondaryDiscountNumber");
-    let totalAmount;
-    let originalAmount;
-    let amountType = "";
-    switch(secondaryPricingOption){
+    const selectedPricingOption = state.selectedPricingOption;
+    let secondaryOriginalAmount;
+    let secondaryAmountType = "";
+    switch(selectedPricingOption){
         case "Annual":
-            originalAmount = state.checkoutPreview?.annual_amount_due;
-            amountType = "Per Year";
+            secondaryOriginalAmount = state.checkoutPreview?.annual_amount_due;
+            secondaryAmountType = "Per Year";
             break;
         case "Monthly":
-            originalAmount = state.checkoutPreview?.monthly_amount_due;
-            amountType = "Per Month";
+            secondaryOriginalAmount = state.checkoutPreview?.monthly_amount_due;
+            secondaryAmountType = "Per Month";
             break;
         case "Pay-Per-Semester":
-            originalAmount = state.checkoutPreview?.semester_amount_due;
-            amountType = "Per Semester";
+            secondaryOriginalAmount = state.checkoutPreview?.semester_amount_due;
+            secondaryAmountType = "Per Semester";
             break;
         default:
-            console.warn("Unknown secondary pricing option:", secondaryPricingOption);
+            console.warn("Unknown pricing option:", selectedPricingOption);
     }
-    if (state.selected_discount && state.selectedPricingOption === "Deposit") {
+    if (state.selected_discount && secondaryOriginalAmount !== undefined) {
         const discountValue = parseFloat(state.selected_discount);
-        totalAmount = originalAmount ? originalAmount * (1 - discountValue / 100) : 0;
+        const discountedTotal = secondaryOriginalAmount * (1 - discountValue / 100);
         secondaryDiscountPill.setStyle({
             display: "block"
         });
         secondaryDiscountNumber.setText(`${discountValue}%`);
-        secondaryOriginalAmountElement.setText(`was ${(0, _formatting.formatCurrency)(originalAmount)} ${amountType}`);
+        secondaryOriginalAmountElement.setText(`was ${(0, _formatting.formatCurrency)(secondaryOriginalAmount)} ${secondaryAmountType}`);
         secondaryOriginalAmountElement.setStyle({
             display: "block"
         });
+        secondaryTotalAmountElement.setText(`${(0, _formatting.formatCurrency)(discountedTotal)} ${secondaryAmountType}`);
+        console.log("Applied discount to secondary total.");
     } else {
-        totalAmount = originalAmount;
+        // No discount applied
+        if (secondaryOriginalAmount !== undefined) secondaryTotalAmountElement.setText(`${(0, _formatting.formatCurrency)(secondaryOriginalAmount)} ${secondaryAmountType}`);
+        else secondaryTotalAmountElement.setText(`$0.00 ${secondaryAmountType}`);
         secondaryDiscountPill.setStyle({
             display: "none"
         });
         secondaryOriginalAmountElement.setStyle({
             display: "none"
         });
+        secondaryDiscountNumber.setText("");
+        console.log("No discount applied to secondary total.");
     }
-    if (totalAmount !== undefined) totalAmountElement.setText(`${(0, _formatting.formatCurrency)(totalAmount)} ${amountType}`);
-    else totalAmountElement.setText(`$0.00 ${amountType}`);
 };
 
-},{"@xatom/core":"j9zXV","../state/registrationState":"jIQ60","../utils/formatting":"iRhp7","@parcel/transformer-js/src/esmodule-helpers.js":"5oERU"}],"8HFcq":[function(require,module,exports) {
+},{"@xatom/core":"j9zXV","../state/registrationState":"jIQ60","../utils/formatting":"iRhp7","@parcel/transformer-js/src/esmodule-helpers.js":"5oERU"}],"gsqzm":[function(require,module,exports) {
+// components/registration/alertBoxEarly.ts
+var parcelHelpers = require("@parcel/transformer-js/src/esmodule-helpers.js");
+parcelHelpers.defineInteropFlag(exports);
+parcelHelpers.export(exports, "initializeAlertBoxEarly", ()=>initializeAlertBoxEarly);
+var _registrationState = require("../state/registrationState");
+const initializeAlertBoxEarly = ()=>{
+    const alertBoxEarly = document.querySelector("#alertBoxEarly");
+    const startDateSpan = document.querySelector("#startDate");
+    if (!alertBoxEarly || !startDateSpan) {
+        console.error("Early Alert Box elements not found");
+        return;
+    }
+    const state = (0, _registrationState.loadState)();
+    const { selectedPricingOption, early_registration, checkoutPreview } = state;
+    // Check if selectedPricingOption is "Monthly" and early_registration is true
+    if (selectedPricingOption === "Monthly" && early_registration && checkoutPreview && checkoutPreview.start_date) {
+        // Parse the start_date as UTC
+        const startDate = new Date(checkoutPreview.start_date);
+        // Format the date in UTC to avoid timezone shifts
+        const formatter = new Intl.DateTimeFormat(undefined, {
+            year: "numeric",
+            month: "long",
+            day: "numeric",
+            timeZone: "UTC"
+        });
+        const formattedDate = formatter.format(startDate);
+        // Update the startDate span
+        startDateSpan.textContent = formattedDate;
+        // Display the alert box
+        alertBoxEarly.style.display = "flex";
+        console.log("Early registration alert box displayed with start date:", formattedDate);
+    } else {
+        // Hide the alert box if conditions are not met
+        alertBoxEarly.style.display = "none";
+        console.log("Early registration alert box hidden");
+    }
+};
+
+},{"../state/registrationState":"jIQ60","@parcel/transformer-js/src/esmodule-helpers.js":"5oERU"}],"8HFcq":[function(require,module,exports) {
+// financialAid.ts
 var parcelHelpers = require("@parcel/transformer-js/src/esmodule-helpers.js");
 parcelHelpers.defineInteropFlag(exports);
 parcelHelpers.export(exports, "initializeFinancialAid", ()=>initializeFinancialAid);
 var _core = require("@xatom/core");
 var _registrationState = require("../state/registrationState");
 var _updateTotalAmount = require("./updateTotalAmount");
-var _updateSecondaryTotalAmount = require("./updateSecondaryTotalAmount");
 var _formUtils = require("../../../utils/formUtils");
 var _validationUtils = require("../../../utils/validationUtils");
 const initializeFinancialAid = ()=>{
@@ -1520,9 +1612,10 @@ const initializeFinancialAid = ()=>{
                 fin_aid_requested: false,
                 selected_discount: undefined
             });
-            // Update totals to reset to original values
-            if (state.selectedPricingOption === "Deposit") (0, _updateSecondaryTotalAmount.updateSecondaryTotalAmount)(state.secondaryPricingOption);
-            else (0, _updateTotalAmount.updateTotalAmount)();
+            // Determine if deposit is included
+            const includeDeposit = state.pendingStudents?.length > 0 || state.early_registration && state.selectedPricingOption === "Monthly";
+            // Update totals accordingly
+            (0, _updateTotalAmount.updateTotalAmount)(includeDeposit, state.selectedPricingOption);
         }
     });
     // Close dialog event to uncheck checkbox if no discount is applied
@@ -1644,6 +1737,7 @@ const saveFinancialAidData = ()=>{
     const previousParticipant = previousParticipantInput ? previousParticipantInput.value : "";
     (0, _registrationState.saveState)({
         fin_aid_requested: true,
+        selected_discount: "",
         financialAidData: {
             relationship,
             annualIncome,
@@ -1682,10 +1776,9 @@ const showSuccessState = ()=>{
             (0, _registrationState.saveState)({
                 fin_aid_requested: true
             });
-            if (state.selectedPricingOption === "Deposit") // Apply discount to secondary total amount
-            (0, _updateSecondaryTotalAmount.updateSecondaryTotalAmount)(state.secondaryPricingOption);
-            else // Apply discount to primary total amount
-            (0, _updateTotalAmount.updateTotalAmount)();
+            // Determine if deposit is included
+            const includeDeposit = state.pendingStudents?.length > 0 || state.early_registration && state.selectedPricingOption === "Monthly";
+            (0, _updateTotalAmount.updateTotalAmount)(includeDeposit, state.selectedPricingOption);
             console.log(`Discount applied: ${discountValue}%`);
             // Close the dialog
             closeFinancialAidDialog(financialAidDialog);
@@ -1706,7 +1799,7 @@ const getComponentValue = (component)=>{
     return element.value;
 };
 
-},{"@xatom/core":"j9zXV","../state/registrationState":"jIQ60","./updateTotalAmount":"73URz","./updateSecondaryTotalAmount":"gVZQe","../../../utils/formUtils":"hvg7i","../../../utils/validationUtils":"dMBjH","@parcel/transformer-js/src/esmodule-helpers.js":"5oERU"}],"hvg7i":[function(require,module,exports) {
+},{"@xatom/core":"j9zXV","../state/registrationState":"jIQ60","./updateTotalAmount":"73URz","../../../utils/formUtils":"hvg7i","../../../utils/validationUtils":"dMBjH","@parcel/transformer-js/src/esmodule-helpers.js":"5oERU"}],"hvg7i":[function(require,module,exports) {
 var parcelHelpers = require("@parcel/transformer-js/src/esmodule-helpers.js");
 parcelHelpers.defineInteropFlag(exports);
 parcelHelpers.export(exports, "toggleError", ()=>toggleError);
@@ -2327,6 +2420,8 @@ var _sessionsList = require("../../registration/sessionsList");
 var _sidebarIndicators = require("../../registration/components/sidebarIndicators");
 var _core = require("@xatom/core"); // Import WFComponent
 var _apiConfig = require("../../../api/apiConfig"); // Import apiClient
+// **Import the initializeAlertBoxEarly function**
+var _alertBoxEarly = require("../../registration/components/alertBoxEarly");
 // Function to parse URL parameters
 const getUrlParams = ()=>{
     const params = new URLSearchParams(window.location.search);
@@ -2427,10 +2522,12 @@ const initializeStateFromUrlParams = async (slider)=>{
             setTimeout(()=>loadingWall.setStyle({
                     display: "none"
                 }), animationDuration);
+            // **Initialize the early registration alert box**
+            (0, _alertBoxEarly.initializeAlertBoxEarly)();
         }
     }
 };
 
-},{"../state/selectedWorkshop":"BqVJq","../../registration/programList":"bA83c","../../registration/workshopList":"dZi8x","../../registration/sessionsList":"2dV61","../../registration/components/sidebarIndicators":"8jLLI","@xatom/core":"j9zXV","../../../api/apiConfig":"2Lx0S","@parcel/transformer-js/src/esmodule-helpers.js":"5oERU"}]},[], null, "parcelRequired346")
+},{"../state/selectedWorkshop":"BqVJq","../../registration/programList":"bA83c","../../registration/workshopList":"dZi8x","../../registration/sessionsList":"2dV61","../../registration/components/sidebarIndicators":"8jLLI","@xatom/core":"j9zXV","../../../api/apiConfig":"2Lx0S","../../registration/components/alertBoxEarly":"gsqzm","@parcel/transformer-js/src/esmodule-helpers.js":"5oERU"}]},[], null, "parcelRequired346")
 
 //# sourceMappingURL=programRegistration.8f6100d7.js.map

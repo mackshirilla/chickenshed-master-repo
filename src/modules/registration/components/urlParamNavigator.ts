@@ -17,6 +17,9 @@ import {
 import { WFComponent } from "@xatom/core"; // Import WFComponent
 import { apiClient } from "../../../api/apiConfig"; // Import apiClient
 
+// **Import the initializeAlertBoxEarly function**
+import { initializeAlertBoxEarly } from "../../registration/components/alertBoxEarly";
+
 // Function to parse URL parameters
 const getUrlParams = () => {
   const params = new URLSearchParams(window.location.search);
@@ -137,6 +140,9 @@ export const initializeStateFromUrlParams = async (slider: WFSlider) => {
         () => loadingWall.setStyle({ display: "none" }),
         animationDuration
       );
+
+      // **Initialize the early registration alert box**
+      initializeAlertBoxEarly();
     }
   }
 };
