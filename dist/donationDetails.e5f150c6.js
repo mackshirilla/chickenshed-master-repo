@@ -235,6 +235,27 @@ async function initializeDonationDetailsPage() {
         invoiceAmount.setText(`$${sale.amount_total.toFixed(2)}`);
         const receiptButton = new (0, _core.WFComponent)("#receiptButton");
         receiptButton.getElement().setAttribute("href", sale.reciept_url);
+        // Handle "Made In The Name Of" field
+        const inNameOfHeader = new (0, _core.WFComponent)("#inNameOfHeader");
+        const inNameOfCell = new (0, _core.WFComponent)("#inNameOfCell");
+        if (donation.in_name_of && donation.in_name_of.trim() !== "") {
+            // If in_name_of has a value, display the header and cell
+            inNameOfHeader.setStyle({
+                display: "table-cell"
+            });
+            inNameOfCell.setStyle({
+                display: "table-cell"
+            });
+            inNameOfCell.setText(donation.in_name_of);
+        } else {
+            // If in_name_of is blank, hide the header and cell
+            inNameOfHeader.setStyle({
+                display: "none"
+            });
+            inNameOfCell.setStyle({
+                display: "none"
+            });
+        }
         // Trigger the success event
         triggerSuccessEvent(".success_trigger");
     } catch (error) {

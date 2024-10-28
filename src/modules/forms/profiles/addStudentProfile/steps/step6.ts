@@ -1,5 +1,3 @@
-// src/modules/forms/profiles/addStudentProfile/stepSix.ts
-
 import { WFComponent, WFFormComponent } from "@xatom/core";
 import {
   setupValidation,

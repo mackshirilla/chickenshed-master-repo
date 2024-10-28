@@ -489,7 +489,6 @@ a = module.exports, h = d, Object.keys(h).forEach(function(e) {
 });
 
 },{"1a87f3bc23b90fa3":"j9zXV","37b5fd8189a9f4c7":"2VHRI"}],"3quYC":[function(require,module,exports) {
-// src/modules/forms/profiles/addStudentProfile/stepOne.ts
 var parcelHelpers = require("@parcel/transformer-js/src/esmodule-helpers.js");
 parcelHelpers.defineInteropFlag(exports);
 parcelHelpers.export(exports, "initializeStepOne", ()=>initializeStepOne);
@@ -504,12 +503,15 @@ const initializeStepOne = (slider)=>{
     // Set sidebar first name from userAuth
     const firstNameText = new (0, _core.WFComponent)("#firstNameText");
     firstNameText.setText((0, _authConfig.userAuth).getUser().profile.first_name);
+    console.log(`First name set to: ${(0, _authConfig.userAuth).getUser().profile.first_name}`);
     // Step 1 Form Initialization
     const formStepOne = new (0, _core.WFFormComponent)("#formStepOne");
     // Check if current_student exists in local storage
     const existingStudent = localStorage.getItem("current_student");
-    if (existingStudent) {
+    console.log(`Existing Student at Initialization: ${existingStudent}`);
+    if (existingStudent) try {
         const student = JSON.parse(existingStudent);
+        console.log("Parsed existing student data:", student);
         formStepOne.setFromData({
             first_name: student.first_name,
             last_name: student.last_name,
@@ -517,6 +519,8 @@ const initializeStepOne = (slider)=>{
             phone: student.phone,
             send_texts: student.send_texts
         });
+    } catch (parseError) {
+        console.error("Error parsing existing_student:", parseError);
     }
     // Define the fields with associated validation rules and error messages
     const fieldsStepOne = [
@@ -541,8 +545,8 @@ const initializeStepOne = (slider)=>{
         {
             input: new (0, _core.WFComponent)("#phoneNumberInput"),
             error: new (0, _core.WFComponent)("#phoneNumberInputError"),
-            validationFn: (0, _validationUtils.validatePhoneNumber),
-            message: "Please enter a valid phone number"
+            validationFn: (0, _validationUtils.validatePhoneNumberOptional),
+            message: "Please enter a valid phone number or leave it empty"
         }
     ];
     // Auto-format phone number input to (xxx) xxx-xxxx
@@ -550,26 +554,42 @@ const initializeStepOne = (slider)=>{
     phoneNumberInput.on("input", ()=>{
         const inputElement = phoneNumberInput.getElement();
         const cursorPosition = inputElement.selectionStart;
+        const originalValue = inputElement.value;
         inputElement.value = formatPhoneNumber(inputElement.value);
         const formattedLength = inputElement.value.length;
         const cleanedLength = inputElement.value.replace(/\D/g, "").length;
         inputElement.setSelectionRange(cursorPosition + (formattedLength - cleanedLength), cursorPosition + (formattedLength - cleanedLength));
+        console.log(`Phone number formatted from "${originalValue}" to "${inputElement.value}"`);
     });
     // Initialize validation for each field
     fieldsStepOne.forEach(({ input, error, validationFn, message })=>{
+        // Optional Enhancement: Real-time validation on blur
+        input.on("blur", ()=>{
+            const errorMessage = (0, _formUtils.createValidationFunction)(input, validationFn, message)();
+            console.log(`Validation on blur for ${input.getElement().id}: "${errorMessage}"`);
+            if (errorMessage) (0, _formUtils.toggleError)(error, errorMessage, true);
+            else (0, _formUtils.toggleError)(error, "", false);
+        });
+        // Setup overall validation
         (0, _formUtils.setupValidation)(input, error, (0, _formUtils.createValidationFunction)(input, validationFn, message), new (0, _core.WFComponent)("#submitStepOneError"));
     });
     // Handle form submission for Step 1
     formStepOne.onFormSubmit(async (formData, event)=>{
         event.preventDefault(); // Stop default form submission
+        console.log("Form submission initiated.");
         const stepOneRequestingAnimation = new (0, _core.WFComponent)("#stepOneRequestingAnimation");
         stepOneRequestingAnimation.setStyle({
             display: "block"
         }); // Show loading animation
+        console.log("Loading animation displayed.");
         let isFormValid = true;
+        // Log the phone number input value on submit
+        const phoneInputElement = document.querySelector("#phoneNumberInput");
+        console.log(`Phone Number Input Value on Submit: "${phoneInputElement.value}"`);
         // Validate all fields before proceeding
         fieldsStepOne.forEach(({ input, error, validationFn, message })=>{
             const errorMessage = (0, _formUtils.createValidationFunction)(input, validationFn, message)();
+            console.log(`Validation result for ${input.getElement().id}: "${errorMessage}"`);
             if (errorMessage) {
                 (0, _formUtils.toggleError)(error, errorMessage, true);
                 isFormValid = false;
@@ -577,58 +597,155 @@ const initializeStepOne = (slider)=>{
         });
         if (!isFormValid) {
             (0, _formUtils.toggleError)(new (0, _core.WFComponent)("#submitStepOneError"), "Please correct all errors above.", true);
+            console.log("Form validation failed. Errors are displayed.");
             stepOneRequestingAnimation.setStyle({
                 display: "none"
             }); // Hide loading animation
+            console.log("Loading animation hidden.");
             return;
         }
+        // **Fetch 'current_student' from localStorage at the time of submission**
+        const existingStudentNow = localStorage.getItem("current_student");
+        console.log(`existingStudentNow: ${existingStudentNow}`);
         // Check if a student profile already exists in local storage
-        if (existingStudent) {
-            const student = JSON.parse(existingStudent);
-            // Skip creating a new profile and navigate directly to the next step
-            slider.goNext();
-            stepOneRequestingAnimation.setStyle({
-                display: "none"
-            }); // Hide loading animation
+        if (existingStudentNow) {
+            try {
+                const student = JSON.parse(existingStudentNow);
+                console.log("Existing student found during submission:", student);
+                // Compare form data with existing student data
+                const formMatchesExisting = compareFormDataWithStudent(formData, student);
+                console.log(`Form matches existing student: ${formMatchesExisting}`);
+                if (formMatchesExisting) {
+                    // Skip creating a new profile and navigate directly to the next step
+                    console.log("Form data matches existing student. Navigating to next step.");
+                    slider.goNext();
+                    stepOneRequestingAnimation.setStyle({
+                        display: "none"
+                    }); // Hide loading animation
+                    console.log("Loading animation hidden.");
+                    return;
+                } else {
+                    // Make a request to update the existing student profile
+                    console.log("Form data does not match existing student. Initiating update request.");
+                    try {
+                        const updateResponse = await updateStudentProfile(student.id, formData);
+                        if (updateResponse.status === "success") {
+                            const { profile } = updateResponse;
+                            localStorage.setItem("current_student", JSON.stringify(profile));
+                            console.log("Student profile updated successfully:", profile);
+                            slider.goNext(); // Proceed to next step
+                            console.log("Navigated to the next step after successful update.");
+                        } else {
+                            // Extract and display the server's error message
+                            const serverErrorMessage = updateResponse.message || "Unexpected response from the server.";
+                            console.warn("Server Error during update:", serverErrorMessage);
+                            (0, _formUtils.toggleError)(new (0, _core.WFComponent)("#submitStepOneError"), serverErrorMessage, true);
+                            console.log("Server error message displayed to the user.");
+                        }
+                    } catch (updateError) {
+                        // Handle errors thrown during the update request
+                        console.error("Error during update request:", updateError);
+                        const serverErrorMessage = updateError.response?.data?.message || updateError.message || "Failed to update student profile.";
+                        (0, _formUtils.toggleError)(new (0, _core.WFComponent)("#submitStepOneError"), serverErrorMessage, true);
+                        console.log("Server-provided error message displayed to the user.");
+                    }
+                }
+            } catch (parseError) {
+                console.error("Error parsing existing_student during submission:", parseError);
+                (0, _formUtils.toggleError)(new (0, _core.WFComponent)("#submitStepOneError"), "Invalid existing student data. Please try again.", true);
+            } finally{
+                stepOneRequestingAnimation.setStyle({
+                    display: "none"
+                }); // Hide loading animation
+                console.log("Loading animation hidden.");
+            }
             return;
         }
         // Handle reCAPTCHA verification
         const recaptchaAction = "create_account";
+        console.log(`Handling reCAPTCHA for action: "${recaptchaAction}"`);
         const isRecaptchaValid = await (0, _recaptchaUtils.handleRecaptcha)(recaptchaAction);
+        console.log(`reCAPTCHA validation result: ${isRecaptchaValid}`);
         if (!isRecaptchaValid) {
             (0, _formUtils.toggleError)(new (0, _core.WFComponent)("#submitStepOneError"), "reCAPTCHA verification failed. Please try again.", true);
+            console.log("reCAPTCHA validation failed. Error message displayed.");
             stepOneRequestingAnimation.setStyle({
                 display: "none"
             }); // Hide loading animation
+            console.log("Loading animation hidden.");
             return;
         }
-        // Post data to a server endpoint
+        // Post data to a server endpoint to create a new student profile
         try {
+            console.log("Sending POST request to create student profile.");
             const response = await (0, _apiConfig.apiClient).post("/profiles/students/create-student", {
                 data: formData
             }).fetch();
+            console.log(`Response received: ${JSON.stringify(response)}`);
             if (response.status === "success") {
                 const { profile } = response;
                 localStorage.setItem("current_student", JSON.stringify(profile));
+                console.log("current_student set in localStorage:", profile);
                 slider.goNext(); // Proceed to next step
+                console.log("Navigated to the next step after successful submission.");
+            } else {
+                // Extract and display the server's error message
+                const serverErrorMessage = response.message || "Unexpected response from the server.";
+                console.warn("Server Error during creation:", serverErrorMessage);
+                (0, _formUtils.toggleError)(new (0, _core.WFComponent)("#submitStepOneError"), serverErrorMessage, true);
+                console.log("Server error message displayed to the user.");
             }
         } catch (error) {
-            (0, _formUtils.toggleError)(new (0, _core.WFComponent)("#submitStepOneError"), error.response?.data?.message || "Failed to create account.", true);
+            console.error("Error during form submission:", error);
+            const serverErrorMessage = error.response?.data?.message || error.message || "Failed to create account.";
+            (0, _formUtils.toggleError)(new (0, _core.WFComponent)("#submitStepOneError"), serverErrorMessage, true);
+            console.log("Server-provided error message displayed to the user.");
         } finally{
             stepOneRequestingAnimation.setStyle({
                 display: "none"
             }); // Hide loading animation
+            console.log("Loading animation hidden in finally block.");
         }
     });
 };
-// Helper function to format phone number
-function formatPhoneNumber(value) {
+/**
+ * Helper function to format phone number.
+ */ function formatPhoneNumber(value) {
     const cleaned = value.replace(/\D/g, "");
     let formatted = "";
     if (cleaned.length <= 3) formatted = cleaned;
     else if (cleaned.length <= 6) formatted = `(${cleaned.slice(0, 3)}) ${cleaned.slice(3)}`;
     else formatted = `(${cleaned.slice(0, 3)}) ${cleaned.slice(3, 6)}-${cleaned.slice(6, 10)}`;
     return formatted;
+}
+/**
+ * Compares form data with existing student data.
+ * @param formData The data submitted from the form.
+ * @param student The existing student data from local storage.
+ * @returns True if all fields match, false otherwise.
+ */ function compareFormDataWithStudent(formData, student) {
+    return formData.first_name === student.first_name && formData.last_name === student.last_name && formData.email === student.email && formData.phone === student.phone && formData.send_texts === student.send_texts;
+}
+/**
+ * Updates the existing student profile by making a POST request.
+ * @param id The ID of the existing student.
+ * @param formData The updated form data.
+ * @returns The response from the server.
+ */ async function updateStudentProfile(id, formData) {
+    try {
+        console.log(`Sending POST request to update student profile with ID: ${id}`);
+        const response = await (0, _apiConfig.apiClient).post("/profiles/students/create-student-updated", {
+            data: {
+                ...formData,
+                id: id
+            }
+        }).fetch();
+        console.log(`Update response received: ${JSON.stringify(response)}`);
+        return response;
+    } catch (error) {
+        console.error("Error updating student profile:", error);
+        throw error;
+    }
 }
 
 },{"@xatom/core":"j9zXV","../../../../../utils/formUtils":"hvg7i","../../../../../utils/validationUtils":"dMBjH","../../../../../utils/recaptchaUtils":"d0IfT","../../../../../api/apiConfig":"2Lx0S","../../../../../auth/authConfig":"gkGgf","@parcel/transformer-js/src/esmodule-helpers.js":"5oERU"}],"hvg7i":[function(require,module,exports) {
@@ -949,6 +1066,7 @@ parcelHelpers.export(exports, "validateCheckbox", ()=>validateCheckbox);
 parcelHelpers.export(exports, "validatePasswordsMatch", ()=>validatePasswordsMatch);
 parcelHelpers.export(exports, "validateSelectField", ()=>validateSelectField);
 parcelHelpers.export(exports, "validatePhoneNumber", ()=>validatePhoneNumber);
+parcelHelpers.export(exports, "validatePhoneNumberOptional", ()=>validatePhoneNumberOptional);
 function validateNotEmpty(input) {
     return input !== undefined && input.trim() !== "";
 }
@@ -983,6 +1101,12 @@ function validatePhoneNumber(input) {
     const phoneRegex = /^\(\d{3}\)\s\d{3}-\d{4}$/;
     return phoneRegex.test(input);
 }
+const validatePhoneNumberOptional = (value)=>{
+    if (value.trim() === "") // Phone number is optional, so empty string is valid
+    return true;
+    // Validate the phone number format if not empty
+    return validatePhoneNumber(value);
+};
 
 },{"@parcel/transformer-js/src/esmodule-helpers.js":"5oERU"}],"d0IfT":[function(require,module,exports) {
 //../../utils/recaptchaUtils.ts
@@ -1044,7 +1168,6 @@ async function handleRecaptcha(action) {
 }
 
 },{"../api/apiConfig":"2Lx0S","@parcel/transformer-js/src/esmodule-helpers.js":"5oERU"}],"w1u6l":[function(require,module,exports) {
-// src/modules/forms/profiles/addStudentProfile/stepTwo.ts
 var parcelHelpers = require("@parcel/transformer-js/src/esmodule-helpers.js");
 parcelHelpers.defineInteropFlag(exports);
 parcelHelpers.export(exports, "initializeStepTwo", ()=>initializeStepTwo);
@@ -1060,13 +1183,21 @@ const initializeStepTwo = (slider)=>{
     const profilePictureInput = new (0, _core.WFComponent)("#profilePictureInput");
     const profilePictureInputError = new (0, _core.WFComponent)("#profilePictureInputError");
     const profilePictureInputSuccess = new (0, _core.WFComponent)("#profilePictureInputSuccess");
+    // Set up file upload with enhanced functionality
     (0, _formUtils.setupFileUpload)(profilePictureInput, profilePictureInputError, profilePictureInputSuccess, "/profiles/students/image-upload" // Replace with your actual endpoint
     ).then((imageUrl)=>{
         console.log("Image uploaded successfully: ", imageUrl);
-        // Indicate success but no need to update form input as per your setup.
+        // Update the 'profile_pic' field in the form with the uploaded image URL
+        const profilePicInputElement = document.querySelector("#profile_pic");
+        if (profilePicInputElement) {
+            profilePicInputElement.value = imageUrl;
+            console.log(`'profile_pic' field set to: ${imageUrl}`);
+        } else console.warn("Profile picture input element ('#profile_pic') not found.");
+        // Indicate success to the user
         profilePictureInputSuccess.setText("Image uploaded successfully!");
     }).catch((error)=>{
         console.error("Error uploading image: ", error.message);
+        (0, _formUtils.toggleError)(profilePictureInputError, "Failed to upload image. Please try again.", true);
     });
     // Define the fields with associated validation rules and error messages
     const fieldsStepTwo = [
@@ -1102,10 +1233,12 @@ const initializeStepTwo = (slider)=>{
     // Handle form submission for Step 2
     formStepTwo.onFormSubmit(async (formData, event)=>{
         event.preventDefault(); // Stop default form submission
+        console.log("Step Two Form submission initiated.");
         let isFormValid = true;
         // Validate all fields before proceeding
         fieldsStepTwo.forEach(({ input, error, validationFn, message })=>{
             const errorMessage = (0, _formUtils.createValidationFunction)(input, validationFn, message)();
+            console.log(`Validation result for ${input.getElement().id}: "${errorMessage}"`);
             if (errorMessage) {
                 (0, _formUtils.toggleError)(error, errorMessage, true);
                 isFormValid = false;
@@ -1113,14 +1246,25 @@ const initializeStepTwo = (slider)=>{
         });
         if (!isFormValid) {
             (0, _formUtils.toggleError)(new (0, _core.WFComponent)("#submitStepTwoError"), "Please correct all errors above.", true);
+            console.log("Form validation failed. Errors are displayed.");
             return;
         }
+        // **Check if an image was uploaded by examining the 'profile_pic' field**
+        if (!formData.profile_pic) {
+            localStorage.removeItem("image_upload");
+            console.log("No image uploaded. Cleared 'image_upload' from local storage.");
+        } else // Optionally, you can ensure 'image_upload' is set correctly if needed
+        // Example:
+        // localStorage.setItem("image_upload", formData.profile_pic);
+        console.log("'profile_pic' exists. No action taken on 'image_upload'.");
         // Proceed to the next step
+        console.log("Form is valid. Navigating to the next step.");
         slider.goNext();
     });
     // Handle back button for Step 2
     const backStepButton = new (0, _core.WFComponent)("#backStepTwo");
     backStepButton.on("click", ()=>{
+        console.log("Back button clicked. Navigating to the previous step.");
         slider.goPrevious();
         (0, _sidebar.unsetActiveStep)(2);
         (0, _sidebar.unmarkStepAsCompleted)(1);
@@ -1129,7 +1273,6 @@ const initializeStepTwo = (slider)=>{
 };
 
 },{"@xatom/core":"j9zXV","../../../../../utils/formUtils":"hvg7i","../../../../../utils/validationUtils":"dMBjH","../sidebar":"5kv9Q","@parcel/transformer-js/src/esmodule-helpers.js":"5oERU"}],"dVeAX":[function(require,module,exports) {
-// src/modules/forms/profiles/addStudentProfile/stepThree.ts
 var parcelHelpers = require("@parcel/transformer-js/src/esmodule-helpers.js");
 parcelHelpers.defineInteropFlag(exports);
 parcelHelpers.export(exports, "initializeStepThree", ()=>initializeStepThree);
@@ -1184,7 +1327,6 @@ const initializeStepThree = (slider)=>{
 };
 
 },{"@xatom/core":"j9zXV","../../../../../utils/formUtils":"hvg7i","../../../../../utils/validationUtils":"dMBjH","../sidebar":"5kv9Q","@parcel/transformer-js/src/esmodule-helpers.js":"5oERU"}],"7FrZU":[function(require,module,exports) {
-// src/modules/forms/profiles/addStudentProfile/stepFour.ts
 var parcelHelpers = require("@parcel/transformer-js/src/esmodule-helpers.js");
 parcelHelpers.defineInteropFlag(exports);
 parcelHelpers.export(exports, "initializeStepFour", ()=>initializeStepFour);
@@ -1300,7 +1442,6 @@ const initializeCaregiverDialog = (slider)=>{
 };
 
 },{"@xatom/core":"j9zXV","../../../../utils/formUtils":"hvg7i","../../../../utils/validationUtils":"dMBjH","../../../../utils/recaptchaUtils":"d0IfT","../../../../api/apiConfig":"2Lx0S","@parcel/transformer-js/src/esmodule-helpers.js":"5oERU"}],"2ThRE":[function(require,module,exports) {
-// src/modules/forms/profiles/addStudentProfile/stepFive.ts
 var parcelHelpers = require("@parcel/transformer-js/src/esmodule-helpers.js");
 parcelHelpers.defineInteropFlag(exports);
 parcelHelpers.export(exports, "initializeStepFive", ()=>initializeStepFive);
@@ -1399,7 +1540,6 @@ function formatPhoneNumber(value) {
 }
 
 },{"@xatom/core":"j9zXV","../../../../../utils/formUtils":"hvg7i","../../../../../utils/validationUtils":"dMBjH","../sidebar":"5kv9Q","@parcel/transformer-js/src/esmodule-helpers.js":"5oERU"}],"cFObv":[function(require,module,exports) {
-// src/modules/forms/profiles/addStudentProfile/stepSix.ts
 var parcelHelpers = require("@parcel/transformer-js/src/esmodule-helpers.js");
 parcelHelpers.defineInteropFlag(exports);
 parcelHelpers.export(exports, "initializeStepSix", ()=>initializeStepSix);
@@ -1455,7 +1595,6 @@ const initializeStepSix = (slider)=>{
 };
 
 },{"@xatom/core":"j9zXV","../../../../../utils/formUtils":"hvg7i","../../../../../utils/validationUtils":"dMBjH","../sidebar":"5kv9Q","@parcel/transformer-js/src/esmodule-helpers.js":"5oERU"}],"9pOFk":[function(require,module,exports) {
-// src/modules/forms/profiles/addStudentProfile/stepSeven.ts
 var parcelHelpers = require("@parcel/transformer-js/src/esmodule-helpers.js");
 parcelHelpers.defineInteropFlag(exports);
 parcelHelpers.export(exports, "initializeStepSeven", ()=>initializeStepSeven);
@@ -1511,7 +1650,6 @@ const initializeStepSeven = (slider)=>{
 };
 
 },{"@xatom/core":"j9zXV","../../../../../utils/formUtils":"hvg7i","../../../../../utils/validationUtils":"dMBjH","../sidebar":"5kv9Q","@parcel/transformer-js/src/esmodule-helpers.js":"5oERU"}],"QRaT7":[function(require,module,exports) {
-// src/modules/forms/profiles/addStudentProfile/steps/step8.ts
 var parcelHelpers = require("@parcel/transformer-js/src/esmodule-helpers.js");
 parcelHelpers.defineInteropFlag(exports);
 parcelHelpers.export(exports, "initializeStepEight", ()=>initializeStepEight);
@@ -1553,6 +1691,9 @@ const initializeStepEight = (slider, getFormData)=>{
         if (localStorage.getItem("image_upload")) {
             const image = localStorage.getItem("image_upload");
             studentProfilePic.setImage(image);
+        } else {
+            console.log("No profile picture available");
+            studentProfilePic.setImage("https://cdn.prod.website-files.com/667f080f36260b9afbdc46b2/667f080f36260b9afbdc46be_placeholder.svg");
         }
         // Set form review items with the appropriate data
         studentFullName.setText(`${data.first_name} ${data.last_name}`);
@@ -1661,9 +1802,12 @@ const initializeStepEight = (slider, getFormData)=>{
                 studentCardElement.setAttribute("href", newHref);
                 // Update the profile card image with the profile picture if available
                 const profileCardImg = new (0, _image.WFImage)("#profileCardImg");
-                if (profile.profile_pic && profile.profile_pic.url) profileCardImg.setImage(profile.profile_pic.url);
-                else // Set a default placeholder image if profile_pic is not available
-                profileCardImg.setImage("https://cdn.prod.website-files.com/667f080f36260b9afbdc46b2/667f080f36260b9afbdc46be_placeholder.svg");
+                if (profile.profile_pic && profile.profile_pic.url != null) profileCardImg.setImage(profile.profile_pic.url);
+                else {
+                    // Set a default placeholder image if profile_pic is not available
+                    console.log("No profile picture available");
+                    profileCardImg.setImage("https://cdn.prod.website-files.com/667f080f36260b9afbdc46b2/667f080f36260b9afbdc46be_placeholder.svg");
+                }
                 // Clear current student and uploaded image from local storage
                 localStorage.removeItem("current_student");
                 localStorage.removeItem("image_upload");
@@ -1699,7 +1843,6 @@ const initializeStepEight = (slider, getFormData)=>{
 };
 
 },{"@xatom/core":"j9zXV","@xatom/image":"ly8Ay","../../../../../utils/recaptchaUtils":"d0IfT","../../../../../api/apiConfig":"2Lx0S","../../../../../utils/formUtils":"hvg7i","../sidebar":"5kv9Q","@parcel/transformer-js/src/esmodule-helpers.js":"5oERU"}],"ds3uH":[function(require,module,exports) {
-// src/modules/forms/profiles/addStudentProfile/steps/step9.ts
 var parcelHelpers = require("@parcel/transformer-js/src/esmodule-helpers.js");
 parcelHelpers.defineInteropFlag(exports);
 parcelHelpers.export(exports, "initializeStepNine", ()=>initializeStepNine);
@@ -1707,7 +1850,6 @@ var _core = require("@xatom/core");
 const initializeStepNine = (slider)=>{
     // Initialize the form components for Step 9
     const submitStepNine = new (0, _core.WFComponent)("#submitStepNine");
-    const backStepEight = new (0, _core.WFComponent)("#backStepEight");
     // Event listener for submitting step nine
     submitStepNine.on("click", async (event)=>{
         event.preventDefault(); // Prevent the default behavior
@@ -1719,11 +1861,6 @@ const initializeStepNine = (slider)=>{
         } catch (error) {
             console.error("Error during Step 9 submission: ", error);
         }
-    });
-    // Event listener for going back to Step 8
-    backStepEight.on("click", ()=>{
-        // Simply go back to the previous step without affecting sidebar steps
-        slider.goPrevious();
     });
 };
 

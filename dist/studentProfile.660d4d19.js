@@ -215,7 +215,10 @@ const getStudentDetails = async (studentId)=>{
             // Set profile picture
             const studentProfilePicture = new (0, _image.WFImage)("#studentProfilePicture");
             if (student.profile_pic && student.profile_pic.url) studentProfilePicture.setImage(student.profile_pic.url);
-            else studentProfilePicture.setImage("https://cdn.prod.website-files.com/plugins/Basic/assets/placeholder.60f9b1840cb14_The+Shed+-+97.jpg");
+            else {
+                console.log("No profile picture available");
+                studentProfilePicture.setImage("https://cdn.prod.website-files.com/667f080f36260b9afbdc46b2/667f080f36260b9afbdc46be_placeholder.svg");
+            }
             // Set email
             const studentEmail = new (0, _core.WFComponent)("#studentEmail");
             studentEmail.setText(student.email || "N/A");
@@ -954,6 +957,7 @@ parcelHelpers.export(exports, "validateCheckbox", ()=>validateCheckbox);
 parcelHelpers.export(exports, "validatePasswordsMatch", ()=>validatePasswordsMatch);
 parcelHelpers.export(exports, "validateSelectField", ()=>validateSelectField);
 parcelHelpers.export(exports, "validatePhoneNumber", ()=>validatePhoneNumber);
+parcelHelpers.export(exports, "validatePhoneNumberOptional", ()=>validatePhoneNumberOptional);
 function validateNotEmpty(input) {
     return input !== undefined && input.trim() !== "";
 }
@@ -988,6 +992,12 @@ function validatePhoneNumber(input) {
     const phoneRegex = /^\(\d{3}\)\s\d{3}-\d{4}$/;
     return phoneRegex.test(input);
 }
+const validatePhoneNumberOptional = (value)=>{
+    if (value.trim() === "") // Phone number is optional, so empty string is valid
+    return true;
+    // Validate the phone number format if not empty
+    return validatePhoneNumber(value);
+};
 
 },{"@parcel/transformer-js/src/esmodule-helpers.js":"5oERU"}],"5ZUsd":[function(require,module,exports) {
 // src/modules/pages/studentProfile/editEmergencyDialog.ts

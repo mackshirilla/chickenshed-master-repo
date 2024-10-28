@@ -1,3 +1,5 @@
+// makeDonation.ts
+
 import { WFComponent, WFFormComponent } from "@xatom/core";
 import { initializeCampaignList } from "./campaignList";
 import { initializeDynamicProductList } from "./campaignProductList";
@@ -120,6 +122,20 @@ export const makeDonation = async () => {
     let hasErrors = false;
     let email = userEmail;
 
+    // Initialize an object to hold all donor details
+    let donorDetails: {
+      email: string;
+      firstName: string;
+      lastName: string;
+      isAnonymous: boolean;
+      inNameOf?: string;
+    } = {
+      email: "",
+      firstName: "",
+      lastName: "",
+      isAnonymous: false,
+    };
+
     if (emailWrap && emailWrap.style.display !== "none") {
       const firstNameInput = document.getElementById(
         "firstNameInput"
@@ -174,27 +190,73 @@ export const makeDonation = async () => {
         document.getElementById("anonymousInput") as HTMLInputElement
       ).checked;
 
-      saveDonorDetails({
+      // Populate donorDetails object
+      donorDetails = {
+        email: email,
         firstName: firstNameInput.value,
         lastName: lastNameInput.value,
-        email: email,
-        isAnonymous,
-      });
+        isAnonymous: isAnonymous,
+      };
     } else {
       // Handle anonymous input and email when the user is logged in
       const isAnonymous = (
         document.getElementById("anonymousInput") as HTMLInputElement
       ).checked;
-      saveDonorDetails({
-        firstName: user ? user.profile.first_name : "", // Default to empty if not logged in
+      donorDetails = {
+        email: userEmail || "",
+        firstName: user ? user.profile.first_name : "",
         lastName: user ? user.profile.last_name : "",
-        email: userEmail || "", // Use user email if available
-        isAnonymous,
-      });
+        isAnonymous: isAnonymous,
+      };
+    }
+
+    // Handle "Make this donation in someone else's name"
+    const inNameOfCheckbox = document.getElementById(
+      "inNameOfBoolInput"
+    ) as HTMLInputElement;
+    const inNameOfInput = document.getElementById(
+      "inNameOfInput"
+    ) as HTMLInputElement;
+
+    if (inNameOfCheckbox && inNameOfCheckbox.checked) {
+      const inNameOfValue = inNameOfInput.value.trim();
+      const inNameOfError = !validateNotEmpty(inNameOfValue);
+
+      if (inNameOfError) {
+        hasErrors = true;
+        console.error(
+          "Name input is required when making donation in someone else's name."
+        );
+
+        const inNameOfInputError = new WFComponent("#inNameOfInputError");
+        inNameOfInputError.setText("Please enter the name.");
+        inNameOfInputError.setStyle({ display: "block" });
+
+        // Display general error message
+        const submitStepTwoError = new WFComponent("#submitStepTwoError");
+        submitStepTwoError.setText("Please correct the errors above.");
+        submitStepTwoError.setStyle({ display: "block" });
+
+        return;
+      } else {
+        // Add inNameOf to donorDetails
+        donorDetails.inNameOf = inNameOfValue;
+      }
+    } else {
+      // If checkbox is not checked, ensure inNameOf is cleared
+      donorDetails.inNameOf = "";
     }
 
     if (!hasErrors) {
+      console.log("Donor details:", donorDetails);
       console.log("Product selected:", selectedProduct);
+
+      // Save all donor details at once
+      saveDonorDetails(donorDetails);
+
+      // Debug: Log the entire donation state before submission
+      const currentDonationState = loadDonationState();
+      console.log("Current Donation State:", currentDonationState);
 
       // Show loading animation
       const stepTwoRequestingAnimation = new WFComponent(
@@ -235,7 +297,7 @@ export const makeDonation = async () => {
   const backStepTwoButton = new WFComponent("#backStepTwo");
   backStepTwoButton.on("click", () => {
     console.log("Navigating to the previous step.");
-    unmarkStepAsCompleted(1); // Unmark the second step if going back
+    unmarkStepAsCompleted(1); // Unmark the first step if going back
     setActiveStep(1); // Set the first step as active
     unsetActiveStep(2); // Unset the second step as active
     slider.goPrevious();
@@ -260,10 +322,40 @@ export const makeDonation = async () => {
     "lastNameInput"
   ) as HTMLInputElement;
   const emailInput = document.getElementById("emailInput") as HTMLInputElement;
+  const inNameOfInput = document.getElementById("inNameOfInput") as HTMLInputElement;
 
-  if (firstNameInput && lastNameInput && emailInput) {
+  if (firstNameInput && lastNameInput && emailInput && inNameOfInput) {
     firstNameInput.addEventListener("focus", clearSubmitStepTwoError);
     lastNameInput.addEventListener("focus", clearSubmitStepTwoError);
     emailInput.addEventListener("focus", clearSubmitStepTwoError);
+    inNameOfInput.addEventListener("focus", clearSubmitStepTwoError);
+  }
+
+  // Handle the "Make donation in someone else's name" checkbox
+  const inNameOfCheckbox = document.getElementById(
+    "inNameOfBoolInput"
+  ) as HTMLInputElement;
+  const hiddenInputWrapper = document.getElementById("hiddenInput") as HTMLElement;
+
+  const toggleHiddenInput = () => {
+    if (inNameOfCheckbox.checked) {
+      hiddenInputWrapper.style.display = "block";
+    } else {
+      hiddenInputWrapper.style.display = "none";
+      // Clear the input value and any error messages
+      inNameOfInput.value = "";
+      const inNameOfError = new WFComponent("#inNameOfInputError");
+      inNameOfError.setText("");
+      inNameOfError.setStyle({ display: "none" });
+    }
+    clearSubmitStepTwoError();
+  };
+
+  if (inNameOfCheckbox && hiddenInputWrapper) {
+    // Initialize the hidden input state based on checkbox
+    toggleHiddenInput();
+
+    // Add event listener to the checkbox
+    inNameOfCheckbox.addEventListener("change", toggleHiddenInput);
   }
 };

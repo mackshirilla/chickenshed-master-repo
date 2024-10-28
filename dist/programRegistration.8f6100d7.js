@@ -203,11 +203,29 @@ const setupNavigationHandlers = (slider)=>{
         try {
             // Proceed to the next step: Workshop Selection
             await (0, _workshopList.initializeWorkshopList)(selectedProgram.id);
-            // Move to the next slide
-            slider.goNext();
-            (0, _sidebarIndicators.markStepAsCompleted)(1);
-            (0, _sidebarIndicators.setActiveStep)(2);
-            (0, _selectedWorkshop.resetSelectedWorkshop)();
+            // Check if the workshop list is empty or not
+            const workshopListContainer = document.querySelector("#selectWorkshopList");
+            const workshopItems = workshopListContainer?.querySelectorAll("#cardSelectWorkshop") || [];
+            const isWorkshopListEmpty = workshopItems.length === 0;
+            if (isWorkshopListEmpty) {
+                // No workshops available, skip to Step 3
+                (0, _selectedWorkshop.resetSelectedWorkshop)();
+                // Initialize the session list with undefined workshopId
+                await (0, _sessionsList.initializeSessionList)(undefined, selectedProgram.id);
+                // Move to Step 3
+                slider.goNext(); // From Step 1 to Step 2
+                (0, _sidebarIndicators.markStepAsCompleted)(1);
+                (0, _sidebarIndicators.setActiveStep)(2);
+                slider.goNext(); // From Step 2 to Step 3
+                (0, _sidebarIndicators.markStepAsCompleted)(2);
+                (0, _sidebarIndicators.setActiveStep)(3);
+            } else {
+                // Workshops are available, proceed to Step 2 as usual
+                slider.goNext();
+                (0, _sidebarIndicators.markStepAsCompleted)(1);
+                (0, _sidebarIndicators.setActiveStep)(2);
+                (0, _selectedWorkshop.resetSelectedWorkshop)();
+            }
         } catch (error) {
             console.error("Error loading workshops:", error);
         } finally{
@@ -505,7 +523,6 @@ const saveSelectedProgram = (program)=>{
 };
 
 },{"@parcel/transformer-js/src/esmodule-helpers.js":"5oERU"}],"dZi8x":[function(require,module,exports) {
-// Assuming the code is from a file like src/registration/initializeWorkshopList.ts
 var parcelHelpers = require("@parcel/transformer-js/src/esmodule-helpers.js");
 parcelHelpers.defineInteropFlag(exports);
 parcelHelpers.export(exports, "initializeWorkshopList", ()=>initializeWorkshopList);
@@ -2117,6 +2134,7 @@ parcelHelpers.export(exports, "validateCheckbox", ()=>validateCheckbox);
 parcelHelpers.export(exports, "validatePasswordsMatch", ()=>validatePasswordsMatch);
 parcelHelpers.export(exports, "validateSelectField", ()=>validateSelectField);
 parcelHelpers.export(exports, "validatePhoneNumber", ()=>validatePhoneNumber);
+parcelHelpers.export(exports, "validatePhoneNumberOptional", ()=>validatePhoneNumberOptional);
 function validateNotEmpty(input) {
     return input !== undefined && input.trim() !== "";
 }
@@ -2151,6 +2169,12 @@ function validatePhoneNumber(input) {
     const phoneRegex = /^\(\d{3}\)\s\d{3}-\d{4}$/;
     return phoneRegex.test(input);
 }
+const validatePhoneNumberOptional = (value)=>{
+    if (value.trim() === "") // Phone number is optional, so empty string is valid
+    return true;
+    // Validate the phone number format if not empty
+    return validatePhoneNumber(value);
+};
 
 },{"@parcel/transformer-js/src/esmodule-helpers.js":"5oERU"}],"2zMuG":[function(require,module,exports) {
 var e = require("1a87f3bc23b90fa3"), s = require("37b5fd8189a9f4c7");

@@ -1,5 +1,3 @@
-// Assuming the code is from a file like src/registration/initializeWorkshopList.ts
-
 import { fetchWorkshops, Workshop } from "../../api/workshops";
 import { saveSelectedWorkshop } from "./state/selectedWorkshop";
 import { WFDynamicList, WFComponent } from "@xatom/core";

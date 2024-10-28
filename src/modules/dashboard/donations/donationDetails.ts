@@ -18,6 +18,7 @@ interface Donation {
   customer_first_name: string;
   customer_last_name: string;
   customer_email: string;
+  in_name_of: string; // Added field for "In Someone Else's Name" donations
   sale_id: number;
   campaign_image_url: string;
 }
@@ -155,6 +156,21 @@ export async function initializeDonationDetailsPage() {
 
     const receiptButton = new WFComponent("#receiptButton");
     receiptButton.getElement().setAttribute("href", sale.reciept_url);
+
+    // Handle "Made In The Name Of" field
+    const inNameOfHeader = new WFComponent("#inNameOfHeader");
+    const inNameOfCell = new WFComponent("#inNameOfCell");
+
+    if (donation.in_name_of && donation.in_name_of.trim() !== "") {
+      // If in_name_of has a value, display the header and cell
+      inNameOfHeader.setStyle({ display: "table-cell" });
+      inNameOfCell.setStyle({ display: "table-cell" });
+      inNameOfCell.setText(donation.in_name_of);
+    } else {
+      // If in_name_of is blank, hide the header and cell
+      inNameOfHeader.setStyle({ display: "none" });
+      inNameOfCell.setStyle({ display: "none" });
+    }
 
     // Trigger the success event
     triggerSuccessEvent(".success_trigger");

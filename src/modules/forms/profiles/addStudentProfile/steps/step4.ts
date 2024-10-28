@@ -1,5 +1,3 @@
-// src/modules/forms/profiles/addStudentProfile/stepFour.ts
-
 import { WFComponent } from "@xatom/core";
 import { WFSlider } from "@xatom/slider";
 import { initializeCaregiverDialog } from "../caregiverDialog";

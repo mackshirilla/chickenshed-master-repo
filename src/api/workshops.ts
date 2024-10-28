@@ -1,19 +1,24 @@
 // api/workshops.ts
 import { apiClient } from "./apiConfig";
 
+/**
+ * Workshop Interface
+ * Defines the structure of a Workshop object as returned by the fetchWorkshops API.
+ */
 export interface Workshop {
   id: string;
   fieldData: {
     name: string;
-    shortDescription: string;
-    ageRange: string;
+    shortDescription: string; // Must match the API response
+    ageRange: string;         // Must match the API response
     mainImage: {
       url: string;
-      alt: string | null;
+      alt?: string | null;     // Optional property, can be null as per API response
     };
   };
-  registered?: boolean;
+  registered?: boolean;        // Made optional to align with API definition
 }
+
 
 interface WorkshopApiResponse {
   workshops: Workshop[];

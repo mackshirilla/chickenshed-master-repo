@@ -1,5 +1,3 @@
-// src/modules/forms/profiles/addStudentProfile/steps/step8.ts
-
 import { WFComponent } from "@xatom/core";
 import { WFSlider } from "@xatom/slider";
 import { WFImage } from "@xatom/image";
@@ -64,6 +62,11 @@ export const initializeStepEight = (
     if (localStorage.getItem("image_upload")) {
       const image = localStorage.getItem("image_upload");
       studentProfilePic.setImage(image);
+    } else {
+      console.log("No profile picture available");
+      studentProfilePic.setImage(
+        "https://cdn.prod.website-files.com/667f080f36260b9afbdc46b2/667f080f36260b9afbdc46be_placeholder.svg"
+      );
     }
 
     // Set form review items with the appropriate data
@@ -170,10 +173,11 @@ export const initializeStepEight = (
 
         // Update the profile card image with the profile picture if available
         const profileCardImg = new WFImage("#profileCardImg");
-        if (profile.profile_pic && profile.profile_pic.url) {
+        if (profile.profile_pic && profile.profile_pic.url != null) {
           profileCardImg.setImage(profile.profile_pic.url);
         } else {
           // Set a default placeholder image if profile_pic is not available
+          console.log("No profile picture available");
           profileCardImg.setImage(
             "https://cdn.prod.website-files.com/667f080f36260b9afbdc46b2/667f080f36260b9afbdc46be_placeholder.svg"
           );

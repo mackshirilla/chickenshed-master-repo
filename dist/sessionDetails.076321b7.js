@@ -680,6 +680,7 @@ parcelHelpers.export(exports, "validateCheckbox", ()=>validateCheckbox);
 parcelHelpers.export(exports, "validatePasswordsMatch", ()=>validatePasswordsMatch);
 parcelHelpers.export(exports, "validateSelectField", ()=>validateSelectField);
 parcelHelpers.export(exports, "validatePhoneNumber", ()=>validatePhoneNumber);
+parcelHelpers.export(exports, "validatePhoneNumberOptional", ()=>validatePhoneNumberOptional);
 function validateNotEmpty(input) {
     return input !== undefined && input.trim() !== "";
 }
@@ -714,6 +715,12 @@ function validatePhoneNumber(input) {
     const phoneRegex = /^\(\d{3}\)\s\d{3}-\d{4}$/;
     return phoneRegex.test(input);
 }
+const validatePhoneNumberOptional = (value)=>{
+    if (value.trim() === "") // Phone number is optional, so empty string is valid
+    return true;
+    // Validate the phone number format if not empty
+    return validatePhoneNumber(value);
+};
 
 },{"@parcel/transformer-js/src/esmodule-helpers.js":"5oERU"}],"hvg7i":[function(require,module,exports) {
 var parcelHelpers = require("@parcel/transformer-js/src/esmodule-helpers.js");

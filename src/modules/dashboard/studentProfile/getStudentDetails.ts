@@ -34,8 +34,9 @@ export const getStudentDetails = async (studentId: number) => {
       if (student.profile_pic && student.profile_pic.url) {
         studentProfilePicture.setImage(student.profile_pic.url);
       } else {
+        console.log("No profile picture available");
         studentProfilePicture.setImage(
-          "https://cdn.prod.website-files.com/plugins/Basic/assets/placeholder.60f9b1840cb14_The+Shed+-+97.jpg"
+          "https://cdn.prod.website-files.com/667f080f36260b9afbdc46b2/667f080f36260b9afbdc46be_placeholder.svg"
         );
       }
 

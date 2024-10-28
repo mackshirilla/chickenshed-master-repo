@@ -75,11 +75,34 @@ const setupNavigationHandlers = (slider: WFSlider) => {
       // Proceed to the next step: Workshop Selection
       await initializeWorkshopList(selectedProgram.id);
 
-      // Move to the next slide
-      slider.goNext();
-      markStepAsCompleted(1);
-      setActiveStep(2);
-      resetSelectedWorkshop();
+      // Check if the workshop list is empty or not
+      const workshopListContainer = document.querySelector("#selectWorkshopList");
+      const workshopItems =
+        workshopListContainer?.querySelectorAll("#cardSelectWorkshop") || [];
+      const isWorkshopListEmpty = workshopItems.length === 0;
+
+      if (isWorkshopListEmpty) {
+        // No workshops available, skip to Step 3
+        resetSelectedWorkshop();
+
+        // Initialize the session list with undefined workshopId
+        await initializeSessionList(undefined, selectedProgram.id);
+
+        // Move to Step 3
+        slider.goNext(); // From Step 1 to Step 2
+        markStepAsCompleted(1);
+        setActiveStep(2);
+
+        slider.goNext(); // From Step 2 to Step 3
+        markStepAsCompleted(2);
+        setActiveStep(3);
+      } else {
+        // Workshops are available, proceed to Step 2 as usual
+        slider.goNext();
+        markStepAsCompleted(1);
+        setActiveStep(2);
+        resetSelectedWorkshop();
+      }
     } catch (error) {
       console.error("Error loading workshops:", error);
     } finally {

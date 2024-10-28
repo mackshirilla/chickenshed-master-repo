@@ -54,3 +54,12 @@ export function validatePhoneNumber(input: string): boolean {
   const phoneRegex = /^\(\d{3}\)\s\d{3}-\d{4}$/;
   return phoneRegex.test(input);
 }
+
+export const validatePhoneNumberOptional = (value: string): boolean => {
+  if (value.trim() === "") {
+    // Phone number is optional, so empty string is valid
+    return true;
+  }
+  // Validate the phone number format if not empty
+  return validatePhoneNumber(value);
+};

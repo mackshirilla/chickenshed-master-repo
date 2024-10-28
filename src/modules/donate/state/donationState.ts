@@ -1,3 +1,5 @@
+// donationState.ts
+
 export interface DonationState {
   selectedCampaignId?: string;
   selectedCampaignName?: string;
@@ -10,7 +12,8 @@ export interface DonationState {
   email?: string;
   firstName?: string;
   lastName?: string;
-  isAnonymous?: boolean; // Added this line for anonymous donation
+  isAnonymous?: boolean; // For anonymous donations
+  inNameOf?: string; // New field for "In Someone Else's Name" donations
 }
 
 const DONATION_STATE_KEY = "donationState";
@@ -93,6 +96,7 @@ export const getDonorDetails = () => {
     firstName: state.firstName || null,
     lastName: state.lastName || null,
     isAnonymous: state.isAnonymous || false,
+    inNameOf: state.inNameOf || null, // Include inNameOf in donor details
   };
 };
 
@@ -102,11 +106,13 @@ export const saveDonorDetails = (donor: {
   firstName: string;
   lastName: string;
   isAnonymous: boolean;
+  inNameOf?: string; // Make inNameOf optional
 }) => {
   saveDonationState({
     email: donor.email,
     firstName: donor.firstName,
     lastName: donor.lastName,
     isAnonymous: donor.isAnonymous,
+    inNameOf: donor.inNameOf, // Save inNameOf if provided
   });
 };
