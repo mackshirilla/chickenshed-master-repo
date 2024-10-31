@@ -113,21 +113,43 @@ export const app = () => {
   });
 
   // Dashboard Routes
-  new WFRoute("/dashboard").execute(async () => {
-    try {
-      const isValidUser = await validateUser();
+  // Route for /dashboard
+new WFRoute("/dashboard").execute(async () => {
+  try {
+    const user = await validateUser();
 
-      if (isValidUser) {
-        import("../modules/dashboard/dashboard").then(({ dashboard }) =>
-          dashboard()
-        );
-      } else {
-        navigate("/login");
+    if (user) {
+      switch (user.role) {
+        case "USER":
+          // Allow access to the user dashboard
+          import("../modules/dashboard/dashboard").then(({ dashboard }) =>
+            dashboard()
+          );
+          break;
+
+        case "STUDENT":
+          // Redirect STUDENT role to /student-dashboard
+          console.warn(`STUDENT role detected. Redirecting to /student-dashboard.`);
+          navigate("/student-dashboard");
+          break;
+
+        default:
+          // For any other roles, redirect to /login or an appropriate page
+          console.warn(`Unauthorized role: ${user.role}. Redirecting to /login.`);
+          navigate("/login");
+          break;
       }
-    } catch (error) {
-      console.error("Error validating user:", error);
+    } else {
+      // If the user is not valid, redirect to /login
+      console.warn("Invalid user. Redirecting to /login.");
+      navigate("/login");
     }
-  });
+  } catch (error) {
+    console.error("Error validating user:", error);
+    // In case of an error during validation, redirect to /login
+    navigate("/login");
+  }
+});
 
   new WFRoute("/dashboard/student-profiles").execute(async () => {
     try {
@@ -324,4 +346,57 @@ new WFRoute("/success").execute(() => {
   import("../modules/success_page/index").then(({ initializeSuccessPage }) =>
     initializeSuccessPage()
   );
+});
+
+//--------------------------------//
+//student dashboard routes
+
+//student dashboard
+
+// Route for /student-dashboard
+new WFRoute("/student-dashboard").execute(async () => {
+  try {
+    const user = await validateUser();
+
+    if (user) {
+      switch (user.role) {
+        case "STUDENT":
+          // Allow access to the student dashboard
+          import("../modules/student_dashboard/studentDashboard").then(({ initializeStudentDashboard }) =>
+            initializeStudentDashboard()
+          );
+          break;
+
+        case "USER":
+          // Redirect USER role to /dashboard
+          navigate("/dashboard");
+          break;
+
+        default:
+          // For any other roles, redirect to /login or an appropriate page
+          console.warn(`Unauthorized role: ${user.role}. Redirecting to /login.`);
+          navigate("/login");
+          break;
+      }
+    } else {
+      // If the user is not valid, redirect to /login
+      navigate("/login");
+    }
+  } catch (error) {
+    console.error("Error validating user:", error);
+    // In case of an error during validation, redirect to /login
+    navigate("/login");
+  }
+});
+  
+
+// Non Users
+// Ticket Order Route for Unauthenticated Users
+new WFRoute("/ticket-order").execute(() => {
+  import("../modules/pages/ticketOrderNoLogin").then(({ initializeTicketOrderNoLoginPage }) =>
+    initializeTicketOrderNoLoginPage()
+  ).catch(error => {
+    console.error("Error loading /ticket-order page:", error);
+    navigate("/error"); // Optional: Redirect to an error page
+  });
 });

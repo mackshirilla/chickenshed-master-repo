@@ -57,7 +57,7 @@ export const loginForm = () => {
   const requestAnimation = new WFComponent("#requestingAnimation");
 
   // Initialize validation for text input fields
-  fields.slice(0, -1).forEach(({ input, error, validationFn, message }) => {
+  fields.forEach(({ input, error, validationFn, message }) => {
     setupValidation(
       input,
       error,
@@ -98,7 +98,7 @@ export const loginForm = () => {
     }
 
     // Handle reCAPTCHA verification
-    const recaptchaAction = "create_account";
+    const recaptchaAction = "login"; // Changed action to "login" for better context
     const isRecaptchaValid = await handleRecaptcha(recaptchaAction);
 
     if (!isRecaptchaValid) {
@@ -139,19 +139,35 @@ export const loginForm = () => {
           response.authToken // Set the auth token
         );
 
-        // Redirect to the page the user intended to access or default to dashboard
-        const redirectUrl =
-          localStorage.getItem("loginRedirect") || "/dashboard";
-        localStorage.removeItem("loginRedirect");
+        // Determine the redirect URL based on user role
+        let redirectUrl = "/dashboard"; // Default redirect
+
+        if (user.role === "STUDENT") {
+          redirectUrl = "/student-dashboard";
+        } else if (user.role === "USER") {
+          redirectUrl = "/dashboard";
+        } else {
+          // Handle other roles or set a default
+          redirectUrl = "/dashboard";
+        }
+
+        // Optionally, check for a stored redirect URL
+        const storedRedirect = localStorage.getItem("loginRedirect");
+        if (storedRedirect) {
+          redirectUrl = storedRedirect;
+          localStorage.removeItem("loginRedirect");
+        }
+
+        // Navigate to the determined URL
         navigate(redirectUrl);
       } else {
-        throw new Error("Login failed.");
+        throw new Error(response.message || "Login failed.");
       }
-    } catch (error) {
+    } catch (error: any) {
       console.error("Login failed:", error);
       toggleError(
         requestError,
-        error.response?.data?.message || "Failed to login.",
+        error.response?.data?.message || error.message || "Failed to login.",
         true
       );
       requestAnimation.setStyle({ display: "none" }); // Hide loading animation

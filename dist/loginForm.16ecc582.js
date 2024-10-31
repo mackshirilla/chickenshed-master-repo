@@ -172,7 +172,7 @@ const loginForm = ()=>{
     const requestError = new (0, _core.WFComponent)("#requestError");
     const requestAnimation = new (0, _core.WFComponent)("#requestingAnimation");
     // Initialize validation for text input fields
-    fields.slice(0, -1).forEach(({ input, error, validationFn, message })=>{
+    fields.forEach(({ input, error, validationFn, message })=>{
         (0, _formUtils.setupValidation)(input, error, (0, _formUtils.createValidationFunction)(input, validationFn, message), requestError // Includes clearing requestError on input change
         );
     });
@@ -202,7 +202,7 @@ const loginForm = ()=>{
             return;
         }
         // Handle reCAPTCHA verification
-        const recaptchaAction = "create_account";
+        const recaptchaAction = "login"; // Changed action to "login" for better context
         const isRecaptchaValid = await (0, _recaptchaUtils.handleRecaptcha)(recaptchaAction);
         if (!isRecaptchaValid) {
             (0, _formUtils.toggleError)(requestError, "reCAPTCHA verification failed.", true);
@@ -234,14 +234,24 @@ const loginForm = ()=>{
                 // Update userAuth and localStorage
                 (0, _authConfig.authManager).setUser(user, user.role, response.authToken // Set the auth token
                 );
-                // Redirect to the page the user intended to access or default to dashboard
-                const redirectUrl = localStorage.getItem("loginRedirect") || "/dashboard";
-                localStorage.removeItem("loginRedirect");
+                // Determine the redirect URL based on user role
+                let redirectUrl = "/dashboard"; // Default redirect
+                if (user.role === "STUDENT") redirectUrl = "/student-dashboard";
+                else if (user.role === "USER") redirectUrl = "/dashboard";
+                else // Handle other roles or set a default
+                redirectUrl = "/dashboard";
+                // Optionally, check for a stored redirect URL
+                const storedRedirect = localStorage.getItem("loginRedirect");
+                if (storedRedirect) {
+                    redirectUrl = storedRedirect;
+                    localStorage.removeItem("loginRedirect");
+                }
+                // Navigate to the determined URL
                 (0, _core.navigate)(redirectUrl);
-            } else throw new Error("Login failed.");
+            } else throw new Error(response.message || "Login failed.");
         } catch (error) {
             console.error("Login failed:", error);
-            (0, _formUtils.toggleError)(requestError, error.response?.data?.message || "Failed to login.", true);
+            (0, _formUtils.toggleError)(requestError, error.response?.data?.message || error.message || "Failed to login.", true);
             requestAnimation.setStyle({
                 display: "none"
             }); // Hide loading animation

@@ -3,6 +3,7 @@
 import { WFComponent } from "@xatom/core";
 import { WFImage } from "@xatom/image";
 import { apiClient } from "../../api/apiConfig";
+import { navigate } from "@xatom/core"; // Ensure navigate is imported for redirection
 
 // Define the structure of the ticket response
 interface TicketResponse {
@@ -27,6 +28,7 @@ interface TicketResponse {
     created_at: number;
     sale_id: number;
     image_url: string;
+    order_uuid: string;
     "success-page-message": string;
     quantity: number;
   };
@@ -41,7 +43,7 @@ class TicketCard {
   private performanceDate: WFComponent;
   private performanceId: string; // Track performance ID
   private quantity: WFComponent; // Track ticket quantity
-  private orderId: string; // Track order ID
+  private orderId: string; // Track order UUID
 
   constructor(cardId: string, orderId: string) {
     const cardElement = document.getElementById(cardId);
@@ -104,24 +106,32 @@ class TicketCard {
     console.log("Performance ID set to:", this.performanceId);
 
     // Set Production Name
-    this.productionName.setText(data.production_name);
-    console.log("Set productionName:", data.production_name);
+    if (this.productionName) {
+      this.productionName.setText(data.production_name);
+      console.log("Set productionName:", data.production_name);
+    }
 
     // Set Performance Name
-    this.performanceName.setText(data.performance_name);
-    console.log("Set performanceName:", data.performance_name);
+    if (this.performanceName) {
+      this.performanceName.setText(data.performance_name);
+      console.log("Set performanceName:", data.performance_name);
+    }
 
     // Set Performance Date
-    const formattedDate = new Date(data.performance_date_time).toLocaleString();
-    this.performanceDate.setText(formattedDate);
-    console.log("Set performanceDate:", formattedDate);
+    if (this.performanceDate) {
+      const formattedDate = new Date(data.performance_date_time).toLocaleString();
+      this.performanceDate.setText(formattedDate);
+      console.log("Set performanceDate:", formattedDate);
+    }
 
     // Set Ticket Quantity
-    this.quantity.setText(data.quantity.toString());
-    console.log("Set ticket quantity:", data.quantity);
+    if (this.quantity) {
+      this.quantity.setText(data.quantity.toString());
+      console.log("Set ticket quantity:", data.quantity);
+    }
 
     // Set Performance Image
-    if (data.image_url) {
+    if (data.image_url && this.image) {
       this.image.setImage(data.image_url);
       const imgElement = this.image.getElement() as HTMLImageElement;
       imgElement.alt = `${data.production_name} - Performance Image`;
@@ -136,12 +146,12 @@ class TicketCard {
       console.log("Set and displayed success message.");
     }
 
-    // Add the `performance` parameter to the ticket order link
-    this.updateTicketOrderLink();
+    // Add the `performance` or `uuid` parameter to the ticket order link
+    this.updateTicketOrderLink(data.order_uuid);
   }
 
-  // Method to update the ticket order link with the performance and order parameters
-  private updateTicketOrderLink() {
+  // Method to update the ticket order link with the appropriate parameters
+  private updateTicketOrderLink(orderUuid: string) {
     // Since #ticketOrderCard is the link element, manipulate its href directly
     const ticketOrderLinkElement = this.card.getElement() as HTMLAnchorElement;
 
@@ -154,18 +164,27 @@ class TicketCard {
     console.log("Current href before update:", currentHref);
 
     try {
-      const url = new URL(currentHref, window.location.origin);
-      // Add the performance parameter first
-      url.searchParams.set("performance", this.performanceId);
-      // Then add the order parameter
-      url.searchParams.set("order", this.orderId);
-      ticketOrderLinkElement.setAttribute("href", url.toString());
-      console.log(
-        "Updated ticket order link with performance and order parameters:",
-        url.toString()
-      );
+      if (localStorage.getItem("auth_config")) {
+        // User is authenticated, proceed with adding performance and order parameters
+        const url = new URL(currentHref, window.location.origin);
+        url.searchParams.set("performance", this.performanceId);
+        url.searchParams.set("order", this.orderId);
+        ticketOrderLinkElement.setAttribute("href", url.toString());
+        console.log(
+          "Updated ticket order link with performance and order parameters:",
+          url.toString()
+        );
+      } else {
+        // User is not authenticated, set href to /ticket-order?uuid={order_uuid}
+        const newHref = `/ticket-order?uuid=${encodeURIComponent(orderUuid)}`;
+        ticketOrderLinkElement.setAttribute("href", newHref);
+        console.log(
+          "Updated ticket order link to /ticket-order with uuid:",
+          newHref
+        );
+      }
     } catch (error) {
-      console.error("Invalid URL in ticketOrderCard href:", currentHref, error);
+      console.error("Error updating ticket order link:", error);
       alert("An error occurred while updating the ticket order link.");
     }
   }

@@ -467,20 +467,28 @@ class TicketCard {
         this.performanceId = data.performance_id;
         console.log("Performance ID set to:", this.performanceId);
         // Set Production Name
-        this.productionName.setText(data.production_name);
-        console.log("Set productionName:", data.production_name);
+        if (this.productionName) {
+            this.productionName.setText(data.production_name);
+            console.log("Set productionName:", data.production_name);
+        }
         // Set Performance Name
-        this.performanceName.setText(data.performance_name);
-        console.log("Set performanceName:", data.performance_name);
+        if (this.performanceName) {
+            this.performanceName.setText(data.performance_name);
+            console.log("Set performanceName:", data.performance_name);
+        }
         // Set Performance Date
-        const formattedDate = new Date(data.performance_date_time).toLocaleString();
-        this.performanceDate.setText(formattedDate);
-        console.log("Set performanceDate:", formattedDate);
+        if (this.performanceDate) {
+            const formattedDate = new Date(data.performance_date_time).toLocaleString();
+            this.performanceDate.setText(formattedDate);
+            console.log("Set performanceDate:", formattedDate);
+        }
         // Set Ticket Quantity
-        this.quantity.setText(data.quantity.toString());
-        console.log("Set ticket quantity:", data.quantity);
+        if (this.quantity) {
+            this.quantity.setText(data.quantity.toString());
+            console.log("Set ticket quantity:", data.quantity);
+        }
         // Set Performance Image
-        if (data.image_url) {
+        if (data.image_url && this.image) {
             this.image.setImage(data.image_url);
             const imgElement = this.image.getElement();
             imgElement.alt = `${data.production_name} - Performance Image`;
@@ -493,11 +501,11 @@ class TicketCard {
             successMessageElement.style.display = "block";
             console.log("Set and displayed success message.");
         }
-        // Add the `performance` parameter to the ticket order link
-        this.updateTicketOrderLink();
+        // Add the `performance` or `uuid` parameter to the ticket order link
+        this.updateTicketOrderLink(data.order_uuid);
     }
-    // Method to update the ticket order link with the performance and order parameters
-    updateTicketOrderLink() {
+    // Method to update the ticket order link with the appropriate parameters
+    updateTicketOrderLink(orderUuid) {
         // Since #ticketOrderCard is the link element, manipulate its href directly
         const ticketOrderLinkElement = this.card.getElement();
         if (!ticketOrderLinkElement) {
@@ -507,15 +515,21 @@ class TicketCard {
         const currentHref = ticketOrderLinkElement.getAttribute("href") || "#";
         console.log("Current href before update:", currentHref);
         try {
-            const url = new URL(currentHref, window.location.origin);
-            // Add the performance parameter first
-            url.searchParams.set("performance", this.performanceId);
-            // Then add the order parameter
-            url.searchParams.set("order", this.orderId);
-            ticketOrderLinkElement.setAttribute("href", url.toString());
-            console.log("Updated ticket order link with performance and order parameters:", url.toString());
+            if (localStorage.getItem("auth_config")) {
+                // User is authenticated, proceed with adding performance and order parameters
+                const url = new URL(currentHref, window.location.origin);
+                url.searchParams.set("performance", this.performanceId);
+                url.searchParams.set("order", this.orderId);
+                ticketOrderLinkElement.setAttribute("href", url.toString());
+                console.log("Updated ticket order link with performance and order parameters:", url.toString());
+            } else {
+                // User is not authenticated, set href to /ticket-order?uuid={order_uuid}
+                const newHref = `/ticket-order?uuid=${encodeURIComponent(orderUuid)}`;
+                ticketOrderLinkElement.setAttribute("href", newHref);
+                console.log("Updated ticket order link to /ticket-order with uuid:", newHref);
+            }
         } catch (error) {
-            console.error("Invalid URL in ticketOrderCard href:", currentHref, error);
+            console.error("Error updating ticket order link:", error);
             alert("An error occurred while updating the ticket order link.");
         }
     }
@@ -616,17 +630,23 @@ class DonationCard {
         this.donationId = data.id;
         console.log("Donation ID set to:", this.donationId);
         // Set Campaign Name
-        this.campaignName.setText(data.campaign_name);
-        console.log("Set campaignName:", data.campaign_name);
+        if (this.campaignName) {
+            this.campaignName.setText(data.campaign_name);
+            console.log("Set campaignName:", data.campaign_name);
+        }
         // Set Campaign Subtitle (e.g., "Thank You for Donating")
-        const subtitle = data.keep_anonymous ? "Anonymous Donation" : `Thank you, ${data.customer_first_name}!`;
-        this.campaignSubtitle.setText(subtitle);
-        console.log("Set campaignSubtitle:", subtitle);
+        if (this.campaignSubtitle) {
+            const subtitle = data.keep_anonymous ? "Anonymous Donation" : `Thank you, ${data.customer_first_name}!`;
+            this.campaignSubtitle.setText(subtitle);
+            console.log("Set campaignSubtitle:", subtitle);
+        }
         // Set Donation Amount
-        this.donationAmount.setText(`$${data.amount.toFixed(2)}`);
-        console.log("Set donationAmount:", `$${data.amount.toFixed(2)}`);
+        if (this.donationAmount) {
+            this.donationAmount.setText(`$${data.amount.toFixed(2)}`);
+            console.log("Set donationAmount:", `$${data.amount.toFixed(2)}`);
+        }
         // Set Campaign Image
-        if (data.image_url) {
+        if (data.image_url && this.image) {
             this.image.setImage(data.image_url);
             const imgElement = this.image.getElement();
             imgElement.alt = `${data.campaign_name} - Campaign Image`;
@@ -653,11 +673,21 @@ class DonationCard {
         const currentHref = donationCardLinkElement.getAttribute("href") || "#";
         console.log("Current href before update:", currentHref);
         try {
-            const url = new URL(currentHref, window.location.origin);
-            url.searchParams.set("campaign", this.campaignId);
-            url.searchParams.set("donation", this.donationId.toString());
-            donationCardLinkElement.setAttribute("href", url.toString());
-            console.log("Updated donation card link with campaign and donation parameters:", url.toString());
+            if (localStorage.getItem("auth_config")) {
+                // User is authenticated, proceed with adding campaign and donation parameters
+                const url = new URL(currentHref, window.location.origin);
+                url.searchParams.set("campaign", this.campaignId);
+                url.searchParams.set("donation", this.donationId.toString());
+                donationCardLinkElement.setAttribute("href", url.toString());
+                console.log("Updated donation card link with campaign and donation parameters:", url.toString());
+            } else {
+                // User is not authenticated, disable the link and make it non-interactive
+                donationCardLinkElement.setAttribute("href", "#"); // Remove or set to a dummy link
+                donationCardLinkElement.style.pointerEvents = "none"; // Disable pointer events
+                //donationCardLinkElement.style.opacity = "0.5"; // Visually indicate disabled state
+                donationCardLinkElement.style.cursor = "not-allowed"; // Change cursor to indicate non-interactivity
+                console.log("Auth_config not found. Donation card link disabled and made non-interactive.");
+            }
         } catch (error) {
             console.error("Invalid URL in donationCard href:", currentHref, error);
             alert("An error occurred while updating the donation card link.");

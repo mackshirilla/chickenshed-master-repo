@@ -3,6 +3,7 @@
 import { WFComponent } from "@xatom/core";
 import { WFImage } from "@xatom/image";
 import { apiClient } from "../../api/apiConfig";
+import { navigate } from "@xatom/core"; // Ensure navigate is imported for potential redirection
 
 // Define the structure of the donation response
 interface DonationResponse {
@@ -92,22 +93,28 @@ class DonationCard {
     console.log("Donation ID set to:", this.donationId);
 
     // Set Campaign Name
-    this.campaignName.setText(data.campaign_name);
-    console.log("Set campaignName:", data.campaign_name);
+    if (this.campaignName) {
+      this.campaignName.setText(data.campaign_name);
+      console.log("Set campaignName:", data.campaign_name);
+    }
 
     // Set Campaign Subtitle (e.g., "Thank You for Donating")
-    const subtitle = data.keep_anonymous
-      ? "Anonymous Donation"
-      : `Thank you, ${data.customer_first_name}!`;
-    this.campaignSubtitle.setText(subtitle);
-    console.log("Set campaignSubtitle:", subtitle);
+    if (this.campaignSubtitle) {
+      const subtitle = data.keep_anonymous
+        ? "Anonymous Donation"
+        : `Thank you, ${data.customer_first_name}!`;
+      this.campaignSubtitle.setText(subtitle);
+      console.log("Set campaignSubtitle:", subtitle);
+    }
 
     // Set Donation Amount
-    this.donationAmount.setText(`$${data.amount.toFixed(2)}`);
-    console.log("Set donationAmount:", `$${data.amount.toFixed(2)}`);
+    if (this.donationAmount) {
+      this.donationAmount.setText(`$${data.amount.toFixed(2)}`);
+      console.log("Set donationAmount:", `$${data.amount.toFixed(2)}`);
+    }
 
     // Set Campaign Image
-    if (data.image_url) {
+    if (data.image_url && this.image) {
       this.image.setImage(data.image_url);
       const imgElement = this.image.getElement() as HTMLImageElement;
       imgElement.alt = `${data.campaign_name} - Campaign Image`;
@@ -140,14 +147,26 @@ class DonationCard {
     console.log("Current href before update:", currentHref);
 
     try {
-      const url = new URL(currentHref, window.location.origin);
-      url.searchParams.set("campaign", this.campaignId);
-      url.searchParams.set("donation", this.donationId.toString());
-      donationCardLinkElement.setAttribute("href", url.toString());
-      console.log(
-        "Updated donation card link with campaign and donation parameters:",
-        url.toString()
-      );
+      if (localStorage.getItem("auth_config")) {
+        // User is authenticated, proceed with adding campaign and donation parameters
+        const url = new URL(currentHref, window.location.origin);
+        url.searchParams.set("campaign", this.campaignId);
+        url.searchParams.set("donation", this.donationId.toString());
+        donationCardLinkElement.setAttribute("href", url.toString());
+        console.log(
+          "Updated donation card link with campaign and donation parameters:",
+          url.toString()
+        );
+      } else {
+        // User is not authenticated, disable the link and make it non-interactive
+        donationCardLinkElement.setAttribute("href", "#"); // Remove or set to a dummy link
+        donationCardLinkElement.style.pointerEvents = "none"; // Disable pointer events
+        //donationCardLinkElement.style.opacity = "0.5"; // Visually indicate disabled state
+        donationCardLinkElement.style.cursor = "not-allowed"; // Change cursor to indicate non-interactivity
+        console.log(
+          "Auth_config not found. Donation card link disabled and made non-interactive."
+        );
+      }
     } catch (error) {
       console.error("Invalid URL in donationCard href:", currentHref, error);
       alert("An error occurred while updating the donation card link.");
