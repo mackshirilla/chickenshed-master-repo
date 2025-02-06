@@ -4,89 +4,84 @@ import { WFComponent } from "@xatom/core";
 import { WFImage } from "@xatom/image";
 import { apiClient } from "../../api/apiConfig";
 
-// Define the structure of the registration response
-interface RegistrationResponse {
+// Define the structure of the new registration response
+export interface RegistrationResponse {
   data: {
     id: number;
-    created_at: number;
-    status: string; // e.g., 'Active', 'Deposit Paid'
-    subscription_type: string; // e.g., 'Annual', 'Monthly'
-    program_name: string;
-    workshop_name: string;
-    coupon?: string | null;
+    status: string; // e.g. 'Active', 'Deposit Paid'
+    subscription_type: string; // e.g. 'Annual', 'Pay-Per-Semester'
+    program: Program;
+    workshop: Workshop | null; // workshop may be null
+    pending_students: boolean;
+    coupon: string;
     deposit_amount: number;
-    start_date: string; // ISO date string
-    next_charge_date?: string | null;
-    stripe_subscription_id?: string | null;
+    start_date: string | null; // Possibly null
+    next_charge_date: string | null;
+    next_charge_amount: number;
+    next_invoice_id: string;
+    stripe_subscription_id: string;
     user_id: number;
     contact_id: number;
-    program_id: string;
-    workshop_id: string;
     sale_id: number;
-    workshop: Workshop | null; // Updated to allow null
-    program: Program; // Defined below
+    cancellation_reason: string;
+    created_at: number;
   };
 }
 
-// Define Workshop interface (if workshop is not null)
-interface Workshop {
-  id: string;
-  cmsLocaleId: string;
-  lastPublished: string;
-  lastUpdated: string;
-  createdOn: string;
-  isArchived: boolean;
-  isDraft: boolean;
-  fieldData: {
-    "short-description": string;
-    "age-range": string;
-    name: string;
-    slug: string;
-    "parent-program": string;
-    "main-image": {
-      fileId: string;
-      url: string;
-      alt: string | null;
-    };
-    "success-page-message": string;
-  };
-}
-
-// Define Program interface
+// Define the Program interface
 interface Program {
-  request: {
-    url: string;
-    method: string;
-    headers: string[];
-    params: any[];
-  };
-  response: {
-    headers: string[];
-    result: {
-      id: string;
-      cmsLocaleId: string;
-      lastPublished: string;
-      lastUpdated: string;
-      createdOn: string;
-      isArchived: boolean;
-      isDraft: boolean;
-      fieldData: {
-        subheading: string;
-        "short-description": string;
-        "age-range": string;
-        name: string;
-        slug: string;
-        "parent-program": string;
-        "main-image": {
-          fileId: string;
-          url: string;
-          alt: string | null;
-        };
-        "success-page-message": string;
-      };
-    };
-    status: number;
-  };
+  id: number;
+  name: string;
+  slug: string;
+  Collection_ID: string;
+  Locale_ID: string;
+  Item_ID: string;
+  Created_On: string;
+  Updated_On: string;
+  Published_On: string;
+  Main_Image: string;
+  Main_Video: string;
+  Subheading: string;
+  Short_description: string;
+  Age_range: string;
+  Price_Description: string;
+  Schedule_Description: string;
+  Financial_Aid_Description: string;
+  Accessibility_Description: string;
+  Program_Overview_Description: string;
+  Sort_Order: number;
+  Color_Theme: number;
+  Inquiry_Only: boolean;
+  ["1st_Semester_Start_Date"]: number | null;
+  ["2nd_Semester_Charge_Date"]: number | null;
+  Subscription_Pause_Date: number | null;
+  Success_Page_Message: string;
+}
+
+// Define the Workshop interface
+interface Workshop {
+  id: number;
+  Name: string;
+  Slug: string;
+  Collection_ID: string;
+  Locale_ID: string;
+  Item_ID: string;
+  Created_On: string | null;
+  Updated_On: string | null;
+  Published_On: string | null;
+  Main_Image: string;
+  Main_Video: string;
+  Subheading: string;
+  Short_description: string;
+  Age_range: string;
+  Price_Description: string;
+  Schedule_Description: string;
+  Financial_Aid_Description: string;
+  Accessibility_Description: string;
+  Workshop_Overview_Description: string;
+  Success_Page_Message: string;
+  Color_Theme: number;
+  Parent_Program: number;
 }
 
 // Define a RegistrationCard component to manage the registration card DOM
@@ -100,7 +95,7 @@ class RegistrationCard {
   private activePill: WFComponent;
   private depositPill: WFComponent;
   private successMessage: WFComponent;
-  private programId: string; // Add programId to track the value
+  private programId: string; // We'll store the program id as a string
 
   constructor(cardId: string) {
     const cardElement = document.getElementById(cardId);
@@ -112,7 +107,6 @@ class RegistrationCard {
     this.card = new WFComponent(cardElement);
 
     // Initialize child elements within the link
-    // Assuming that these elements are nested inside the <a id="registrationCard">
     this.image = new WFImage(
       this.card.getChildAsComponent("#cardRegistrationImage").getElement()
     );
@@ -124,12 +118,12 @@ class RegistrationCard {
     this.invoiceDate = this.card.getChildAsComponent("#cardInvoiceDate");
     this.activePill = this.card.getChildAsComponent("#cardActivePill");
     this.depositPill = this.card.getChildAsComponent("#cardDepositPill");
-    this.successMessage = new WFComponent("#successMessage"); // Initialize success message
+    this.successMessage = new WFComponent("#successMessage");
 
     // Initialize programId to an empty string
     this.programId = "";
 
-    // Log if any essential child elements are missing
+    // Log warnings if any essential child elements are missing
     if (!this.programName) {
       console.warn(
         "Element with id 'cardProgramName' not found within the registration card."
@@ -174,45 +168,50 @@ class RegistrationCard {
   populate(data: RegistrationResponse["data"]) {
     console.log("Populating registration card with data.");
 
-    // Set Program ID
-    this.programId = data.program_id;
+    // Set Program ID (store as string for URL parameter)
+    this.programId = data.program.id.toString();
     console.log("Program ID set to:", this.programId);
 
     // Set Program Name
-    this.programName.setText(data.program_name);
-    console.log("Set programName:", data.program_name);
+    this.programName.setText(data.program.name);
+    console.log("Set programName:", data.program.name);
 
-    // Set Workshop Name
-    this.workshopName.setText(data.workshop_name);
-    console.log("Set workshopName:", data.workshop_name);
+    // Set Workshop Name (if workshop exists)
+    const workshopName = data.workshop ? data.workshop.Name : "";
+    this.workshopName.setText(workshopName);
+    console.log("Set workshopName:", workshopName);
 
     // Set Subscription Type
     this.subscriptionType.setText(data.subscription_type);
     console.log("Set subscriptionType:", data.subscription_type);
 
-    // Set Next Invoice Date
+    // Set Next Invoice Date (or show a fallback)
     const formattedDate = data.next_charge_date
       ? new Date(data.next_charge_date).toLocaleDateString()
       : "Upon Student Approval";
     this.invoiceDate.setText(formattedDate);
     console.log("Set invoiceDate:", formattedDate);
 
-    // Determine source for image and success message
-    const source = data.workshop
-      ? data.workshop.fieldData
-      : data.program.response.result.fieldData;
+    // Determine the image and success message source
+    // If there's a workshop, use the workshop fields; otherwise, use the program fields
+    const imageUrl = data.workshop?.Main_Image || data.program.Main_Image;
+    const successMessage =
+      data.workshop?.Success_Page_Message || data.program.Success_Page_Message;
 
     // Set Registration Image
-    if (source["main-image"].url) {
-      this.image.setImage(source["main-image"].url);
+    if (imageUrl) {
+      this.image.setImage(imageUrl);
       const imgElement = this.image.getElement() as HTMLImageElement;
-      imgElement.alt = source["main-image"].alt || "Workshop Image";
+      // No alt field is present in the new data; use a placeholder or the name
+      imgElement.alt = data.workshop
+        ? data.workshop.Name || "Chickenshed Workshop"
+        : data.program.name || "Chickenshed Program";
       console.log("Set registration image URL and alt text.");
     }
 
     // Set Success Message
-    if (source["success-page-message"]) {
-      this.successMessage.setHTML(source["success-page-message"]);
+    if (successMessage) {
+      this.successMessage.setHTML(successMessage);
       const successMessageElement = this.successMessage.getElement();
       successMessageElement.style.display = "block";
       console.log("Set and displayed success message.");

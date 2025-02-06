@@ -26,7 +26,8 @@ import {
 
 type completeProfileResponse = {
   status: string;
-  profile: {
+  message?: string;
+  profile?: {
     id: number;
     first_name: string;
     last_name: string;
@@ -282,37 +283,41 @@ export const completeUserProfile = async () => {
           data: completeProfileData,
         })
         .fetch();
-
-      if (response.status === "success") {
-        const { profile } = response;
-
+    
+      // Check for response status and handle accordingly
+      if (response.status === "success" && response.profile) {
+        const profile = response.profile;
+    
         new WFComponent("#profileLinkTemplate").updateTextViaAttrVar({
           name: `${profile.first_name} ${profile.last_name}`,
           email: profile.email,
           phone: profile.phone,
         });
-
+    
         // Set profile picture, or fallback if no URL exists
         const profilePicUrl =
           profile.profile_pic && profile.profile_pic.url
             ? profile.profile_pic.url
-            : "path/to/default/image.jpg"; // Default fallback image
+            : "https://cdn.prod.website-files.com/667f080f36260b9afbdc46b2/667f080f36260b9afbdc46be_placeholder.svg"; // Default fallback image
         new WFImage("#profileCardImg").setImage(profilePicUrl);
-
+    
         requestingAnimation.setStyle({ display: "none" }); // Hide animation on success
         submitStepThree.removeAttribute("disabled"); // Re-enable button on success
         slider.goNext();
+      } else {
+        throw new Error(response.message || "Failed to complete profile.");
       }
-    } catch (error) {
-      console.error("Error completing profile", error);
+    } catch (error: any) {
+      console.error("Error completing profile:", error);
       toggleError(
         new WFComponent("#submitStepThreeError"),
-        "An error occurred. Please try again.",
+        error.response?.data?.message || error.message || "An error occurred. Please try again.",
         true
       );
       requestingAnimation.setStyle({ display: "none" }); // Hide animation on error
       submitStepThree.removeAttribute("disabled"); // Re-enable button on error
     }
+    
   });
 
   // --- Handle Back Button for Step 2 ---

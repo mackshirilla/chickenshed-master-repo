@@ -6,52 +6,76 @@ import { apiClient } from "../../../api/apiConfig";
 import { CancelRegistrationDialog } from "../registration/components/cancelRegistrationDialog";
 import { initializeDynamicWorkshopFileList } from "./components/listWorkshopFiles";
 
-// Define the Session interface based on the API response
+// -------------------- UPDATED INTERFACES -------------------- //
+
+// Workshop now has top-level keys like Name, Main_Image, etc.
+interface Workshop {
+  id: number;
+  Name: string;
+  Main_Image: string;
+  Subheading: string;
+  Short_description: string;
+}
+
+// Subscription references fields like `program` and `workshop` IDs
+interface Subscription {
+  id: number;
+  status: string;
+  subscription_type: string;
+  program: number;
+  workshop: number;
+  pending_students: boolean;
+  coupon: string;
+  deposit_amount: number;
+
+  // Now numeric timestamps:
+  start_date: number | null;
+  next_charge_date: number | null;
+
+  next_charge_amount: number;
+  next_invoice_id: string;
+  stripe_subscription_id: string;
+  user_id: number;
+  contact_id: number;
+  sale_id: number;
+  cancellation_reason: string;
+  created_at: number;
+}
+
+// Session includes `session_details` for advanced info (weekday, time_block, location, etc.)
 interface Session {
-  id: string;
-  created_at: number; // Unix timestamp in milliseconds
-  status: string; // e.g., 'Active'
-  subscription_type: string; // e.g., 'Annual'
-  program_name: string;
-  workshop_name: string;
-  weekday: string;
-  location: string;
-  time_block: string;
-  session_id: string;
+  id: number;
+  status: string;
+  subscription_type: string;
+  program: number;
+  workshop: number;
+  session: number; // The numeric session ID
+  subscription_id: number;
   price_id: string;
   user_id: number;
-  subscription_id: number;
-  workshop_id: string;
   student_profile_id: number;
-  cancellation_reason?: string; // Optional, based on API response
-}
+  cancellation_reason: string;
+  created_at: number;
 
-// Define the Workshop interface based on the API response
-interface Workshop {
-  id: string;
-  cmsLocaleId: string;
-  lastPublished: string;
-  lastUpdated: string;
-  createdOn: string;
-  isArchived: boolean;
-  isDraft: boolean;
-  fieldData: {
-    "short-description": string;
-    "age-range": string;
-    name: string;
-    slug: string;
-    "parent-program": string;
-    "main-image": {
-      fileId: string;
-      url: string;
-      alt: string | null;
+  // New, optional session_details object
+  session_details?: {
+    id: number;
+    Name: string;
+    Weekday: string;
+    Time_block: string;
+    Start_Date: string | null;
+    End_Date: string | null;
+    Location: number;
+    location_details?: {
+      id: number;
+      Name: string;
+      Address_line_1: string;
+      City_state_zip: string;
     };
-    "success-page-message"?: string; // Optional, based on API response
   };
-  program_name?: string; // Optional if needed
 }
 
-// Define the Invoice interface based on the API response
+// Invoice remains mostly the same
 interface Invoice {
   id: number;
   created_at: number;
@@ -73,62 +97,26 @@ interface Invoice {
   reciept_url: string;
 }
 
-// Define the Program interface based on the API response
+// Program is a single object, not an array
 interface Program {
-  id: string;
-  cmsLocaleId: string;
-  lastPublished: string;
-  lastUpdated: string;
-  createdOn: string;
-  isArchived: boolean;
-  isDraft: boolean;
-  fieldData: {
-    subheading: string;
-    "short-description": string;
-    "age-range": string;
-    name: string;
-    slug: string;
-    "parent-program": string;
-    "main-image": {
-      fileId: string;
-      url: string;
-      alt: string | null;
-    };
-    "2nd-semester-charge-date"?: string; // Optional, based on API response
-    "subscription-pause-date"?: string; // Optional, based on API response
-  };
-}
-
-// Define the Subscription interface based on the API response
-interface Subscription {
   id: number;
-  created_at: number;
-  status: string;
-  subscription_type: string;
-  program_name: string;
-  workshop_name: string;
-  coupon?: string | null;
-  deposit_amount: number;
-  start_date: string;
-  next_charge_date: string;
-  next_charge_amount: number;
-  stripe_subscription_id: string;
-  user_id: number;
-  contact_id: number;
-  program_id: string;
-  workshop_id: string;
-  sale_id: number;
-  cancellation_reason?: string; // Optional, based on API response
+  name: string;
+  Main_Image: string;
+  Subheading: string;
+  Short_description: string;
+  "1st_Semester_Start_Date"?: number;
+  "2nd_Semester_Charge_Date"?: number;
+  "Subscription_Pause_Date"?: number;
 }
 
-// Define the structure of the API response
+// The API now returns a single program, plus workshop, subscription, sessions, invoices
 interface WorkshopApiResponse {
-  workshop: Workshop | null; // workshop can be null based on API response
+  workshop: Workshop | null;
   subscription: Subscription;
   sessions: Session[];
   invoices: Invoice[];
-  program: { items: Program[] };
-  caregiver: boolean; // Changed from Caregiver to boolean
+  program: Program;
+  caregiver: boolean;
 }
 
 // Define the structure of the error response
@@ -148,16 +136,18 @@ interface CaregiverBreadcrumbs {
   program_name: string;
   program_id: string;
   subscription_id: number;
-  session_id?: string; // Optional
-  session_weekday?: string; // Optional
-  session_time_block?: string; // Optional
+  session_id?: string;
+  session_weekday?: string;
+  session_time_block?: string;
 }
 
-// Function to fetch workshop details from the API, including program and subscription params
+// ------------------------------------------------------------- //
+
+// Fetch workshop details from the API
 export async function fetchWorkshopDetails(
   programId: string,
   subscriptionId: string,
-  workshopId?: string // Made optional
+  workshopId?: string
 ): Promise<WorkshopApiResponse | undefined> {
   try {
     // Construct request data conditionally
@@ -165,56 +155,44 @@ export async function fetchWorkshopDetails(
       program: programId,
       subscription: subscriptionId,
     };
-
     if (workshopId) {
       requestData.workshop_id = workshopId;
     }
 
     // Make the API request
     const getWorkshopDetails = apiClient.get<WorkshopApiResponse>(
-      `/dashboard/registration/workshop/${workshopId || "none"}`, // Use "none" if no workshopId
+      `/dashboard/registration/workshop/${workshopId || "none"}`,
       { data: requestData }
     );
-
     const response = await getWorkshopDetails.fetch();
     return response;
   } catch (error: any) {
-    // Log the detailed error object for debugging
     console.error("Detailed Error Object:", error);
 
-    // Initialize a default error message
     let errorMessage = "An unexpected error occurred. Please try again.";
 
-    // Extract the specific error message from the API response if available
     if (error?.response?.data?.message) {
       errorMessage = error.response.data.message;
     } else if (error.message) {
-      // Fallback to the generic error message
       errorMessage = error.message;
     }
-
-    // Display the error message in an alert box
     alert(`Error: ${errorMessage}`);
 
-    // Navigate back to the previous page with a fallback
     window.history.length > 1
       ? window.history.back()
       : (window.location.href = "/dashboard/registrations");
 
-    // Log the error for debugging purposes
     console.error("Fetch Workshop Details Error:", error);
-
-    // Optionally, return undefined to indicate failure
     return undefined;
   }
 }
 
-// Function to initialize and render the workshop details and sessions
+// Main function to initialize the page
 export async function initializeWorkshopDetailsPage() {
-  //initalize files list
+  // Initialize the dynamic workshop files list
   initializeDynamicWorkshopFileList("#filesList");
 
-  // Utility function to parse URL parameters
+  // Parse URL parameters
   const getUrlParams = () => {
     const params = new URLSearchParams(window.location.search);
     const workshopId = params.get("workshop");
@@ -232,425 +210,208 @@ export async function initializeWorkshopDetailsPage() {
   }
 
   try {
-    // Fetch workshop details with program and subscription params
-    const apiResponse = await fetchWorkshopDetails(
-      programId,
-      subscriptionId,
-      workshopId // Optional parameter
-    );
+    const apiResponse = await fetchWorkshopDetails(programId, subscriptionId, workshopId);
 
-    // If fetchWorkshopDetails encounters an error, it handles it and navigates back,
-    // so the following code will not execute in that case.
     if (!apiResponse) {
-      // In case fetchWorkshopDetails returns undefined due to an error
+      // If fetchWorkshopDetails returns undefined due to an error
       return;
     }
 
-    const { workshop, subscription, program, sessions, invoices, caregiver } =
-      apiResponse;
+    const { workshop, subscription, program, sessions, invoices, caregiver } = apiResponse;
 
-    // Use program details if workshop details are not provided
-    const programDetails = program.items.find(
-      (p) => p.id === subscription.program_id
-    );
-
-    // Update workshop and program details on the page
+    // Update the Workshop UI if present, otherwise fallback to Program data
     if (workshop) {
-      updateWorkshopDetails(workshop, { items: program.items }, subscription);
-    } else if (programDetails) {
-      updateWorkshopDetailsFromProgram(programDetails, subscription);
+      updateWorkshopDetails(workshop, program);
+    } else {
+      updateWorkshopDetailsFallback(program);
     }
 
-    // Always update program breadcrumb regardless of workshop availability
-    if (programDetails) {
-      updateProgramBreadcrumb(programDetails);
-    }
+    // Always update Program breadcrumb
+    updateProgramBreadcrumb(program);
 
+    // Update subscription details
     updateSubscriptionDetails(subscription);
 
-    // Filter sessions to unique based on session_id
+    // Filter sessions for uniqueness by `session` (optional logic)
     const uniqueSessions = getUniqueSessions(sessions);
 
-    // Initialize and render the sessions list using fetched data
-    initializeDynamicSessionList(
-      "#listRegistration",
-      uniqueSessions,
-      subscription,
-      caregiver // Pass the caregiver flag
-    );
+    // Initialize and render the sessions list
+    initializeDynamicSessionList("#listRegistration", uniqueSessions, subscription, caregiver);
 
-    // Initialize and render the invoices list using fetched data
+    // Initialize and render the invoices list
     initializePastInvoicesList(".table_body", invoices);
 
-    // Handle Breadcrumbs based on caregiver flag
+    // Handle caregiver breadcrumb logic and UI differences
     handleBreadcrumbs(caregiver, subscription);
 
-    // Handle Caregiver-specific UI adjustments
     if (caregiver) {
       // Remove the Cancel Registration button
       const cancelButton = document.querySelector("#openCancelDialog");
       if (cancelButton) {
         cancelButton.remove();
       }
-
-      // Remove any existing Cancel Registration Dialog if present
+      // Remove the Cancel Registration Dialog
       const cancelDialog = document.getElementById("cancelRegistrationDialog");
       if (cancelDialog) {
         cancelDialog.remove();
       }
-
       // Remove the Payment Details section
       const paymentDetails = document.querySelector(".payment_details_wrap");
       if (paymentDetails) {
         paymentDetails.remove();
       }
     } else {
-      // Initialize Cancel Registration Dialog component
+      // Initialize the Cancel Registration Dialog for non-caregivers
       new CancelRegistrationDialog({
         containerSelector: ".button_group",
         subscriptionId: subscription.id.toString(),
         onCancelSuccess: () => {
-          // Redirect to registrations dashboard upon successful cancellation
           window.location.href = "/dashboard/registrations";
         },
       });
     }
 
-    // Trigger the success_trigger element
+    // Trigger any success handlers
     triggerSuccessEvent(".success_trigger");
   } catch (error) {
-    // Since fetchWorkshopDetails already handles the error, this block can remain empty or be removed.
-    // If you prefer, you can log the error here.
     console.error("initializeWorkshopDetailsPage Error:", error);
   }
 }
 
-// Function to handle Breadcrumbs based on caregiver flag
-function handleBreadcrumbs(caregiver: boolean, subscription: Subscription) {
-  const userBreadcrumbList = document.getElementById("userBreadcrumbList");
-  const caregiverBreadcrumbList = document.getElementById(
-    "caregiverBreadcrumbList"
-  );
+// -------------------- WORKSHOP / PROGRAM UPDATERS -------------------- //
 
-  if (caregiver) {
-    if (userBreadcrumbList) {
-      userBreadcrumbList.style.display = "none";
-    }
-    if (caregiverBreadcrumbList) {
-      caregiverBreadcrumbList.style.display = "flex";
-    }
-
-    // Fetch caregiver_breadcrumbs from localStorage
-    const caregiverBreadcrumbs = localStorage.getItem("caregiver_breadcrumbs");
-    if (caregiverBreadcrumbs) {
-      try {
-        const breadcrumbs = JSON.parse(
-          caregiverBreadcrumbs
-        ) as CaregiverBreadcrumbs;
-
-        // Update studentBreadcrumb link
-        const studentBreadcrumb = document.getElementById("studentBreadcrumb");
-        if (studentBreadcrumb) {
-          const studentBreadcrumbComponent = new WFComponent(studentBreadcrumb);
-          studentBreadcrumbComponent.setText(breadcrumbs.student_name);
-
-          // Append ?id={student_id} to the href
-          const currentHref =
-            studentBreadcrumb.getAttribute("href") ||
-            "/dashboard/student/profile";
-          const url = new URL(currentHref, window.location.origin);
-          url.searchParams.set("id", breadcrumbs.student_id.toString());
-          studentBreadcrumbComponent.setAttribute("href", url.toString());
-        }
-
-        // Update workshopBreadcrumbCaregiver text
-        const workshopBreadcrumbCaregiver = document.getElementById(
-          "workshopBreadcrumbCaregiver"
-        );
-        if (workshopBreadcrumbCaregiver) {
-          const workshopBreadcrumbComponent = new WFComponent(
-            workshopBreadcrumbCaregiver
-          );
-          const workshopName =
-            breadcrumbs.workshop_name || breadcrumbs.program_name || "N/A";
-          workshopBreadcrumbComponent.setText(workshopName);
-        }
-      } catch (parseError) {
-        console.error(
-          "Error parsing caregiver_breadcrumbs from localStorage:",
-          parseError
-        );
-      }
-    } else {
-      console.warn("No caregiver_breadcrumbs found in localStorage.");
-    }
-  } else {
-    if (userBreadcrumbList) {
-      userBreadcrumbList.style.display = "flex";
-    }
-    if (caregiverBreadcrumbList) {
-      caregiverBreadcrumbList.style.display = "none";
-    }
-  }
-}
-
-// Function to initialize and render the past invoices list using fetched data
-async function initializePastInvoicesList(
-  containerSelector: string,
-  invoices: Invoice[]
-) {
-  // Initialize a new instance of WFDynamicList for Invoices
-  const list = new WFDynamicList<Invoice>(containerSelector, {
-    rowSelector: "#invoiceLine", // Using ID selector for table row template
-  });
-
-  // Customize the rendering of the loader
-  list.loaderRenderer((loaderElement) => {
-    loaderElement.setStyle({
-      display: "flex",
-    });
-    return loaderElement;
-  });
-
-  // Customize the rendering of the empty state
-  list.emptyRenderer((emptyElement) => {
-    emptyElement.setStyle({
-      display: "flex",
-    });
-    return emptyElement;
-  });
-
-  // Customize the rendering of list items (Invoice Rows)
-  list.rowRenderer(({ rowData, rowElement }) => {
-    const invoiceRow = new WFComponent(rowElement);
-
-    // Set the invoice date
-    const invoiceDateComponent = invoiceRow.getChildAsComponent("#invoiceDate");
-    if (invoiceDateComponent) {
-      const invoiceDate = new WFComponent(invoiceDateComponent.getElement());
-      const formattedDate = new Date(rowData.created_at).toLocaleDateString();
-      invoiceDate.setText(formattedDate);
-    }
-
-    // Set the invoice amount
-    const invoiceAmountComponent =
-      invoiceRow.getChildAsComponent("#invoiceAmount");
-    if (invoiceAmountComponent) {
-      const invoiceAmount = new WFComponent(
-        invoiceAmountComponent.getElement()
-      );
-      invoiceAmount.setText(`$${rowData.amount_total}`);
-    }
-
-    // Set the receipt link
-    const receiptButtonComponent =
-      invoiceRow.getChildAsComponent("#receiptButton");
-    if (receiptButtonComponent) {
-      const receiptButton = new WFComponent(
-        receiptButtonComponent.getElement()
-      );
-      receiptButton.setAttribute("href", rowData.reciept_url);
-    }
-
-    // Show the list item
-    rowElement.setStyle({
-      display: "table-row",
-    });
-
-    return rowElement;
-  });
-
-  // Load and display invoice data
-  try {
-    // Enable the loading state
-    list.changeLoadingStatus(true);
-
-    // Set the data to be displayed in the dynamic list
-    list.setData(invoices);
-
-    // Disable the loading state
-    list.changeLoadingStatus(false);
-  } catch (error) {
-    console.error("Error initializing past invoices list:", error);
-    list.setData([]);
-    list.changeLoadingStatus(false);
-  }
-}
-
-// Function to update workshop and program details on the page using Workshop details
-function updateWorkshopDetails(
-  workshop: Workshop,
-  programData: { items: Program[] },
-  subscription: Subscription
-) {
-  // Update Workshop Image
+// Update page details from the Workshop object
+function updateWorkshopDetails(workshop: Workshop, program: Program) {
+  // Workshop Image
   const workshopImageElement = document.getElementById("workshopImage");
   if (workshopImageElement) {
     const workshopImage = new WFImage(workshopImageElement);
-    if (workshop.fieldData["main-image"].url) {
-      workshopImage.setImage(workshop.fieldData["main-image"].url);
-      const imgElement = workshopImage.getElement() as HTMLImageElement;
-      imgElement.alt = workshop.fieldData["main-image"].alt || "Workshop Image";
+    if (workshop.Main_Image) {
+      workshopImage.setImage(workshop.Main_Image);
+      (workshopImage.getElement() as HTMLImageElement).alt = "Workshop Image";
     } else {
       workshopImage.setImage(
         "https://cdn.prod.website-files.com/plugins/Basic/assets/placeholder.60f9b1840c.svg"
       );
-      const imgElement = workshopImage.getElement() as HTMLImageElement;
-      imgElement.alt = "Workshop Image";
+      (workshopImage.getElement() as HTMLImageElement).alt = "Workshop Image";
     }
   }
 
-  // Update Workshop Name
+  // Workshop Name
   const workshopNameElement = document.getElementById("workshopName");
   if (workshopNameElement) {
     const workshopName = new WFComponent(workshopNameElement);
-    workshopName.setText(workshop.fieldData.name);
+    workshopName.setText(workshop.Name);
   }
 
-  // Update workshop breadcrumb
-  const workshopBreadcrumbElement =
-    document.getElementById("workshopBreadcrumb");
+  // Workshop Breadcrumb
+  const workshopBreadcrumbElement = document.getElementById("workshopBreadcrumb");
   if (workshopBreadcrumbElement) {
     const workshopBreadcrumb = new WFComponent(workshopBreadcrumbElement);
-    workshopBreadcrumb.setText(workshop.fieldData.name);
+    workshopBreadcrumb.setText(workshop.Name);
   }
 
-  // Update program breadcrumb
-  updateProgramBreadcrumbFromItems(programData, subscription);
-
-  // Update Program Name with safe access and debug statements
+  // Program Name (below the workshop name or as a subtitle if desired)
   const programNameElement = document.getElementById("programName");
   if (programNameElement) {
     const programName = new WFComponent(programNameElement);
-    if (workshop.fieldData && workshop.fieldData.name) {
-      programName.setText(workshop.fieldData.name);
-    } else {
-      programName.setText("Program Name Not Available");
-    }
+    programName.setText(program.name);
   }
 
-  // Update Workshop Short Description
+  // Workshop Short Description
   const workshopShortDescriptionElement = document.getElementById(
     "workshopShortDescription"
   );
   if (workshopShortDescriptionElement) {
-    const workshopShortDescription = new WFComponent(
-      workshopShortDescriptionElement
-    );
-    workshopShortDescription.setText(workshop.fieldData["short-description"]);
+    const shortDescComponent = new WFComponent(workshopShortDescriptionElement);
+    shortDescComponent.setText(workshop.Short_description);
   }
 }
 
-// Function to update workshop and program details using Program details
-function updateWorkshopDetailsFromProgram(
-  programDetails: Program,
-  subscription: Subscription
-) {
-  // Update Program Image
+// Fallback if no workshop object is provided (use Program data)
+function updateWorkshopDetailsFallback(program: Program) {
+  // Program Image
   const programImageElement = document.getElementById("workshopImage");
   if (programImageElement) {
     const programImage = new WFImage(programImageElement);
-    if (programDetails.fieldData["main-image"].url) {
-      programImage.setImage(programDetails.fieldData["main-image"].url);
-      const imgElement = programImage.getElement() as HTMLImageElement;
-      imgElement.alt =
-        programDetails.fieldData["main-image"].alt || "Program Image";
+    if (program.Main_Image) {
+      programImage.setImage(program.Main_Image);
+      (programImage.getElement() as HTMLImageElement).alt = "Program Image";
     } else {
       programImage.setImage(
         "https://cdn.prod.website-files.com/plugins/Basic/assets/placeholder.60f9b1840c.svg"
       );
-      const imgElement = programImage.getElement() as HTMLImageElement;
-      imgElement.alt = "Program Image";
+      (programImage.getElement() as HTMLImageElement).alt = "Program Image";
     }
   }
 
-  // Update Workshop Name with the Program Name
+  // Workshop Name
   const workshopNameElement = document.getElementById("workshopName");
   if (workshopNameElement) {
     const workshopName = new WFComponent(workshopNameElement);
-    workshopName.setText(programDetails.fieldData.name);
+    workshopName.setText(program.name);
   }
 
-  // Update Program Name with Program Subheading
+  // Program Name
   const programNameElement = document.getElementById("programName");
   if (programNameElement) {
     const programName = new WFComponent(programNameElement);
-    programName.setText(programDetails.fieldData.subheading);
+    programName.setText(program.Subheading || program.name);
   }
 
-  // Update workshop breadcrumb with the Program Name
-  const workshopBreadcrumbElement =
-    document.getElementById("workshopBreadcrumb");
+  // Workshop Breadcrumb
+  const workshopBreadcrumbElement = document.getElementById("workshopBreadcrumb");
   if (workshopBreadcrumbElement) {
     const workshopBreadcrumb = new WFComponent(workshopBreadcrumbElement);
-    workshopBreadcrumb.setText(programDetails.fieldData.name);
+    workshopBreadcrumb.setText(program.name);
+  }
+
+  // Short Description
+  const workshopShortDescriptionElement = document.getElementById(
+    "workshopShortDescription"
+  );
+  if (workshopShortDescriptionElement) {
+    const shortDescComponent = new WFComponent(workshopShortDescriptionElement);
+    shortDescComponent.setText(program.Short_description);
   }
 }
 
-// Function to update the program breadcrumb element (ensure it's always set)
-function updateProgramBreadcrumb(programDetails: Program) {
+// Always update the program breadcrumb
+function updateProgramBreadcrumb(program: Program) {
   const programBreadcrumbElement = document.getElementById("programBreadcrumb");
   if (programBreadcrumbElement) {
     const programBreadcrumb = new WFComponent(programBreadcrumbElement);
-    programBreadcrumb.setText(programDetails.fieldData.name);
+    programBreadcrumb.setText(program.name);
 
-    // Update the href attribute to append the program param to the current link
+    // Optionally update the link to include the program param
     const currentHref = programBreadcrumbElement.getAttribute("href") || "#";
     const url = new URL(currentHref, window.location.origin);
-    url.searchParams.set("program", programDetails.id);
+    url.searchParams.set("program", program.id.toString());
     programBreadcrumb.setAttribute("href", url.toString());
   }
 }
 
-// Helper function to update program breadcrumb from program items
-function updateProgramBreadcrumbFromItems(
-  programData: { items: Program[] },
-  subscription: Subscription
-) {
-  const programBreadcrumbElement = document.getElementById("programBreadcrumb");
-  if (programBreadcrumbElement) {
-    const programBreadcrumb = new WFComponent(programBreadcrumbElement);
-    const matchedProgram = programData.items.find(
-      (program) => program.id === subscription.program_id
-    );
-    if (matchedProgram) {
-      // Set the breadcrumb text to the program name
-      programBreadcrumb.setText(matchedProgram.fieldData.name);
+// -------------------- SUBSCRIPTION UPDATER -------------------- //
 
-      // Update the href attribute to append the program param to the current link
-      const currentHref = programBreadcrumbElement.getAttribute("href") || "#";
-      const url = new URL(currentHref, window.location.origin);
-      url.searchParams.set("program", matchedProgram.id);
-      programBreadcrumb.setAttribute("href", url.toString());
-    }
-  }
-}
-
-// Function to update subscription details on the page
 function updateSubscriptionDetails(subscription: Subscription) {
-  // Update Subscription Type
+  // Subscription Type
   const subscriptionTypeElement = document.getElementById("subscription_type");
   if (subscriptionTypeElement) {
     const subscriptionType = new WFComponent(subscriptionTypeElement);
     subscriptionType.setText(subscription.subscription_type);
   }
 
-  // Update Next Invoice Date
+  // Next Invoice Date
   const nextInvoiceDateElement = document.getElementById("nextInvoiceDate");
   if (nextInvoiceDateElement) {
     const nextInvoiceDate = new WFComponent(nextInvoiceDateElement);
-
-    const nextChargeDateStr = subscription.next_charge_date;
-
-    if (nextChargeDateStr) {
-      // Create a new Date object
-      const date = new Date(nextChargeDateStr + "T00:00:00Z");
-      // Check if the date is valid
+    if (subscription.next_charge_date) {
+      // Here, next_charge_date is a numeric timestamp (e.g. 1743638400000), not a string
+      const date = new Date(subscription.next_charge_date);
       if (!isNaN(date.getTime())) {
-        const formattedDate = date.toLocaleDateString("en-US", {
-          timeZone: "UTC",
-        });
-        nextInvoiceDate.setText(formattedDate);
+        nextInvoiceDate.setText(
+          date.toLocaleDateString("en-US", { timeZone: "UTC" })
+        );
       } else {
         nextInvoiceDate.setText("Upon Student Approval");
       }
@@ -659,14 +420,13 @@ function updateSubscriptionDetails(subscription: Subscription) {
     }
   }
 
-  // Update Next Invoice Amount
+  // Next Invoice Amount
   const nextInvoiceAmountElement = document.getElementById("nextInvoiceAmount");
   if (nextInvoiceAmountElement) {
     const nextInvoiceAmount = new WFComponent(nextInvoiceAmountElement);
     const amount = subscription.next_charge_amount;
-
-    if (amount === 0 || amount === null || amount === undefined) {
-      // Hide the parent .bento_box.is-dashboard.is-payment-detail element
+    if (!amount || amount === 0) {
+      // Hide the parent .bento_box if no future charge
       const parentElement = nextInvoiceAmountElement.closest(
         ".bento_box.is-dashboard.is-payment-detail"
       );
@@ -678,170 +438,136 @@ function updateSubscriptionDetails(subscription: Subscription) {
     }
   }
 
-  // Update FinAid Coupon
+  // FinAid Coupon
   const couponElement = document.getElementById("finAidCoupon");
   if (couponElement) {
     const coupon = new WFComponent(couponElement);
-    if (subscription.coupon && subscription.coupon !== "None") {
-      // Remove 'FINAID' from the beginning and add '% discount Applied'
-      const couponText =
-        subscription.coupon.replace(/^FINAID/, "").trim() + "% Discount";
-      coupon.setText(couponText);
+    if (subscription.coupon) {
+      // If there's a FIN AID coupon, format it accordingly
+      const couponText = subscription.coupon.replace(/^FINAID/, "").trim();
+      coupon.setText(couponText ? `${couponText}% Discount` : "None");
     } else {
       coupon.setText("None");
     }
   }
 
-  // Display or hide finAidDisclaimer based on coupon
+  // Hide or show finAidDisclaimer
   const finAidDisclaimer = document.getElementById("finAidDisclaimer");
   if (finAidDisclaimer) {
-    if (subscription.coupon) {
-      finAidDisclaimer.style.display = "block";
-    } else {
-      finAidDisclaimer.style.display = "none";
-    }
+    finAidDisclaimer.style.display = subscription.coupon ? "block" : "none";
   }
 }
 
-// Function to filter unique sessions based on session_id
+// -------------------- DYNAMIC LISTS (Sessions & Invoices) -------------------- //
+
+// Unique sessions if you want to deduplicate by `session`
 function getUniqueSessions(sessions: Session[]): Session[] {
-  const uniqueMap: { [key: string]: Session } = {};
-  sessions.forEach((session) => {
-    if (!uniqueMap[session.session_id]) {
-      uniqueMap[session.session_id] = session;
+  const uniqueMap: Record<number, Session> = {};
+  sessions.forEach((sess) => {
+    if (!uniqueMap[sess.session]) {
+      uniqueMap[sess.session] = sess;
     }
   });
   return Object.values(uniqueMap);
 }
 
-// Function to initialize and render the dynamic sessions list
+// Initialize the sessions list
 async function initializeDynamicSessionList(
   containerSelector: string,
   sessions: Session[],
-  subscription: Subscription, // Add subscription details as parameter
-  caregiver: boolean // Add caregiver flag as parameter
+  subscription: Subscription,
+  caregiver: boolean
 ) {
-  // Initialize a new instance of WFDynamicList for Sessions
   const list = new WFDynamicList<Session>(containerSelector, {
-    rowSelector: "#listRegistrationCard", // Using ID selector for template
-    loaderSelector: "#listRegistrationloading", // Selector for the loader
-    emptySelector: "#listRegistrationEmpty", // Selector for the empty state
+    rowSelector: "#listRegistrationCard",
+    loaderSelector: "#listRegistrationloading",
+    emptySelector: "#listRegistrationEmpty",
   });
 
-  // Customize the rendering of the loader
+  // Loader
   list.loaderRenderer((loaderElement) => {
-    loaderElement.setStyle({
-      display: "flex",
-    });
+    loaderElement.setStyle({ display: "flex" });
     return loaderElement;
   });
 
-  // Customize the rendering of the empty state
+  // Empty state
   list.emptyRenderer((emptyElement) => {
-    emptyElement.setStyle({
-      display: "flex",
-    });
+    emptyElement.setStyle({ display: "flex" });
     return emptyElement;
   });
 
-  // Customize the rendering of list items (Session Cards)
+  // Row renderer
   list.rowRenderer(({ rowData, rowElement }) => {
     const sessionCard = new WFComponent(rowElement);
+    const sessionDetails = rowData.session_details;
 
-    // Set the session day
-    const sessionDayComponent =
-      sessionCard.getChildAsComponent("#cardSessionDay");
+    // #cardSessionDay
+    const sessionDayComponent = sessionCard.getChildAsComponent("#cardSessionDay");
     if (sessionDayComponent) {
-      const sessionDay = new WFComponent(sessionDayComponent.getElement());
-      sessionDay.setText(rowData.weekday);
+      sessionDayComponent.setText(
+        sessionDetails?.Weekday || `Session #${rowData.session}`
+      );
     }
 
-    // Set the session time block
+    // #cardSessionTimeBlock
     const sessionTimeBlockComponent = sessionCard.getChildAsComponent(
       "#cardSessionTimeBlock"
     );
     if (sessionTimeBlockComponent) {
-      const sessionTimeBlock = new WFComponent(
-        sessionTimeBlockComponent.getElement()
-      );
-      sessionTimeBlock.setText(rowData.time_block);
+      sessionTimeBlockComponent.setText(sessionDetails?.Time_block || "N/A");
     }
 
-    // Set the session location
+    // #cardSessionLocation
     const sessionLocationComponent = sessionCard.getChildAsComponent(
       "#cardSessionLocation"
     );
     if (sessionLocationComponent) {
-      const sessionLocation = new WFComponent(
-        sessionLocationComponent.getElement()
-      );
-      sessionLocation.setText(rowData.location);
+      const locationName = sessionDetails?.location_details?.Name || "N/A";
+      sessionLocationComponent.setText(locationName);
     }
 
-    // Set the link with program, workshop, and subscription parameters
+    // Build the link
     const sessionCardElement = sessionCard.getElement() as HTMLAnchorElement;
     const currentHref = sessionCardElement.getAttribute("href") || "#";
-
-    // Parse existing URL to avoid malformed URLs
     const url = new URL(currentHref, window.location.origin);
 
-    // Append or set query parameters using subscription and session details
-    url.searchParams.set("program", subscription.program_id);
-    url.searchParams.set("workshop", subscription.workshop_id);
-    url.searchParams.set("session", rowData.session_id);
+    // Use subscription fields
+    url.searchParams.set("program", subscription.program.toString());
+    url.searchParams.set("workshop", subscription.workshop.toString());
+    url.searchParams.set("session", rowData.session.toString());
     url.searchParams.set("subscription", subscription.id.toString());
 
-    // Update the href attribute with the correct parameters
     sessionCardElement.setAttribute("href", url.toString());
 
-    // If the user is a caregiver, update the caregiver_breadcrumbs on session selection
+    // If caregiver, update localStorage on click
     if (caregiver) {
       sessionCardElement.addEventListener("click", () => {
-        const caregiverBreadcrumbs = localStorage.getItem(
-          "caregiver_breadcrumbs"
-        );
+        const caregiverBreadcrumbs = localStorage.getItem("caregiver_breadcrumbs");
         if (caregiverBreadcrumbs) {
           try {
-            const breadcrumbs = JSON.parse(
-              caregiverBreadcrumbs
-            ) as CaregiverBreadcrumbs;
-
-            // Update with session details
-            breadcrumbs.session_id = rowData.session_id;
-            breadcrumbs.session_weekday = rowData.weekday;
-            breadcrumbs.session_time_block = rowData.time_block;
-
-            // Save back to localStorage
-            localStorage.setItem(
-              "caregiver_breadcrumbs",
-              JSON.stringify(breadcrumbs)
-            );
+            const breadcrumbs = JSON.parse(caregiverBreadcrumbs) as CaregiverBreadcrumbs;
+            // Update session details
+            breadcrumbs.session_id = rowData.session.toString();
+            breadcrumbs.session_weekday = sessionDetails?.Weekday || "";
+            breadcrumbs.session_time_block = sessionDetails?.Time_block || "";
+            // Save
+            localStorage.setItem("caregiver_breadcrumbs", JSON.stringify(breadcrumbs));
           } catch (e) {
             console.error("Error updating caregiver_breadcrumbs:", e);
           }
-        } else {
-          console.warn("No caregiver_breadcrumbs found in localStorage.");
         }
       });
     }
 
-    // Show the list item
-    rowElement.setStyle({
-      display: "block",
-    });
-
+    // Show this row
+    rowElement.setStyle({ display: "block" });
     return rowElement;
   });
 
-  // Load and display session data
+  // Load data
   try {
-    // Enable the loading state
     list.changeLoadingStatus(true);
-
-    // Set the data to be displayed in the dynamic list
     list.setData(sessions);
-
-    // Disable the loading state
     list.changeLoadingStatus(false);
   } catch (error) {
     console.error("Error initializing dynamic session list:", error);
@@ -850,7 +576,113 @@ async function initializeDynamicSessionList(
   }
 }
 
-// Function to trigger a click on the success_trigger element
+// Initialize the past invoices list
+async function initializePastInvoicesList(containerSelector: string, invoices: Invoice[]) {
+  const list = new WFDynamicList<Invoice>(containerSelector, {
+    rowSelector: "#invoiceLine",
+  });
+
+  list.loaderRenderer((loaderElement) => {
+    loaderElement.setStyle({ display: "flex" });
+    return loaderElement;
+  });
+
+  list.emptyRenderer((emptyElement) => {
+    emptyElement.setStyle({ display: "flex" });
+    return emptyElement;
+  });
+
+  list.rowRenderer(({ rowData, rowElement }) => {
+    const invoiceRow = new WFComponent(rowElement);
+
+    // Date
+    const invoiceDateComponent = invoiceRow.getChildAsComponent("#invoiceDate");
+    if (invoiceDateComponent) {
+      const dateComp = new WFComponent(invoiceDateComponent.getElement());
+      const formattedDate = new Date(rowData.created_at).toLocaleDateString();
+      dateComp.setText(formattedDate);
+    }
+
+    // Amount
+    const invoiceAmountComponent = invoiceRow.getChildAsComponent("#invoiceAmount");
+    if (invoiceAmountComponent) {
+      const amountComp = new WFComponent(invoiceAmountComponent.getElement());
+      amountComp.setText(`$${rowData.amount_total}`);
+    }
+
+    // Receipt link
+    const receiptButtonComponent = invoiceRow.getChildAsComponent("#receiptButton");
+    if (receiptButtonComponent) {
+      receiptButtonComponent.setAttribute("href", rowData.reciept_url);
+    }
+
+    // Show the invoice row
+    rowElement.setStyle({ display: "table-row" });
+    return rowElement;
+  });
+
+  try {
+    list.changeLoadingStatus(true);
+    list.setData(invoices);
+    list.changeLoadingStatus(false);
+  } catch (error) {
+    console.error("Error initializing past invoices list:", error);
+    list.setData([]);
+    list.changeLoadingStatus(false);
+  }
+}
+
+// -------------------- CAREGIVER BREADCRUMB HANDLING -------------------- //
+
+function handleBreadcrumbs(caregiver: boolean, subscription: Subscription) {
+  const userBreadcrumbList = document.getElementById("userBreadcrumbList");
+  const caregiverBreadcrumbList = document.getElementById("caregiverBreadcrumbList");
+
+  if (caregiver) {
+    if (userBreadcrumbList) userBreadcrumbList.style.display = "none";
+    if (caregiverBreadcrumbList) caregiverBreadcrumbList.style.display = "flex";
+
+    // Load caregiver breadcrumbs
+    const caregiverBreadcrumbs = localStorage.getItem("caregiver_breadcrumbs");
+    if (caregiverBreadcrumbs) {
+      try {
+        const breadcrumbs = JSON.parse(caregiverBreadcrumbs) as CaregiverBreadcrumbs;
+        // Update the Student breadcrumb
+        const studentBreadcrumb = document.getElementById("studentBreadcrumb");
+        if (studentBreadcrumb) {
+          const studentComp = new WFComponent(studentBreadcrumb);
+          studentComp.setText(breadcrumbs.student_name);
+          const currentHref =
+            studentBreadcrumb.getAttribute("href") || "/dashboard/student/profile";
+          const url = new URL(currentHref, window.location.origin);
+          url.searchParams.set("id", breadcrumbs.student_id.toString());
+          studentComp.setAttribute("href", url.toString());
+        }
+
+        // Update the workshopBreadcrumbCaregiver
+        const workshopBreadcrumbCaregiver = document.getElementById(
+          "workshopBreadcrumbCaregiver"
+        );
+        if (workshopBreadcrumbCaregiver) {
+          const wcComp = new WFComponent(workshopBreadcrumbCaregiver);
+          const workshopName = breadcrumbs.workshop_name || breadcrumbs.program_name || "N/A";
+          wcComp.setText(workshopName);
+        }
+      } catch (parseError) {
+        console.error("Error parsing caregiver_breadcrumbs:", parseError);
+      }
+    } else {
+      console.warn("No caregiver_breadcrumbs found in localStorage.");
+    }
+  } else {
+    // Non-caregiver
+    if (userBreadcrumbList) userBreadcrumbList.style.display = "flex";
+    if (caregiverBreadcrumbList) caregiverBreadcrumbList.style.display = "none";
+  }
+}
+
+// -------------------- SUCCESS TRIGGER -------------------- //
+
 function triggerSuccessEvent(selector: string) {
   const successTrigger = document.querySelector(selector);
   if (successTrigger instanceof HTMLElement) {

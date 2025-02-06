@@ -99,7 +99,7 @@ export const initializeStateFromUrlParams = async (slider: WFSlider) => {
             resetSelectedWorkshop();
             markStepAsCompleted(2);
             setActiveStep(3);
-            await initializeSessionList(null, programId);
+            await initializeSessionList(undefined, programId);
             slider.goToIndex(2); // Navigate to the session selection slide
           } else if (workshopId) {
             // Select the workshop based on the URL parameter

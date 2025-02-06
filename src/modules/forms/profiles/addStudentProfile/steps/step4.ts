@@ -7,7 +7,7 @@ export const initializeStepFour = (slider: WFSlider) => {
   console.log("Initialize Step Four Form - Invite Caregiver");
 
   // Initialize Caregiver Dialog/Form
-  initializeCaregiverDialog(slider);
+  initializeCaregiverDialog();
 
   // Handle Step 4 submission (Continue to Step 5)
   const submitStepFour = new WFComponent("#submitStepFour");

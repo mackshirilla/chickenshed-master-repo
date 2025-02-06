@@ -689,7 +689,7 @@ const populateEditStudentForm = ()=>{
             profilePictureImage.setImage(student.profile_pic.url);
             console.log("Set profile picture to:", student.profile_pic.url);
         } else {
-            profilePictureImage.setImage("default-image-url");
+            profilePictureImage.setImage("https://cdn.prod.website-files.com/667f080f36260b9afbdc46b2/667f080f36260b9afbdc46be_placeholder.svg");
             console.log("Set profile picture to default-image-url");
         }
     } catch (error) {
@@ -1162,13 +1162,13 @@ const updateEmergencyContactFullName = ()=>{
 // src/modules/pages/studentProfile/studentRegistrations.ts
 var parcelHelpers = require("@parcel/transformer-js/src/esmodule-helpers.js");
 parcelHelpers.defineInteropFlag(exports);
+// ----- FETCHING FUNCTION -----
 /**
- * Function to fetch registrations for a student.
- * @param studentId - The ID of the student.
- * @returns A promise that resolves to an array of Registration objects.
+ * Fetch registrations for a student from the new endpoint/response.
  */ parcelHelpers.export(exports, "fetchStudentRegistrations", ()=>fetchStudentRegistrations);
+// ----- INITIALIZER FOR THE DYNAMIC LIST -----
 /**
- * Function to initialize the dynamic list of registrations.
+ * Initializes the dynamic list of registrations for a given student.
  * @param studentId - The ID of the student.
  */ parcelHelpers.export(exports, "initializeStudentRegistrations", ()=>initializeStudentRegistrations);
 var _core = require("@xatom/core");
@@ -1177,6 +1177,7 @@ var _apiConfig = require("../../../api/apiConfig");
 async function fetchStudentRegistrations(studentId) {
     try {
         const response = await (0, _apiConfig.apiClient).get(`/dashboard/profiles/student/${studentId}/registrations`).fetch();
+        // The API directly returns an array of Registration objects
         if (response) {
             const registrations = response;
             return registrations;
@@ -1190,30 +1191,28 @@ async function fetchStudentRegistrations(studentId) {
     }
 }
 async function initializeStudentRegistrations(studentId) {
-    // Initialize the dynamic list
+    // 1) Create the dynamic list
     const list = new (0, _core.WFDynamicList)("#listRegistration", {
         rowSelector: "#listRegistrationCard",
         loaderSelector: "#listRegistrationloading",
         emptySelector: "#listRegistrationEmpty"
     });
-    // Customize the rendering of the loader
+    // 2) Customize the loader
     list.loaderRenderer((loaderElement)=>{
         loaderElement.setStyle({
             display: "flex"
         });
         return loaderElement;
     });
-    // Customize the rendering of the empty state
+    // 3) Customize the empty state
     list.emptyRenderer((emptyElement)=>{
         emptyElement.setStyle({
             display: "flex"
         });
         return emptyElement;
     });
-    /**
-   * Customize the rendering of each registration card.
-   * This includes adding necessary classes and data attributes for breadcrumb tracking.
-   */ list.rowRenderer(({ rowData, rowElement })=>{
+    // 4) Customize how each row (registration card) is rendered
+    list.rowRenderer(({ rowData, rowElement })=>{
         const registrationCard = new (0, _core.WFComponent)(rowElement);
         // Retrieve the student's name from localStorage
         const currentStudent = localStorage.getItem("current_student");
@@ -1225,40 +1224,54 @@ async function initializeStudentRegistrations(studentId) {
             console.error("Error parsing current_student from localStorage:", parseError);
         }
         else console.warn("current_student not found in localStorage.");
-        // Build the base URL with required parameters
-        let href = `/dashboard/registration/subscription/workshop?program=${encodeURIComponent(rowData.program_id)}&subscription=${encodeURIComponent(rowData.subscription_id)}`;
-        // Conditionally add the workshop parameter if workshop_id is present and not empty
-        if (rowData.workshop_id && rowData.workshop_id.trim() !== "") href += `&workshop=${encodeURIComponent(rowData.workshop_id)}`;
-        // Set the href attribute
+        // Build the link
+        // rowData.program is the numeric Program ID
+        // rowData.subscription_id is the numeric subscription
+        // rowData.workshop might be 0 if no workshop
+        let href = `/dashboard/registration/subscription/workshop?program=${encodeURIComponent(String(rowData.program))}&subscription=${encodeURIComponent(String(rowData.subscription_id))}`;
+        // If workshop > 0, add workshop param
+        if (rowData.workshop && rowData.workshop !== 0) href += `&workshop=${encodeURIComponent(String(rowData.workshop))}`;
+        // Set this link on the card element
         registrationCard.setAttribute("href", href);
-        // Add the 'registration-link' class for event delegation
+        // Add the 'registration-link' class for possible event delegation
         registrationCard.addCssClass("registration-link");
-        /**
-     * Set data attributes required for breadcrumb tracking.
-     * These attributes are essential for the registrationBreadcrumbs.ts module to function correctly.
-     */ registrationCard.setAttribute("data-student-id", String(rowData.student_profile_id));
+        // ----- Breadcrumb Data Attributes -----
+        registrationCard.setAttribute("data-student-id", String(rowData.student_profile_id));
         registrationCard.setAttribute("data-student-name", studentName);
-        registrationCard.setAttribute("data-workshop-name", rowData.workshop_name || "");
-        registrationCard.setAttribute("data-workshop-id", rowData.workshop_id || "");
-        registrationCard.setAttribute("data-program-name", rowData.program_name || "");
-        registrationCard.setAttribute("data-program-id", rowData.program_id || "");
+        // The new data has `program_details` and possibly `workshop_details`
+        const programNameStr = rowData.program_details.name || "";
+        const workshopNameStr = rowData.workshop_details?.Name || "";
+        registrationCard.setAttribute("data-program-name", programNameStr);
+        registrationCard.setAttribute("data-program-id", String(rowData.program));
+        // If there's a real workshop, store it
+        if (rowData.workshop && rowData.workshop !== 0) {
+            registrationCard.setAttribute("data-workshop-name", workshopNameStr);
+            registrationCard.setAttribute("data-workshop-id", String(rowData.workshop));
+        } else {
+            // No workshop
+            registrationCard.setAttribute("data-workshop-name", "");
+            registrationCard.setAttribute("data-workshop-id", "");
+        }
         registrationCard.setAttribute("data-subscription-id", String(rowData.subscription_id));
-        // Update the program name
-        const programName = registrationCard.getChildAsComponent("#cardProgramName");
-        if (programName) programName.setText(rowData.program_name || "N/A");
+        // ----- Update UI Elements in the Card -----
+        // #cardProgramName => from rowData.program_details.name
+        const programNameCmp = registrationCard.getChildAsComponent("#cardProgramName");
+        if (programNameCmp) programNameCmp.setText(programNameStr || "N/A");
         else console.warn("#cardProgramName not found in registrationCard.");
-        // Update the workshop name, if available
-        const workshopName = registrationCard.getChildAsComponent("#cardWorkshopName");
-        if (workshopName) workshopName.setText(rowData.workshop_name || " ");
+        // #cardWorkshopName => from rowData.workshop_details?.Name
+        const workshopNameCmp = registrationCard.getChildAsComponent("#cardWorkshopName");
+        if (workshopNameCmp) workshopNameCmp.setText(workshopNameStr || "");
         else console.warn("#cardWorkshopName not found in registrationCard.");
-        // Update the registration image
+        // #cardRegistrationImage => from rowData.program_details.Main_Image
+        // (The new response does not include a direct image_url for each registration,
+        //  so we'll assume the program image is the fallback.)
         const registrationImageElement = registrationCard.getChildAsComponent("#cardRegistrationImage");
         if (registrationImageElement) {
             const registrationImage = new (0, _image.WFImage)(registrationImageElement.getElement());
-            if (rowData.image_url) registrationImage.setImage(rowData.image_url);
+            if (rowData.program_details?.Main_Image) registrationImage.setImage(rowData.program_details.Main_Image);
             else registrationImage.setImage("https://cdn.prod.website-files.com/667f080f36260b9afbdc46b2/667f080f36260b9afbdc46be_placeholder.svg");
         } else console.warn("#cardRegistrationImage not found in registrationCard.");
-        // Update the status pills
+        // ----- Status Pills (#cardActivePill, #cardDepositPill, etc.) -----
         const activePill = registrationCard.getChildAsComponent("#cardActivePill");
         const depositPill = registrationCard.getChildAsComponent("#cardDepositPill");
         if (activePill && depositPill) {
@@ -1286,28 +1299,24 @@ async function initializeStudentRegistrations(studentId) {
                 });
             }
         } else console.warn("Status pills (#cardActivePill or #cardDepositPill) not found in registrationCard.");
-        // Show the registration card
+        // Finally, ensure the card is displayed
         rowElement.setStyle({
             display: "block"
         });
+        // Return rowElement to WFDynamicList
         return rowElement;
     });
-    // Load and display the student's registrations
+    // 5) Fetch and load the registrations
     try {
-        // Enable the loading state
         list.changeLoadingStatus(true);
         const registrations = await fetchStudentRegistrations(studentId);
-        // Sort registrations by created_at date (optional)
+        // Optionally sort descending by created_at
         registrations.sort((a, b)=>b.created_at - a.created_at);
-        // Set the data for the dynamic list
         list.setData(registrations);
-        // Disable the loading state
         list.changeLoadingStatus(false);
     } catch (error) {
         console.error("Error initializing student registrations:", error);
-        // Set an empty array to trigger the empty state
-        list.setData([]);
-        // Disable the loading state
+        list.setData([]); // Empty state
         list.changeLoadingStatus(false);
     }
 }

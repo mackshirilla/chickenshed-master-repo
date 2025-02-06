@@ -146,17 +146,17 @@
 // src/pages/workshopDetails.ts
 var parcelHelpers = require("@parcel/transformer-js/src/esmodule-helpers.js");
 parcelHelpers.defineInteropFlag(exports);
-// Function to fetch workshop details from the API, including program and subscription params
+// ------------------------------------------------------------- //
+// Fetch workshop details from the API
 parcelHelpers.export(exports, "fetchWorkshopDetails", ()=>fetchWorkshopDetails);
-// Function to initialize and render the workshop details and sessions
+// Main function to initialize the page
 parcelHelpers.export(exports, "initializeWorkshopDetailsPage", ()=>initializeWorkshopDetailsPage);
 var _core = require("@xatom/core");
 var _image = require("@xatom/image");
 var _apiConfig = require("../../../api/apiConfig");
 var _cancelRegistrationDialog = require("../registration/components/cancelRegistrationDialog");
 var _listWorkshopFiles = require("./components/listWorkshopFiles");
-async function fetchWorkshopDetails(programId, subscriptionId, workshopId // Made optional
-) {
+async function fetchWorkshopDetails(programId, subscriptionId, workshopId) {
     try {
         // Construct request data conditionally
         const requestData = {
@@ -171,28 +171,20 @@ async function fetchWorkshopDetails(programId, subscriptionId, workshopId // Mad
         const response = await getWorkshopDetails.fetch();
         return response;
     } catch (error) {
-        // Log the detailed error object for debugging
         console.error("Detailed Error Object:", error);
-        // Initialize a default error message
         let errorMessage = "An unexpected error occurred. Please try again.";
-        // Extract the specific error message from the API response if available
         if (error?.response?.data?.message) errorMessage = error.response.data.message;
-        else if (error.message) // Fallback to the generic error message
-        errorMessage = error.message;
-        // Display the error message in an alert box
+        else if (error.message) errorMessage = error.message;
         alert(`Error: ${errorMessage}`);
-        // Navigate back to the previous page with a fallback
         window.history.length > 1 ? window.history.back() : window.location.href = "/dashboard/registrations";
-        // Log the error for debugging purposes
         console.error("Fetch Workshop Details Error:", error);
-        // Optionally, return undefined to indicate failure
         return undefined;
     }
 }
 async function initializeWorkshopDetailsPage() {
-    //initalize files list
+    // Initialize the dynamic workshop files list
     (0, _listWorkshopFiles.initializeDynamicWorkshopFileList)("#filesList");
-    // Utility function to parse URL parameters
+    // Parse URL parameters
     const getUrlParams = ()=>{
         const params = new URLSearchParams(window.location.search);
         const workshopId = params.get("workshop");
@@ -211,416 +203,268 @@ async function initializeWorkshopDetailsPage() {
         return;
     }
     try {
-        // Fetch workshop details with program and subscription params
-        const apiResponse = await fetchWorkshopDetails(programId, subscriptionId, workshopId // Optional parameter
-        );
-        // If fetchWorkshopDetails encounters an error, it handles it and navigates back,
-        // so the following code will not execute in that case.
-        if (!apiResponse) // In case fetchWorkshopDetails returns undefined due to an error
+        const apiResponse = await fetchWorkshopDetails(programId, subscriptionId, workshopId);
+        if (!apiResponse) // If fetchWorkshopDetails returns undefined due to an error
         return;
         const { workshop, subscription, program, sessions, invoices, caregiver } = apiResponse;
-        // Use program details if workshop details are not provided
-        const programDetails = program.items.find((p)=>p.id === subscription.program_id);
-        // Update workshop and program details on the page
-        if (workshop) updateWorkshopDetails(workshop, {
-            items: program.items
-        }, subscription);
-        else if (programDetails) updateWorkshopDetailsFromProgram(programDetails, subscription);
-        // Always update program breadcrumb regardless of workshop availability
-        if (programDetails) updateProgramBreadcrumb(programDetails);
+        // Update the Workshop UI if present, otherwise fallback to Program data
+        if (workshop) updateWorkshopDetails(workshop, program);
+        else updateWorkshopDetailsFallback(program);
+        // Always update Program breadcrumb
+        updateProgramBreadcrumb(program);
+        // Update subscription details
         updateSubscriptionDetails(subscription);
-        // Filter sessions to unique based on session_id
+        // Filter sessions for uniqueness by `session` (optional logic)
         const uniqueSessions = getUniqueSessions(sessions);
-        // Initialize and render the sessions list using fetched data
-        initializeDynamicSessionList("#listRegistration", uniqueSessions, subscription, caregiver // Pass the caregiver flag
-        );
-        // Initialize and render the invoices list using fetched data
+        // Initialize and render the sessions list
+        initializeDynamicSessionList("#listRegistration", uniqueSessions, subscription, caregiver);
+        // Initialize and render the invoices list
         initializePastInvoicesList(".table_body", invoices);
-        // Handle Breadcrumbs based on caregiver flag
+        // Handle caregiver breadcrumb logic and UI differences
         handleBreadcrumbs(caregiver, subscription);
-        // Handle Caregiver-specific UI adjustments
         if (caregiver) {
             // Remove the Cancel Registration button
             const cancelButton = document.querySelector("#openCancelDialog");
             if (cancelButton) cancelButton.remove();
-            // Remove any existing Cancel Registration Dialog if present
+            // Remove the Cancel Registration Dialog
             const cancelDialog = document.getElementById("cancelRegistrationDialog");
             if (cancelDialog) cancelDialog.remove();
             // Remove the Payment Details section
             const paymentDetails = document.querySelector(".payment_details_wrap");
             if (paymentDetails) paymentDetails.remove();
-        } else // Initialize Cancel Registration Dialog component
+        } else // Initialize the Cancel Registration Dialog for non-caregivers
         new (0, _cancelRegistrationDialog.CancelRegistrationDialog)({
             containerSelector: ".button_group",
             subscriptionId: subscription.id.toString(),
             onCancelSuccess: ()=>{
-                // Redirect to registrations dashboard upon successful cancellation
                 window.location.href = "/dashboard/registrations";
             }
         });
-        // Trigger the success_trigger element
+        // Trigger any success handlers
         triggerSuccessEvent(".success_trigger");
     } catch (error) {
-        // Since fetchWorkshopDetails already handles the error, this block can remain empty or be removed.
-        // If you prefer, you can log the error here.
         console.error("initializeWorkshopDetailsPage Error:", error);
     }
 }
-// Function to handle Breadcrumbs based on caregiver flag
-function handleBreadcrumbs(caregiver, subscription) {
-    const userBreadcrumbList = document.getElementById("userBreadcrumbList");
-    const caregiverBreadcrumbList = document.getElementById("caregiverBreadcrumbList");
-    if (caregiver) {
-        if (userBreadcrumbList) userBreadcrumbList.style.display = "none";
-        if (caregiverBreadcrumbList) caregiverBreadcrumbList.style.display = "flex";
-        // Fetch caregiver_breadcrumbs from localStorage
-        const caregiverBreadcrumbs = localStorage.getItem("caregiver_breadcrumbs");
-        if (caregiverBreadcrumbs) try {
-            const breadcrumbs = JSON.parse(caregiverBreadcrumbs);
-            // Update studentBreadcrumb link
-            const studentBreadcrumb = document.getElementById("studentBreadcrumb");
-            if (studentBreadcrumb) {
-                const studentBreadcrumbComponent = new (0, _core.WFComponent)(studentBreadcrumb);
-                studentBreadcrumbComponent.setText(breadcrumbs.student_name);
-                // Append ?id={student_id} to the href
-                const currentHref = studentBreadcrumb.getAttribute("href") || "/dashboard/student/profile";
-                const url = new URL(currentHref, window.location.origin);
-                url.searchParams.set("id", breadcrumbs.student_id.toString());
-                studentBreadcrumbComponent.setAttribute("href", url.toString());
-            }
-            // Update workshopBreadcrumbCaregiver text
-            const workshopBreadcrumbCaregiver = document.getElementById("workshopBreadcrumbCaregiver");
-            if (workshopBreadcrumbCaregiver) {
-                const workshopBreadcrumbComponent = new (0, _core.WFComponent)(workshopBreadcrumbCaregiver);
-                const workshopName = breadcrumbs.workshop_name || breadcrumbs.program_name || "N/A";
-                workshopBreadcrumbComponent.setText(workshopName);
-            }
-        } catch (parseError) {
-            console.error("Error parsing caregiver_breadcrumbs from localStorage:", parseError);
-        }
-        else console.warn("No caregiver_breadcrumbs found in localStorage.");
-    } else {
-        if (userBreadcrumbList) userBreadcrumbList.style.display = "flex";
-        if (caregiverBreadcrumbList) caregiverBreadcrumbList.style.display = "none";
-    }
-}
-// Function to initialize and render the past invoices list using fetched data
-async function initializePastInvoicesList(containerSelector, invoices) {
-    // Initialize a new instance of WFDynamicList for Invoices
-    const list = new (0, _core.WFDynamicList)(containerSelector, {
-        rowSelector: "#invoiceLine"
-    });
-    // Customize the rendering of the loader
-    list.loaderRenderer((loaderElement)=>{
-        loaderElement.setStyle({
-            display: "flex"
-        });
-        return loaderElement;
-    });
-    // Customize the rendering of the empty state
-    list.emptyRenderer((emptyElement)=>{
-        emptyElement.setStyle({
-            display: "flex"
-        });
-        return emptyElement;
-    });
-    // Customize the rendering of list items (Invoice Rows)
-    list.rowRenderer(({ rowData, rowElement })=>{
-        const invoiceRow = new (0, _core.WFComponent)(rowElement);
-        // Set the invoice date
-        const invoiceDateComponent = invoiceRow.getChildAsComponent("#invoiceDate");
-        if (invoiceDateComponent) {
-            const invoiceDate = new (0, _core.WFComponent)(invoiceDateComponent.getElement());
-            const formattedDate = new Date(rowData.created_at).toLocaleDateString();
-            invoiceDate.setText(formattedDate);
-        }
-        // Set the invoice amount
-        const invoiceAmountComponent = invoiceRow.getChildAsComponent("#invoiceAmount");
-        if (invoiceAmountComponent) {
-            const invoiceAmount = new (0, _core.WFComponent)(invoiceAmountComponent.getElement());
-            invoiceAmount.setText(`$${rowData.amount_total}`);
-        }
-        // Set the receipt link
-        const receiptButtonComponent = invoiceRow.getChildAsComponent("#receiptButton");
-        if (receiptButtonComponent) {
-            const receiptButton = new (0, _core.WFComponent)(receiptButtonComponent.getElement());
-            receiptButton.setAttribute("href", rowData.reciept_url);
-        }
-        // Show the list item
-        rowElement.setStyle({
-            display: "table-row"
-        });
-        return rowElement;
-    });
-    // Load and display invoice data
-    try {
-        // Enable the loading state
-        list.changeLoadingStatus(true);
-        // Set the data to be displayed in the dynamic list
-        list.setData(invoices);
-        // Disable the loading state
-        list.changeLoadingStatus(false);
-    } catch (error) {
-        console.error("Error initializing past invoices list:", error);
-        list.setData([]);
-        list.changeLoadingStatus(false);
-    }
-}
-// Function to update workshop and program details on the page using Workshop details
-function updateWorkshopDetails(workshop, programData, subscription) {
-    // Update Workshop Image
+// -------------------- WORKSHOP / PROGRAM UPDATERS -------------------- //
+// Update page details from the Workshop object
+function updateWorkshopDetails(workshop, program) {
+    // Workshop Image
     const workshopImageElement = document.getElementById("workshopImage");
     if (workshopImageElement) {
         const workshopImage = new (0, _image.WFImage)(workshopImageElement);
-        if (workshop.fieldData["main-image"].url) {
-            workshopImage.setImage(workshop.fieldData["main-image"].url);
-            const imgElement = workshopImage.getElement();
-            imgElement.alt = workshop.fieldData["main-image"].alt || "Workshop Image";
+        if (workshop.Main_Image) {
+            workshopImage.setImage(workshop.Main_Image);
+            workshopImage.getElement().alt = "Workshop Image";
         } else {
             workshopImage.setImage("https://cdn.prod.website-files.com/plugins/Basic/assets/placeholder.60f9b1840c.svg");
-            const imgElement = workshopImage.getElement();
-            imgElement.alt = "Workshop Image";
+            workshopImage.getElement().alt = "Workshop Image";
         }
     }
-    // Update Workshop Name
+    // Workshop Name
     const workshopNameElement = document.getElementById("workshopName");
     if (workshopNameElement) {
         const workshopName = new (0, _core.WFComponent)(workshopNameElement);
-        workshopName.setText(workshop.fieldData.name);
+        workshopName.setText(workshop.Name);
     }
-    // Update workshop breadcrumb
+    // Workshop Breadcrumb
     const workshopBreadcrumbElement = document.getElementById("workshopBreadcrumb");
     if (workshopBreadcrumbElement) {
         const workshopBreadcrumb = new (0, _core.WFComponent)(workshopBreadcrumbElement);
-        workshopBreadcrumb.setText(workshop.fieldData.name);
+        workshopBreadcrumb.setText(workshop.Name);
     }
-    // Update program breadcrumb
-    updateProgramBreadcrumbFromItems(programData, subscription);
-    // Update Program Name with safe access and debug statements
+    // Program Name (below the workshop name or as a subtitle if desired)
     const programNameElement = document.getElementById("programName");
     if (programNameElement) {
         const programName = new (0, _core.WFComponent)(programNameElement);
-        if (workshop.fieldData && workshop.fieldData.name) programName.setText(workshop.fieldData.name);
-        else programName.setText("Program Name Not Available");
+        programName.setText(program.name);
     }
-    // Update Workshop Short Description
+    // Workshop Short Description
     const workshopShortDescriptionElement = document.getElementById("workshopShortDescription");
     if (workshopShortDescriptionElement) {
-        const workshopShortDescription = new (0, _core.WFComponent)(workshopShortDescriptionElement);
-        workshopShortDescription.setText(workshop.fieldData["short-description"]);
+        const shortDescComponent = new (0, _core.WFComponent)(workshopShortDescriptionElement);
+        shortDescComponent.setText(workshop.Short_description);
     }
 }
-// Function to update workshop and program details using Program details
-function updateWorkshopDetailsFromProgram(programDetails, subscription) {
-    // Update Program Image
+// Fallback if no workshop object is provided (use Program data)
+function updateWorkshopDetailsFallback(program) {
+    // Program Image
     const programImageElement = document.getElementById("workshopImage");
     if (programImageElement) {
         const programImage = new (0, _image.WFImage)(programImageElement);
-        if (programDetails.fieldData["main-image"].url) {
-            programImage.setImage(programDetails.fieldData["main-image"].url);
-            const imgElement = programImage.getElement();
-            imgElement.alt = programDetails.fieldData["main-image"].alt || "Program Image";
+        if (program.Main_Image) {
+            programImage.setImage(program.Main_Image);
+            programImage.getElement().alt = "Program Image";
         } else {
             programImage.setImage("https://cdn.prod.website-files.com/plugins/Basic/assets/placeholder.60f9b1840c.svg");
-            const imgElement = programImage.getElement();
-            imgElement.alt = "Program Image";
+            programImage.getElement().alt = "Program Image";
         }
     }
-    // Update Workshop Name with the Program Name
+    // Workshop Name
     const workshopNameElement = document.getElementById("workshopName");
     if (workshopNameElement) {
         const workshopName = new (0, _core.WFComponent)(workshopNameElement);
-        workshopName.setText(programDetails.fieldData.name);
+        workshopName.setText(program.name);
     }
-    // Update Program Name with Program Subheading
+    // Program Name
     const programNameElement = document.getElementById("programName");
     if (programNameElement) {
         const programName = new (0, _core.WFComponent)(programNameElement);
-        programName.setText(programDetails.fieldData.subheading);
+        programName.setText(program.Subheading || program.name);
     }
-    // Update workshop breadcrumb with the Program Name
+    // Workshop Breadcrumb
     const workshopBreadcrumbElement = document.getElementById("workshopBreadcrumb");
     if (workshopBreadcrumbElement) {
         const workshopBreadcrumb = new (0, _core.WFComponent)(workshopBreadcrumbElement);
-        workshopBreadcrumb.setText(programDetails.fieldData.name);
+        workshopBreadcrumb.setText(program.name);
+    }
+    // Short Description
+    const workshopShortDescriptionElement = document.getElementById("workshopShortDescription");
+    if (workshopShortDescriptionElement) {
+        const shortDescComponent = new (0, _core.WFComponent)(workshopShortDescriptionElement);
+        shortDescComponent.setText(program.Short_description);
     }
 }
-// Function to update the program breadcrumb element (ensure it's always set)
-function updateProgramBreadcrumb(programDetails) {
+// Always update the program breadcrumb
+function updateProgramBreadcrumb(program) {
     const programBreadcrumbElement = document.getElementById("programBreadcrumb");
     if (programBreadcrumbElement) {
         const programBreadcrumb = new (0, _core.WFComponent)(programBreadcrumbElement);
-        programBreadcrumb.setText(programDetails.fieldData.name);
-        // Update the href attribute to append the program param to the current link
+        programBreadcrumb.setText(program.name);
+        // Optionally update the link to include the program param
         const currentHref = programBreadcrumbElement.getAttribute("href") || "#";
         const url = new URL(currentHref, window.location.origin);
-        url.searchParams.set("program", programDetails.id);
+        url.searchParams.set("program", program.id.toString());
         programBreadcrumb.setAttribute("href", url.toString());
     }
 }
-// Helper function to update program breadcrumb from program items
-function updateProgramBreadcrumbFromItems(programData, subscription) {
-    const programBreadcrumbElement = document.getElementById("programBreadcrumb");
-    if (programBreadcrumbElement) {
-        const programBreadcrumb = new (0, _core.WFComponent)(programBreadcrumbElement);
-        const matchedProgram = programData.items.find((program)=>program.id === subscription.program_id);
-        if (matchedProgram) {
-            // Set the breadcrumb text to the program name
-            programBreadcrumb.setText(matchedProgram.fieldData.name);
-            // Update the href attribute to append the program param to the current link
-            const currentHref = programBreadcrumbElement.getAttribute("href") || "#";
-            const url = new URL(currentHref, window.location.origin);
-            url.searchParams.set("program", matchedProgram.id);
-            programBreadcrumb.setAttribute("href", url.toString());
-        }
-    }
-}
-// Function to update subscription details on the page
+// -------------------- SUBSCRIPTION UPDATER -------------------- //
 function updateSubscriptionDetails(subscription) {
-    // Update Subscription Type
+    // Subscription Type
     const subscriptionTypeElement = document.getElementById("subscription_type");
     if (subscriptionTypeElement) {
         const subscriptionType = new (0, _core.WFComponent)(subscriptionTypeElement);
         subscriptionType.setText(subscription.subscription_type);
     }
-    // Update Next Invoice Date
+    // Next Invoice Date
     const nextInvoiceDateElement = document.getElementById("nextInvoiceDate");
     if (nextInvoiceDateElement) {
         const nextInvoiceDate = new (0, _core.WFComponent)(nextInvoiceDateElement);
-        const nextChargeDateStr = subscription.next_charge_date;
-        if (nextChargeDateStr) {
-            // Create a new Date object
-            const date = new Date(nextChargeDateStr + "T00:00:00Z");
-            // Check if the date is valid
-            if (!isNaN(date.getTime())) {
-                const formattedDate = date.toLocaleDateString("en-US", {
-                    timeZone: "UTC"
-                });
-                nextInvoiceDate.setText(formattedDate);
-            } else nextInvoiceDate.setText("Upon Student Approval");
+        if (subscription.next_charge_date) {
+            // Here, next_charge_date is a numeric timestamp (e.g. 1743638400000), not a string
+            const date = new Date(subscription.next_charge_date);
+            if (!isNaN(date.getTime())) nextInvoiceDate.setText(date.toLocaleDateString("en-US", {
+                timeZone: "UTC"
+            }));
+            else nextInvoiceDate.setText("Upon Student Approval");
         } else nextInvoiceDate.setText("Upon Student Approval");
     }
-    // Update Next Invoice Amount
+    // Next Invoice Amount
     const nextInvoiceAmountElement = document.getElementById("nextInvoiceAmount");
     if (nextInvoiceAmountElement) {
         const nextInvoiceAmount = new (0, _core.WFComponent)(nextInvoiceAmountElement);
         const amount = subscription.next_charge_amount;
-        if (amount === 0 || amount === null || amount === undefined) {
-            // Hide the parent .bento_box.is-dashboard.is-payment-detail element
+        if (!amount || amount === 0) {
+            // Hide the parent .bento_box if no future charge
             const parentElement = nextInvoiceAmountElement.closest(".bento_box.is-dashboard.is-payment-detail");
             if (parentElement instanceof HTMLElement) parentElement.style.display = "none";
         } else nextInvoiceAmount.setText(`$${amount}`);
     }
-    // Update FinAid Coupon
+    // FinAid Coupon
     const couponElement = document.getElementById("finAidCoupon");
     if (couponElement) {
         const coupon = new (0, _core.WFComponent)(couponElement);
-        if (subscription.coupon && subscription.coupon !== "None") {
-            // Remove 'FINAID' from the beginning and add '% discount Applied'
-            const couponText = subscription.coupon.replace(/^FINAID/, "").trim() + "% Discount";
-            coupon.setText(couponText);
+        if (subscription.coupon) {
+            // If there's a FIN AID coupon, format it accordingly
+            const couponText = subscription.coupon.replace(/^FINAID/, "").trim();
+            coupon.setText(couponText ? `${couponText}% Discount` : "None");
         } else coupon.setText("None");
     }
-    // Display or hide finAidDisclaimer based on coupon
+    // Hide or show finAidDisclaimer
     const finAidDisclaimer = document.getElementById("finAidDisclaimer");
-    if (finAidDisclaimer) {
-        if (subscription.coupon) finAidDisclaimer.style.display = "block";
-        else finAidDisclaimer.style.display = "none";
-    }
+    if (finAidDisclaimer) finAidDisclaimer.style.display = subscription.coupon ? "block" : "none";
 }
-// Function to filter unique sessions based on session_id
+// -------------------- DYNAMIC LISTS (Sessions & Invoices) -------------------- //
+// Unique sessions if you want to deduplicate by `session`
 function getUniqueSessions(sessions) {
     const uniqueMap = {};
-    sessions.forEach((session)=>{
-        if (!uniqueMap[session.session_id]) uniqueMap[session.session_id] = session;
+    sessions.forEach((sess)=>{
+        if (!uniqueMap[sess.session]) uniqueMap[sess.session] = sess;
     });
     return Object.values(uniqueMap);
 }
-// Function to initialize and render the dynamic sessions list
-async function initializeDynamicSessionList(containerSelector, sessions, subscription, caregiver // Add caregiver flag as parameter
-) {
-    // Initialize a new instance of WFDynamicList for Sessions
+// Initialize the sessions list
+async function initializeDynamicSessionList(containerSelector, sessions, subscription, caregiver) {
     const list = new (0, _core.WFDynamicList)(containerSelector, {
         rowSelector: "#listRegistrationCard",
         loaderSelector: "#listRegistrationloading",
         emptySelector: "#listRegistrationEmpty"
     });
-    // Customize the rendering of the loader
+    // Loader
     list.loaderRenderer((loaderElement)=>{
         loaderElement.setStyle({
             display: "flex"
         });
         return loaderElement;
     });
-    // Customize the rendering of the empty state
+    // Empty state
     list.emptyRenderer((emptyElement)=>{
         emptyElement.setStyle({
             display: "flex"
         });
         return emptyElement;
     });
-    // Customize the rendering of list items (Session Cards)
+    // Row renderer
     list.rowRenderer(({ rowData, rowElement })=>{
         const sessionCard = new (0, _core.WFComponent)(rowElement);
-        // Set the session day
+        const sessionDetails = rowData.session_details;
+        // #cardSessionDay
         const sessionDayComponent = sessionCard.getChildAsComponent("#cardSessionDay");
-        if (sessionDayComponent) {
-            const sessionDay = new (0, _core.WFComponent)(sessionDayComponent.getElement());
-            sessionDay.setText(rowData.weekday);
-        }
-        // Set the session time block
+        if (sessionDayComponent) sessionDayComponent.setText(sessionDetails?.Weekday || `Session #${rowData.session}`);
+        // #cardSessionTimeBlock
         const sessionTimeBlockComponent = sessionCard.getChildAsComponent("#cardSessionTimeBlock");
-        if (sessionTimeBlockComponent) {
-            const sessionTimeBlock = new (0, _core.WFComponent)(sessionTimeBlockComponent.getElement());
-            sessionTimeBlock.setText(rowData.time_block);
-        }
-        // Set the session location
+        if (sessionTimeBlockComponent) sessionTimeBlockComponent.setText(sessionDetails?.Time_block || "N/A");
+        // #cardSessionLocation
         const sessionLocationComponent = sessionCard.getChildAsComponent("#cardSessionLocation");
         if (sessionLocationComponent) {
-            const sessionLocation = new (0, _core.WFComponent)(sessionLocationComponent.getElement());
-            sessionLocation.setText(rowData.location);
+            const locationName = sessionDetails?.location_details?.Name || "N/A";
+            sessionLocationComponent.setText(locationName);
         }
-        // Set the link with program, workshop, and subscription parameters
+        // Build the link
         const sessionCardElement = sessionCard.getElement();
         const currentHref = sessionCardElement.getAttribute("href") || "#";
-        // Parse existing URL to avoid malformed URLs
         const url = new URL(currentHref, window.location.origin);
-        // Append or set query parameters using subscription and session details
-        url.searchParams.set("program", subscription.program_id);
-        url.searchParams.set("workshop", subscription.workshop_id);
-        url.searchParams.set("session", rowData.session_id);
+        // Use subscription fields
+        url.searchParams.set("program", subscription.program.toString());
+        url.searchParams.set("workshop", subscription.workshop.toString());
+        url.searchParams.set("session", rowData.session.toString());
         url.searchParams.set("subscription", subscription.id.toString());
-        // Update the href attribute with the correct parameters
         sessionCardElement.setAttribute("href", url.toString());
-        // If the user is a caregiver, update the caregiver_breadcrumbs on session selection
+        // If caregiver, update localStorage on click
         if (caregiver) sessionCardElement.addEventListener("click", ()=>{
             const caregiverBreadcrumbs = localStorage.getItem("caregiver_breadcrumbs");
             if (caregiverBreadcrumbs) try {
                 const breadcrumbs = JSON.parse(caregiverBreadcrumbs);
-                // Update with session details
-                breadcrumbs.session_id = rowData.session_id;
-                breadcrumbs.session_weekday = rowData.weekday;
-                breadcrumbs.session_time_block = rowData.time_block;
-                // Save back to localStorage
+                // Update session details
+                breadcrumbs.session_id = rowData.session.toString();
+                breadcrumbs.session_weekday = sessionDetails?.Weekday || "";
+                breadcrumbs.session_time_block = sessionDetails?.Time_block || "";
+                // Save
                 localStorage.setItem("caregiver_breadcrumbs", JSON.stringify(breadcrumbs));
             } catch (e) {
                 console.error("Error updating caregiver_breadcrumbs:", e);
             }
-            else console.warn("No caregiver_breadcrumbs found in localStorage.");
         });
-        // Show the list item
+        // Show this row
         rowElement.setStyle({
             display: "block"
         });
         return rowElement;
     });
-    // Load and display session data
+    // Load data
     try {
-        // Enable the loading state
         list.changeLoadingStatus(true);
-        // Set the data to be displayed in the dynamic list
         list.setData(sessions);
-        // Disable the loading state
         list.changeLoadingStatus(false);
     } catch (error) {
         console.error("Error initializing dynamic session list:", error);
@@ -628,7 +472,96 @@ async function initializeDynamicSessionList(containerSelector, sessions, subscri
         list.changeLoadingStatus(false);
     }
 }
-// Function to trigger a click on the success_trigger element
+// Initialize the past invoices list
+async function initializePastInvoicesList(containerSelector, invoices) {
+    const list = new (0, _core.WFDynamicList)(containerSelector, {
+        rowSelector: "#invoiceLine"
+    });
+    list.loaderRenderer((loaderElement)=>{
+        loaderElement.setStyle({
+            display: "flex"
+        });
+        return loaderElement;
+    });
+    list.emptyRenderer((emptyElement)=>{
+        emptyElement.setStyle({
+            display: "flex"
+        });
+        return emptyElement;
+    });
+    list.rowRenderer(({ rowData, rowElement })=>{
+        const invoiceRow = new (0, _core.WFComponent)(rowElement);
+        // Date
+        const invoiceDateComponent = invoiceRow.getChildAsComponent("#invoiceDate");
+        if (invoiceDateComponent) {
+            const dateComp = new (0, _core.WFComponent)(invoiceDateComponent.getElement());
+            const formattedDate = new Date(rowData.created_at).toLocaleDateString();
+            dateComp.setText(formattedDate);
+        }
+        // Amount
+        const invoiceAmountComponent = invoiceRow.getChildAsComponent("#invoiceAmount");
+        if (invoiceAmountComponent) {
+            const amountComp = new (0, _core.WFComponent)(invoiceAmountComponent.getElement());
+            amountComp.setText(`$${rowData.amount_total}`);
+        }
+        // Receipt link
+        const receiptButtonComponent = invoiceRow.getChildAsComponent("#receiptButton");
+        if (receiptButtonComponent) receiptButtonComponent.setAttribute("href", rowData.reciept_url);
+        // Show the invoice row
+        rowElement.setStyle({
+            display: "table-row"
+        });
+        return rowElement;
+    });
+    try {
+        list.changeLoadingStatus(true);
+        list.setData(invoices);
+        list.changeLoadingStatus(false);
+    } catch (error) {
+        console.error("Error initializing past invoices list:", error);
+        list.setData([]);
+        list.changeLoadingStatus(false);
+    }
+}
+// -------------------- CAREGIVER BREADCRUMB HANDLING -------------------- //
+function handleBreadcrumbs(caregiver, subscription) {
+    const userBreadcrumbList = document.getElementById("userBreadcrumbList");
+    const caregiverBreadcrumbList = document.getElementById("caregiverBreadcrumbList");
+    if (caregiver) {
+        if (userBreadcrumbList) userBreadcrumbList.style.display = "none";
+        if (caregiverBreadcrumbList) caregiverBreadcrumbList.style.display = "flex";
+        // Load caregiver breadcrumbs
+        const caregiverBreadcrumbs = localStorage.getItem("caregiver_breadcrumbs");
+        if (caregiverBreadcrumbs) try {
+            const breadcrumbs = JSON.parse(caregiverBreadcrumbs);
+            // Update the Student breadcrumb
+            const studentBreadcrumb = document.getElementById("studentBreadcrumb");
+            if (studentBreadcrumb) {
+                const studentComp = new (0, _core.WFComponent)(studentBreadcrumb);
+                studentComp.setText(breadcrumbs.student_name);
+                const currentHref = studentBreadcrumb.getAttribute("href") || "/dashboard/student/profile";
+                const url = new URL(currentHref, window.location.origin);
+                url.searchParams.set("id", breadcrumbs.student_id.toString());
+                studentComp.setAttribute("href", url.toString());
+            }
+            // Update the workshopBreadcrumbCaregiver
+            const workshopBreadcrumbCaregiver = document.getElementById("workshopBreadcrumbCaregiver");
+            if (workshopBreadcrumbCaregiver) {
+                const wcComp = new (0, _core.WFComponent)(workshopBreadcrumbCaregiver);
+                const workshopName = breadcrumbs.workshop_name || breadcrumbs.program_name || "N/A";
+                wcComp.setText(workshopName);
+            }
+        } catch (parseError) {
+            console.error("Error parsing caregiver_breadcrumbs:", parseError);
+        }
+        else console.warn("No caregiver_breadcrumbs found in localStorage.");
+    } else {
+        // Non-caregiver
+        if (userBreadcrumbList) userBreadcrumbList.style.display = "flex";
+        if (caregiverBreadcrumbList) caregiverBreadcrumbList.style.display = "none";
+    }
+}
+// -------------------- SUCCESS TRIGGER -------------------- //
 function triggerSuccessEvent(selector) {
     const successTrigger = document.querySelector(selector);
     if (successTrigger instanceof HTMLElement) successTrigger.click();

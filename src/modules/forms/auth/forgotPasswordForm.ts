@@ -4,25 +4,20 @@ import {
   createValidationFunction,
   toggleError,
 } from "../../../utils/formUtils";
-import {
-  validateEmail,
-  validatePasswordRequirements,
-} from "../../../utils/validationUtils";
+import { validateEmail } from "../../../utils/validationUtils";
 import { handleRecaptcha } from "../../../utils/recaptchaUtils"; // Ensure this function is implemented for reCAPTCHA handling
 import { apiClient } from "../../../api/apiConfig"; // Ensure you have set up this API client for server interactions
 
-type forgotPasswordResponse = {
+type ForgotPasswordResponse = {
   status: string;
   message: string;
 };
 
 export const forgotPasswordForm = () => {
-  // Initialize the main form component with the specified form ID
   const form = new WFFormComponent<{
     email: string;
   }>("#forgotPasswordForm");
 
-  // define fields with associated validation rules and messages
   const fields = [
     {
       input: new WFComponent("#emailInput"),
@@ -32,41 +27,39 @@ export const forgotPasswordForm = () => {
     },
   ];
 
-  // Component for displaying any request-level error messages
   const requestError = new WFComponent("#requestError");
   const requestAnimation = new WFComponent("#requestingAnimation");
 
-  // Initialize validation for text input fields
-  fields.slice(0).forEach(({ input, error, validationFn, message }) => {
+  fields.forEach(({ input, error, validationFn, message }) => {
     setupValidation(
       input,
       error,
       createValidationFunction(input, validationFn, message),
-      requestError // Includes clearing requestError on input change
+      requestError
     );
   });
 
-  // Handle form submission
+  // Helper function to handle API responses
+  const handleApiResponse = (response: ForgotPasswordResponse) => {
+    if (response.status !== "success") {
+      throw new Error(response.message || "An unknown error occurred.");
+    }
+    return response;
+  };
+
   form.onFormSubmit(async (formData, event) => {
-    event.preventDefault(); // Stop the form from submitting normally
+    event.preventDefault();
     let isFormValid = true;
 
     requestAnimation.setStyle({ display: "flex" }); // Show loading animation
+    toggleError(requestError, "", false); // Clear previous errors
 
-    // Clear the requestError at the beginning of each submission attempt
-    toggleError(requestError, "", false);
-
-    // Validate all fields before proceeding
+    // Validate all fields
     fields.forEach(({ input, error, validationFn, message }) => {
-      const errorMessage = createValidationFunction(
-        input,
-        validationFn,
-        message
-      )();
+      const errorMessage = createValidationFunction(input, validationFn, message)();
 
       if (errorMessage) {
         toggleError(error, errorMessage, true);
-
         isFormValid = false;
       } else {
         toggleError(error, "", false);
@@ -74,9 +67,8 @@ export const forgotPasswordForm = () => {
     });
 
     if (!isFormValid) {
-      console.log("Validation failed:", formData);
       toggleError(requestError, "Please correct all errors above.", true);
-      requestAnimation.setStyle({ display: "none" }); // Hide loading animation
+      requestAnimation.setStyle({ display: "none" });
       return;
     }
 
@@ -86,37 +78,29 @@ export const forgotPasswordForm = () => {
 
     if (!isRecaptchaValid) {
       toggleError(requestError, "reCAPTCHA verification failed.", true);
-      requestAnimation.setStyle({ display: "none" }); // Hide loading animation
+      requestAnimation.setStyle({ display: "none" });
       return;
     }
 
-    // Prepare data for submission
-    formData = form.getFormData();
-    console.log("Form data:", formData);
-
-    // Post data to a server endpoint
+    // Submit data
     try {
       const response = await apiClient
-        .post<forgotPasswordResponse>("/auth/forgot-password", {
-          data: formData,
-        })
+        .post<ForgotPasswordResponse>("/auth/forgot-password", { data: formData })
         .fetch();
-      if (response.status === "success") {
-        form.showSuccessState(); // Display success state for the form
-        const successTrigger = new WFComponent("#onSuccessTrigger");
-        successTrigger.getElement()?.click();
-      } else {
-        throw new Error("Failed to create account.");
-      }
-    } catch (error) {
-      console.error("Account creation failed:", error);
+
+      // Process the response
+      handleApiResponse(response);
+
+      form.showSuccessState(); // Display success state for the form
+      const successTrigger = new WFComponent("#onSuccessTrigger");
+      successTrigger.getElement()?.click();
+    } catch (error: any) {
+      console.error("Forgot password failed:", error);
       toggleError(
         requestError,
-        error.response.data.message || "Failed to create account.",
+        error.message || "Failed to send reset password request.",
         true
       );
-      requestAnimation.setStyle({ display: "none" }); // Hide loading animation
-      return;
     } finally {
       requestAnimation.setStyle({ display: "none" }); // Hide loading animation
     }

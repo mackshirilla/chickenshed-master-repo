@@ -228,27 +228,33 @@ const setupNavigationHandlers = (slider: WFSlider) => {
 
   submitStepFour.on("click", async (event) => {
     event.preventDefault();
-
+  
     // Show the loading animation
     stepFourRequestingAnimation.setStyle({ display: "block" });
-
+  
     try {
       // Load the current registration state
       const registrationState = loadState();
-
-      // Submit the registration state to the /session_registrations/begin_checkout endpoint
+  
+      // Get the current URL without query parameters
+      const currentUrl = window.location.origin;
+  
+      // Submit the registration state and current URL to the /registration/checkout endpoint
       const response = await apiClient
-        .post<BeginCheckout>("/session_registrations/begin_checkout", {
-          data: registrationState,
+        .post<BeginCheckout>("/registration/checkout", {
+          data: {
+            registrationState,
+            currentUrl, // Include the current URL
+          },
         })
         .fetch();
-
+  
       // Handle the response (e.g., redirect to the payment page or show a success message)
       console.log("Registration checkout response:", response);
-
+  
       // Mark Step 4 as completed
       markStepAsCompleted(4);
-
+  
       // Redirect based on the response: prioritize `setup_url` if it exists, otherwise use `checkout_url`
       if (response.setup_url) {
         window.location.href = response.setup_url;
@@ -266,4 +272,5 @@ const setupNavigationHandlers = (slider: WFSlider) => {
       stepFourRequestingAnimation.setStyle({ display: "none" });
     }
   });
+  
 };

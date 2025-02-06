@@ -1,4 +1,4 @@
-// Assuming the code is from a file like src/registration/initializeProgramList.ts
+// src/registration/initializeProgramList.ts
 
 import { fetchPrograms, Program } from "../../api/programs";
 import { saveSelectedProgram } from "./state/selectedProgram";
@@ -44,9 +44,7 @@ export const initializeProgramList = async () => {
     list.rowRenderer(({ rowData, rowElement, index }) => {
       const programCard = new WFComponent(rowElement);
       const programTitle = programCard.getChildAsComponent("#cardProgramTitle");
-      const programDescription = programCard.getChildAsComponent(
-        "#cardProgramDescription"
-      );
+      const programDescription = programCard.getChildAsComponent("#cardProgramDescription");
       const programAges = programCard.getChildAsComponent("#cardProgramAges");
       const programImage =
         programCard.getChildAsComponent<HTMLImageElement>("#cardProgramImage");
@@ -57,21 +55,21 @@ export const initializeProgramList = async () => {
       const inputId = `programInput-${index}`;
       programInput.setAttribute("id", inputId);
       programInput.setAttribute("name", "program"); // Group radio buttons
-      programInput.setAttribute("value", rowData.id);
+      programInput.setAttribute("value", rowData.id.toString()); // Convert to string if necessary
 
       // Associate the label with the radio button
-      const programLabel = programCard.getChildAsComponent("label");
+      const programLabel = programCard.getChildAsComponent<HTMLLabelElement>("label");
       programLabel.setAttribute("for", inputId);
 
-      // Updated property access to match the response object
-      programTitle.setText(rowData.fieldData["name"]);
-      programDescription.setText(rowData.fieldData["short-description"]);
-      programAges.setText(rowData.fieldData["age-range"]);
-      programImage.setAttribute("src", rowData.fieldData["main-image"].url);
+      // Access properties directly from rowData
+      programTitle.setText(rowData.name);
+      programDescription.setText(rowData.Short_description);
+      programAges.setText(rowData.Age_range);
+      programImage.setAttribute("src", rowData.Main_Image);
+      programImage.setAttribute("alt", rowData.name ? `${rowData.name} Image` : "Program Image");
 
       // Get the #registrationTrue element inside the row
-      const registrationTrueElement =
-        programCard.getChildAsComponent("#registrationTrue");
+      const registrationTrueElement = programCard.getChildAsComponent<HTMLElement>("#registrationTrue");
 
       // Set display and input disabled state based on the 'registered' property
       if (rowData.registered === true) {
@@ -84,10 +82,10 @@ export const initializeProgramList = async () => {
 
       programInput.on("change", () => {
         saveSelectedProgram({
-          id: rowData.id,
-          name: rowData.fieldData["name"],
-          imageUrl: rowData.fieldData["main-image"].url,
-          ageRange: rowData.fieldData["age-range"],
+          id: rowData.id.toString(), // Convert to string to match expected type
+          name: rowData.name,
+          imageUrl: rowData.Main_Image,
+          ageRange: rowData.Age_range,
         });
       });
 
@@ -95,7 +93,7 @@ export const initializeProgramList = async () => {
       return rowElement;
     });
 
-    list.setData(programs);
+    list.setData(programs); // Directly set the 'programs' array
   } catch (error) {
     console.error("Error loading programs:", error);
     list.setData([]);

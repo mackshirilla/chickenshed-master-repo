@@ -19,7 +19,6 @@ type CreateAccountResponse = {
 };
 
 export const signupForm = () => {
-  // Initialize the main form component with the specified form ID
   const form = new WFFormComponent<{
     first_name: string;
     last_name: string;
@@ -28,7 +27,6 @@ export const signupForm = () => {
     terms_of_service: boolean;
   }>("#createAccountForm");
 
-  // Define fields with associated validation rules and messages
   const fields = [
     {
       input: new WFComponent("#firstNameInput"),
@@ -61,21 +59,18 @@ export const signupForm = () => {
     },
   ];
 
-  // Component for displaying any request-level error messages
   const requestError = new WFComponent("#requestError");
   const requestAnimation = new WFComponent("#requestingAnimation");
 
-  // Initialize validation for text input fields
   fields.forEach(({ input, error, validationFn, message }) => {
     setupValidation(
       input,
       error,
       createValidationFunction(input, validationFn, message),
-      requestError // Includes clearing requestError on input change
+      requestError
     );
   });
 
-  // Initialize validation specifically for the checkbox
   const termsField = fields[fields.length - 1];
   setupValidation(
     termsField.input,
@@ -84,7 +79,6 @@ export const signupForm = () => {
     requestError
   );
 
-  // Dynamic feedback for password requirements
   const passwordRequirements = [
     new WFComponent("#lengthCheck"),
     new WFComponent("#lowercaseCheck"),
@@ -93,7 +87,6 @@ export const signupForm = () => {
     new WFComponent("#charCheck"),
   ];
 
-  // Function to update visual indicators for password strength based on user input
   const updatePasswordRequirements = (password: string) => {
     const checks = [
       password.length >= 8,
@@ -112,7 +105,6 @@ export const signupForm = () => {
     });
   };
 
-  // Attach a handler to update password requirements as the user types
   fields
     .find(({ input }) => input === fields[3].input)
     ?.input.on("input", () => {
@@ -120,17 +112,22 @@ export const signupForm = () => {
       updatePasswordRequirements(inputElement.value);
     });
 
-  // Handle form submission
+  // Helper function to handle API responses
+  const handleApiResponse = (response: CreateAccountResponse) => {
+    if (response.status !== "success") {
+      throw new Error(response.message || "An unknown error occurred.");
+    }
+    return response;
+  };
+
   form.onFormSubmit(async (formData, event) => {
-    event.preventDefault(); // Stop the form from submitting normally
+    event.preventDefault();
     let isFormValid = true;
 
     requestAnimation.setStyle({ display: "flex" }); // Show loading animation
+    toggleError(requestError, "", false); // Clear previous errors
 
-    // Clear the requestError at the beginning of each submission attempt
-    toggleError(requestError, "", false);
-
-    // Validate all fields before proceeding
+    // Validate all fields
     fields.forEach(({ input, error, validationFn, message }) => {
       const errorMessage =
         input === termsField.input
@@ -139,7 +136,6 @@ export const signupForm = () => {
 
       if (errorMessage) {
         toggleError(error, errorMessage, true);
-
         isFormValid = false;
       } else {
         toggleError(error, "", false);
@@ -147,51 +143,38 @@ export const signupForm = () => {
     });
 
     if (!isFormValid) {
-      console.log("Validation failed:", formData);
       toggleError(requestError, "Please correct all errors above.", true);
-      requestAnimation.setStyle({ display: "none" }); // Hide loading animation
+      requestAnimation.setStyle({ display: "none" });
       return;
     }
 
-    // Handle reCAPTCHA verification
+    // Handle reCAPTCHA
     const recaptchaAction = "create_account";
     const isRecaptchaValid = await handleRecaptcha(recaptchaAction);
 
     if (!isRecaptchaValid) {
       toggleError(requestError, "reCAPTCHA verification failed.", true);
-      requestAnimation.setStyle({ display: "none" }); // Hide loading animation
+      requestAnimation.setStyle({ display: "none" });
       return;
     }
 
-    // Prepare data for submission
-    formData = form.getFormData();
-    console.log("Form data:", formData);
-
-    // Post data to a server endpoint
+    // Submit data
     try {
       const response = await apiClient
-        .post<CreateAccountResponse>("/auth/create-account", {
-          data: formData,
-        })
+        .post<CreateAccountResponse>("/auth/create-account", { data: formData })
         .fetch();
-      if (response.status === "success") {
-        form.showSuccessState(); // Display success state for the form
-        const successTrigger = new WFComponent("#onSuccessTrigger");
-        successTrigger.getElement()?.click();
-      } else {
-        throw new Error("Failed to create account.");
-      }
-    } catch (error) {
-      console.error("Account creation failed:", error);
-      toggleError(
-        requestError,
-        error.response.data.message || "Failed to create account.",
-        true
-      );
-      requestAnimation.setStyle({ display: "none" }); // Hide loading animation
-      return;
+
+      // Process the response
+      handleApiResponse(response);
+
+      form.showSuccessState();
+      const successTrigger = new WFComponent("#onSuccessTrigger");
+      successTrigger.getElement()?.click();
+    } catch (error: any) {
+      console.error("Error:", error);
+      toggleError(requestError, error.message || "Failed to create account.", true);
     } finally {
-      requestAnimation.setStyle({ display: "none" }); // Hide loading animation
+      requestAnimation.setStyle({ display: "none" });
     }
   });
 };

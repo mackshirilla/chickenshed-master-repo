@@ -563,33 +563,24 @@ const initializeStepOne = (slider)=>{
     });
     // Initialize validation for each field
     fieldsStepOne.forEach(({ input, error, validationFn, message })=>{
-        // Optional Enhancement: Real-time validation on blur
         input.on("blur", ()=>{
             const errorMessage = (0, _formUtils.createValidationFunction)(input, validationFn, message)();
-            console.log(`Validation on blur for ${input.getElement().id}: "${errorMessage}"`);
             if (errorMessage) (0, _formUtils.toggleError)(error, errorMessage, true);
             else (0, _formUtils.toggleError)(error, "", false);
         });
-        // Setup overall validation
         (0, _formUtils.setupValidation)(input, error, (0, _formUtils.createValidationFunction)(input, validationFn, message), new (0, _core.WFComponent)("#submitStepOneError"));
     });
     // Handle form submission for Step 1
     formStepOne.onFormSubmit(async (formData, event)=>{
-        event.preventDefault(); // Stop default form submission
+        event.preventDefault();
         console.log("Form submission initiated.");
         const stepOneRequestingAnimation = new (0, _core.WFComponent)("#stepOneRequestingAnimation");
         stepOneRequestingAnimation.setStyle({
             display: "block"
-        }); // Show loading animation
-        console.log("Loading animation displayed.");
+        });
         let isFormValid = true;
-        // Log the phone number input value on submit
-        const phoneInputElement = document.querySelector("#phoneNumberInput");
-        console.log(`Phone Number Input Value on Submit: "${phoneInputElement.value}"`);
-        // Validate all fields before proceeding
         fieldsStepOne.forEach(({ input, error, validationFn, message })=>{
             const errorMessage = (0, _formUtils.createValidationFunction)(input, validationFn, message)();
-            console.log(`Validation result for ${input.getElement().id}: "${errorMessage}"`);
             if (errorMessage) {
                 (0, _formUtils.toggleError)(error, errorMessage, true);
                 isFormValid = false;
@@ -597,158 +588,83 @@ const initializeStepOne = (slider)=>{
         });
         if (!isFormValid) {
             (0, _formUtils.toggleError)(new (0, _core.WFComponent)("#submitStepOneError"), "Please correct all errors above.", true);
-            console.log("Form validation failed. Errors are displayed.");
             stepOneRequestingAnimation.setStyle({
                 display: "none"
-            }); // Hide loading animation
-            console.log("Loading animation hidden.");
+            });
             return;
         }
-        // **Fetch 'current_student' from localStorage at the time of submission**
         const existingStudentNow = localStorage.getItem("current_student");
-        console.log(`existingStudentNow: ${existingStudentNow}`);
-        // Check if a student profile already exists in local storage
         if (existingStudentNow) {
             try {
                 const student = JSON.parse(existingStudentNow);
-                console.log("Existing student found during submission:", student);
-                // Compare form data with existing student data
                 const formMatchesExisting = compareFormDataWithStudent(formData, student);
-                console.log(`Form matches existing student: ${formMatchesExisting}`);
                 if (formMatchesExisting) {
-                    // Skip creating a new profile and navigate directly to the next step
-                    console.log("Form data matches existing student. Navigating to next step.");
                     slider.goNext();
                     stepOneRequestingAnimation.setStyle({
                         display: "none"
-                    }); // Hide loading animation
-                    console.log("Loading animation hidden.");
+                    });
                     return;
                 } else {
-                    // Make a request to update the existing student profile
-                    console.log("Form data does not match existing student. Initiating update request.");
-                    try {
-                        const updateResponse = await updateStudentProfile(student.id, formData);
-                        if (updateResponse.status === "success") {
-                            const { profile } = updateResponse;
-                            localStorage.setItem("current_student", JSON.stringify(profile));
-                            console.log("Student profile updated successfully:", profile);
-                            slider.goNext(); // Proceed to next step
-                            console.log("Navigated to the next step after successful update.");
-                        } else {
-                            // Extract and display the server's error message
-                            const serverErrorMessage = updateResponse.message || "Unexpected response from the server.";
-                            console.warn("Server Error during update:", serverErrorMessage);
-                            (0, _formUtils.toggleError)(new (0, _core.WFComponent)("#submitStepOneError"), serverErrorMessage, true);
-                            console.log("Server error message displayed to the user.");
-                        }
-                    } catch (updateError) {
-                        // Handle errors thrown during the update request
-                        console.error("Error during update request:", updateError);
-                        const serverErrorMessage = updateError.response?.data?.message || updateError.message || "Failed to update student profile.";
-                        (0, _formUtils.toggleError)(new (0, _core.WFComponent)("#submitStepOneError"), serverErrorMessage, true);
-                        console.log("Server-provided error message displayed to the user.");
-                    }
+                    const updatedProfile = await updateStudentProfile(student.id, formData);
+                    localStorage.setItem("current_student", JSON.stringify(updatedProfile));
+                    slider.goNext();
                 }
-            } catch (parseError) {
-                console.error("Error parsing existing_student during submission:", parseError);
-                (0, _formUtils.toggleError)(new (0, _core.WFComponent)("#submitStepOneError"), "Invalid existing student data. Please try again.", true);
+            } catch (error) {
+                const errorMessage = error.response?.data?.message || error.message || "Failed to update student profile.";
+                (0, _formUtils.toggleError)(new (0, _core.WFComponent)("#submitStepOneError"), errorMessage, true);
             } finally{
                 stepOneRequestingAnimation.setStyle({
                     display: "none"
-                }); // Hide loading animation
-                console.log("Loading animation hidden.");
+                });
             }
             return;
         }
-        // Handle reCAPTCHA verification
         const recaptchaAction = "create_account";
-        console.log(`Handling reCAPTCHA for action: "${recaptchaAction}"`);
         const isRecaptchaValid = await (0, _recaptchaUtils.handleRecaptcha)(recaptchaAction);
-        console.log(`reCAPTCHA validation result: ${isRecaptchaValid}`);
         if (!isRecaptchaValid) {
             (0, _formUtils.toggleError)(new (0, _core.WFComponent)("#submitStepOneError"), "reCAPTCHA verification failed. Please try again.", true);
-            console.log("reCAPTCHA validation failed. Error message displayed.");
             stepOneRequestingAnimation.setStyle({
                 display: "none"
-            }); // Hide loading animation
-            console.log("Loading animation hidden.");
+            });
             return;
         }
-        // Post data to a server endpoint to create a new student profile
         try {
-            console.log("Sending POST request to create student profile.");
             const response = await (0, _apiConfig.apiClient).post("/profiles/students/create-student", {
                 data: formData
             }).fetch();
-            console.log(`Response received: ${JSON.stringify(response)}`);
-            if (response.status === "success") {
-                const { profile } = response;
-                localStorage.setItem("current_student", JSON.stringify(profile));
-                console.log("current_student set in localStorage:", profile);
-                slider.goNext(); // Proceed to next step
-                console.log("Navigated to the next step after successful submission.");
-            } else {
-                // Extract and display the server's error message
-                const serverErrorMessage = response.message || "Unexpected response from the server.";
-                console.warn("Server Error during creation:", serverErrorMessage);
-                (0, _formUtils.toggleError)(new (0, _core.WFComponent)("#submitStepOneError"), serverErrorMessage, true);
-                console.log("Server error message displayed to the user.");
-            }
+            if (response.status === "success" && response.profile) {
+                localStorage.setItem("current_student", JSON.stringify(response.profile));
+                slider.goNext();
+            } else throw new Error(response.message || "Failed to create student profile.");
         } catch (error) {
-            console.error("Error during form submission:", error);
-            const serverErrorMessage = error.response?.data?.message || error.message || "Failed to create account.";
-            (0, _formUtils.toggleError)(new (0, _core.WFComponent)("#submitStepOneError"), serverErrorMessage, true);
-            console.log("Server-provided error message displayed to the user.");
+            const errorMessage = error.response?.data?.message || error.message || "Failed to create student profile.";
+            (0, _formUtils.toggleError)(new (0, _core.WFComponent)("#submitStepOneError"), errorMessage, true);
         } finally{
             stepOneRequestingAnimation.setStyle({
                 display: "none"
-            }); // Hide loading animation
-            console.log("Loading animation hidden in finally block.");
+            });
         }
     });
 };
-/**
- * Helper function to format phone number.
- */ function formatPhoneNumber(value) {
+function formatPhoneNumber(value) {
     const cleaned = value.replace(/\D/g, "");
-    let formatted = "";
-    if (cleaned.length <= 3) formatted = cleaned;
-    else if (cleaned.length <= 6) formatted = `(${cleaned.slice(0, 3)}) ${cleaned.slice(3)}`;
-    else formatted = `(${cleaned.slice(0, 3)}) ${cleaned.slice(3, 6)}-${cleaned.slice(6, 10)}`;
-    return formatted;
+    return cleaned.length <= 3 ? cleaned : cleaned.length <= 6 ? `(${cleaned.slice(0, 3)}) ${cleaned.slice(3)}` : `(${cleaned.slice(0, 3)}) ${cleaned.slice(3, 6)}-${cleaned.slice(6, 10)}`;
 }
-/**
- * Compares form data with existing student data.
- * @param formData The data submitted from the form.
- * @param student The existing student data from local storage.
- * @returns True if all fields match, false otherwise.
- */ function compareFormDataWithStudent(formData, student) {
+function compareFormDataWithStudent(formData, student) {
     return formData.first_name === student.first_name && formData.last_name === student.last_name && formData.email === student.email && formData.phone === student.phone && formData.send_texts === student.send_texts;
 }
-/**
- * Updates the existing student profile by making a POST request.
- * @param id The ID of the existing student.
- * @param formData The updated form data.
- * @returns The response from the server.
- */ async function updateStudentProfile(id, formData) {
-    try {
-        console.log(`Sending POST request to update student profile with ID: ${id}`);
-        const response = await (0, _apiConfig.apiClient).post("/profiles/students/create-student-updated", {
-            data: {
-                ...formData,
-                id: id
-            }
-        }).fetch();
-        console.log(`Update response received: ${JSON.stringify(response)}`);
-        return response;
-    } catch (error) {
-        console.error("Error updating student profile:", error);
-        throw error;
-    }
+async function updateStudentProfile(id, formData) {
+    const response = await (0, _apiConfig.apiClient).post("/profiles/students/create-student-updated", {
+        data: {
+            ...formData,
+            id
+        }
+    }).fetch();
+    if (response.status === "success" && response.profile) return response.profile;
+    else throw new Error(response.message || "Failed to update student profile.");
 }
 
-},{"@xatom/core":"j9zXV","../../../../../utils/formUtils":"hvg7i","../../../../../utils/validationUtils":"dMBjH","../../../../../utils/recaptchaUtils":"d0IfT","../../../../../api/apiConfig":"2Lx0S","../../../../../auth/authConfig":"gkGgf","@parcel/transformer-js/src/esmodule-helpers.js":"5oERU"}],"hvg7i":[function(require,module,exports) {
+},{"@xatom/core":"j9zXV","../../../../../utils/formUtils":"hvg7i","../../../../../utils/validationUtils":"dMBjH","../../../../../api/apiConfig":"2Lx0S","../../../../../auth/authConfig":"gkGgf","@parcel/transformer-js/src/esmodule-helpers.js":"5oERU","../../../../../utils/recaptchaUtils":"d0IfT"}],"hvg7i":[function(require,module,exports) {
 var parcelHelpers = require("@parcel/transformer-js/src/esmodule-helpers.js");
 parcelHelpers.defineInteropFlag(exports);
 parcelHelpers.export(exports, "toggleError", ()=>toggleError);
@@ -1336,7 +1252,7 @@ var _sidebar = require("../sidebar");
 const initializeStepFour = (slider)=>{
     console.log("Initialize Step Four Form - Invite Caregiver");
     // Initialize Caregiver Dialog/Form
-    (0, _caregiverDialog.initializeCaregiverDialog)(slider);
+    (0, _caregiverDialog.initializeCaregiverDialog)();
     // Handle Step 4 submission (Continue to Step 5)
     const submitStepFour = new (0, _core.WFComponent)("#submitStepFour");
     submitStepFour.on("click", ()=>{
@@ -1353,7 +1269,6 @@ const initializeStepFour = (slider)=>{
 };
 
 },{"@xatom/core":"j9zXV","../caregiverDialog":"bPXQO","../sidebar":"5kv9Q","@parcel/transformer-js/src/esmodule-helpers.js":"5oERU"}],"bPXQO":[function(require,module,exports) {
-// src/modules/forms/profiles/addStudentProfile/caregiverDialog.ts
 var parcelHelpers = require("@parcel/transformer-js/src/esmodule-helpers.js");
 parcelHelpers.defineInteropFlag(exports);
 parcelHelpers.export(exports, "initializeCaregiverDialog", ()=>initializeCaregiverDialog);
@@ -1362,7 +1277,7 @@ var _formUtils = require("../../../../utils/formUtils");
 var _validationUtils = require("../../../../utils/validationUtils");
 var _recaptchaUtils = require("../../../../utils/recaptchaUtils");
 var _apiConfig = require("../../../../api/apiConfig");
-const initializeCaregiverDialog = (slider)=>{
+const initializeCaregiverDialog = ()=>{
     console.log("Initialize Invite Caregiver Form");
     // Caregiver Form Initialization
     const caregiverForm = new (0, _core.WFFormComponent)("#inviteCaregiverDialog");
@@ -1421,10 +1336,12 @@ const initializeCaregiverDialog = (slider)=>{
             if (response.status === "success") {
                 const onSuccessTrigger = new (0, _core.WFComponent)("#inviteCaregiverSuccessTrigger");
                 caregiverForm.showSuccessState();
-                onSuccessTrigger.getElement().click();
-            }
+                onSuccessTrigger.getElement()?.click();
+            } else throw new Error(response.message || "Failed to invite caregiver.");
         } catch (error) {
-            (0, _formUtils.toggleError)(new (0, _core.WFComponent)("#submitInviteCaregiverError"), error.response?.data?.message || "Failed to create account.", true);
+            console.error("Error inviting caregiver:", error);
+            const errorMessage = error.response?.data?.message || error.message || "Failed to invite caregiver.";
+            (0, _formUtils.toggleError)(new (0, _core.WFComponent)("#submitInviteCaregiverError"), errorMessage, true);
         } finally{
             caregiverRequestingAnimation.setStyle({
                 display: "none"
@@ -1437,7 +1354,7 @@ const initializeCaregiverDialog = (slider)=>{
         caregiverForm.resetForm();
         caregiverForm.showForm();
         const onSuccessTrigger = new (0, _core.WFComponent)("#inviteCaregiverSuccessTrigger");
-        onSuccessTrigger.getElement().click();
+        onSuccessTrigger.getElement()?.click();
     });
 };
 
@@ -1681,7 +1598,6 @@ const initializeStepEight = (slider, getFormData)=>{
     const studentFamily = new (0, _core.WFComponent)("#studentFamily");
     const studentPhotoTrue = new (0, _core.WFComponent)("#studentPhotoTrue");
     const studentPhotoFalse = new (0, _core.WFComponent)("#studentPhotoFalse");
-    // New components for displaying if the student opted for text messages
     const studentTextTrue = new (0, _core.WFComponent)("#studentTextTrue");
     const studentTextFalse = new (0, _core.WFComponent)("#studentTextFalse");
     // Function to set form review items from collected data
@@ -1785,8 +1701,8 @@ const initializeStepEight = (slider, getFormData)=>{
             const response = await (0, _apiConfig.apiClient).post("/profiles/students/complete-profile", {
                 data: formData
             }).fetch();
-            if (response.status === "success") {
-                const { profile } = response;
+            if (response.status === "success" && response.profile) {
+                const profile = response.profile;
                 // Update the profile link template with the returned data
                 const studentProfileLinkTemplate = new (0, _core.WFComponent)("#studentCard");
                 studentProfileLinkTemplate.updateTextViaAttrVar({
@@ -1795,30 +1711,25 @@ const initializeStepEight = (slider, getFormData)=>{
                     phone: profile.phone
                 });
                 // **Updated code to append ?id={student_id} to the #studentCard link**
-                // Get the student card element and update its href attribute
                 const studentCardElement = studentProfileLinkTemplate.getElement();
                 const currentHref = studentCardElement.getAttribute("href") || "";
                 const newHref = `${currentHref}?id=${profile.id}`;
                 studentCardElement.setAttribute("href", newHref);
                 // Update the profile card image with the profile picture if available
                 const profileCardImg = new (0, _image.WFImage)("#profileCardImg");
-                if (profile.profile_pic && profile.profile_pic.url != null) profileCardImg.setImage(profile.profile_pic.url);
+                if (profile.profile_pic?.url) profileCardImg.setImage(profile.profile_pic.url);
                 else {
-                    // Set a default placeholder image if profile_pic is not available
                     console.log("No profile picture available");
                     profileCardImg.setImage("https://cdn.prod.website-files.com/667f080f36260b9afbdc46b2/667f080f36260b9afbdc46be_placeholder.svg");
                 }
                 // Clear current student and uploaded image from local storage
                 localStorage.removeItem("current_student");
                 localStorage.removeItem("image_upload");
-                // Hide loading animation
                 stepEightRequestingAnimation.setStyle({
                     display: "none"
-                });
-                // Navigate to the next step
-                slider.goNext();
+                }); // Hide loading animation
+                slider.goNext(); // Navigate to the next step
             } else {
-                // Handle cases where response.status is not "success"
                 (0, _formUtils.toggleError)(submitStepEightError, response.message || "Failed to complete profile.", true);
                 stepEightRequestingAnimation.setStyle({
                     display: "none"

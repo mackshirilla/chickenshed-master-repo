@@ -1,5 +1,3 @@
-// src/modules/forms/profiles/addStudentProfile/caregiverDialog.ts
-
 import { WFComponent, WFFormComponent } from "@xatom/core";
 import {
   setupValidation,
@@ -10,7 +8,7 @@ import { validateEmail } from "../../../../utils/validationUtils";
 import { handleRecaptcha } from "../../../../utils/recaptchaUtils";
 import { apiClient } from "../../../../api/apiConfig";
 
-export const initializeCaregiverDialog = (slider: WFSlider) => {
+export const initializeCaregiverDialog = () => {
   console.log("Initialize Invite Caregiver Form");
 
   // Caregiver Form Initialization
@@ -41,20 +39,14 @@ export const initializeCaregiverDialog = (slider: WFSlider) => {
   // Handle form submission for Caregiver Form
   caregiverForm.onFormSubmit(async (formData, event) => {
     event.preventDefault(); // Stop default form submission
-    const caregiverRequestingAnimation = new WFComponent(
-      "#caregiverRequestingAnimation"
-    );
+    const caregiverRequestingAnimation = new WFComponent("#caregiverRequestingAnimation");
     caregiverRequestingAnimation.setStyle({ display: "block" }); // Show loading animation
 
     let isFormValid = true;
 
     // Validate all fields before proceeding
     fieldsCaregiver.forEach(({ input, error, validationFn, message }) => {
-      const errorMessage = createValidationFunction(
-        input,
-        validationFn,
-        message
-      )();
+      const errorMessage = createValidationFunction(input, validationFn, message)();
       if (errorMessage) {
         toggleError(error, errorMessage, true);
         isFormValid = false;
@@ -90,22 +82,25 @@ export const initializeCaregiverDialog = (slider: WFSlider) => {
     // Post data to a server endpoint
     try {
       const response = await apiClient
-        .post("/caregivers/invite", {
+        .post<{ status: string; message?: string }>("/caregivers/invite", {
           data: formData,
         })
         .fetch();
 
       if (response.status === "success") {
-        const onSuccessTrigger = new WFComponent(
-          "#inviteCaregiverSuccessTrigger"
-        );
+        const onSuccessTrigger = new WFComponent("#inviteCaregiverSuccessTrigger");
         caregiverForm.showSuccessState();
-        onSuccessTrigger.getElement().click();
+        onSuccessTrigger.getElement()?.click();
+      } else {
+        throw new Error(response.message || "Failed to invite caregiver.");
       }
     } catch (error: any) {
+      console.error("Error inviting caregiver:", error);
+      const errorMessage =
+        error.response?.data?.message || error.message || "Failed to invite caregiver.";
       toggleError(
         new WFComponent("#submitInviteCaregiverError"),
-        error.response?.data?.message || "Failed to create account.",
+        errorMessage,
         true
       );
     } finally {
@@ -119,6 +114,6 @@ export const initializeCaregiverDialog = (slider: WFSlider) => {
     caregiverForm.resetForm();
     caregiverForm.showForm();
     const onSuccessTrigger = new WFComponent("#inviteCaregiverSuccessTrigger");
-    onSuccessTrigger.getElement().click();
+    onSuccessTrigger.getElement()?.click();
   });
 };

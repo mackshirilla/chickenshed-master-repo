@@ -297,25 +297,26 @@ const completeUserProfile = async ()=>{
             const response = await (0, _apiConfig.apiClient).post("profiles/complete-profile", {
                 data: completeProfileData
             }).fetch();
-            if (response.status === "success") {
-                const { profile } = response;
+            // Check for response status and handle accordingly
+            if (response.status === "success" && response.profile) {
+                const profile = response.profile;
                 new (0, _core.WFComponent)("#profileLinkTemplate").updateTextViaAttrVar({
                     name: `${profile.first_name} ${profile.last_name}`,
                     email: profile.email,
                     phone: profile.phone
                 });
                 // Set profile picture, or fallback if no URL exists
-                const profilePicUrl = profile.profile_pic && profile.profile_pic.url ? profile.profile_pic.url : "path/to/default/image.jpg"; // Default fallback image
+                const profilePicUrl = profile.profile_pic && profile.profile_pic.url ? profile.profile_pic.url : "https://cdn.prod.website-files.com/667f080f36260b9afbdc46b2/667f080f36260b9afbdc46be_placeholder.svg"; // Default fallback image
                 new (0, _image.WFImage)("#profileCardImg").setImage(profilePicUrl);
                 requestingAnimation.setStyle({
                     display: "none"
                 }); // Hide animation on success
                 submitStepThree.removeAttribute("disabled"); // Re-enable button on success
                 slider.goNext();
-            }
+            } else throw new Error(response.message || "Failed to complete profile.");
         } catch (error) {
-            console.error("Error completing profile", error);
-            (0, _formUtils.toggleError)(new (0, _core.WFComponent)("#submitStepThreeError"), "An error occurred. Please try again.", true);
+            console.error("Error completing profile:", error);
+            (0, _formUtils.toggleError)(new (0, _core.WFComponent)("#submitStepThreeError"), error.response?.data?.message || error.message || "An error occurred. Please try again.", true);
             requestingAnimation.setStyle({
                 display: "none"
             }); // Hide animation on error

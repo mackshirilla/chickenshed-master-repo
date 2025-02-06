@@ -89,8 +89,9 @@ export const initializeSessionList = async (
     const label = sessionCard.getChildAsComponent("label");
     label.setAttribute("for", inputId);
 
+    // Updated property access to match the Session interface
     sessionWeekday.setText(rowData.fieldData.weekday);
-    sessionTime.setText(rowData.fieldData["time-block"]);
+    sessionTime.setText(rowData.fieldData.timeBlock);
     sessionLocation.setText(rowData.fieldData.location);
 
     const initialPrice = updateSessionPrice(sessionPrice, rowData);
@@ -282,16 +283,16 @@ const updateSessionPrice = (sessionPrice: WFComponent, rowData: Session) => {
 
   switch (selectedPricingOption) {
     case "Annual":
-      price = rowData.fieldData["displayed-annual-price"];
+      price = rowData.fieldData.displayedAnnualPrice;
       break;
     case "Monthly":
-      price = rowData.fieldData["displayed-monthly-price"];
+      price = rowData.fieldData.displayedMonthlyPrice;
       break;
     case "Pay-Per-Semester":
-      price = rowData.fieldData["displayed-one-off-price"];
+      price = rowData.fieldData.displayedSemesterPrice;
       break;
     case "Deposit":
-      price = rowData.fieldData["displayed-deposit-price"];
+      price = rowData.fieldData.displayedDepositPrice;
       break;
     default:
       price = ""; // Or any default value you choose

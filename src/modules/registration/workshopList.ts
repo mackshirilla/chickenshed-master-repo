@@ -1,3 +1,4 @@
+// workshopList.ts
 import { fetchWorkshops, Workshop } from "../../api/workshops";
 import { saveSelectedWorkshop } from "./state/selectedWorkshop";
 import { WFDynamicList, WFComponent } from "@xatom/core";
@@ -71,11 +72,11 @@ export const initializeWorkshopList = async (programId: string) => {
       const workshopLabel = workshopCard.getChildAsComponent("label");
       workshopLabel.setAttribute("for", inputId);
 
-      // Updated property access to match the response object
-      workshopTitle.setText(rowData.fieldData["name"]);
-      workshopDescription.setText(rowData.fieldData["short-description"]);
-      workshopAges.setText(rowData.fieldData["age-range"]);
-      workshopImage.setAttribute("src", rowData.fieldData["main-image"].url);
+      // Updated property access to match the Workshop interface
+      workshopTitle.setText(rowData.fieldData.name);
+      workshopDescription.setText(rowData.fieldData.shortDescription);
+      workshopAges.setText(rowData.fieldData.ageRange);
+      workshopImage.setAttribute("src", rowData.fieldData.mainImage.url);
 
       // Get the #registrationTrue element inside the row
       const registrationTrueElement =
@@ -93,9 +94,9 @@ export const initializeWorkshopList = async (programId: string) => {
       workshopInput.on("change", () => {
         saveSelectedWorkshop({
           id: rowData.id,
-          name: rowData.fieldData["name"],
-          imageUrl: rowData.fieldData["main-image"].url,
-          ageRange: rowData.fieldData["age-range"],
+          name: rowData.fieldData.name,
+          imageUrl: rowData.fieldData.mainImage.url,
+          ageRange: rowData.fieldData.ageRange,
         });
       });
 

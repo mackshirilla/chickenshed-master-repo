@@ -153,7 +153,7 @@ var _recaptchaUtils = require("../../../utils/recaptchaUtils");
 var _apiConfig = require("../../../api/apiConfig");
 var _authConfig = require("../../../auth/authConfig");
 const loginForm = ()=>{
-    const form = new (0, _core.WFFormComponent)("#loginForm"); // Replace with your login form ID
+    const form = new (0, _core.WFFormComponent)("#loginForm");
     const fields = [
         {
             input: new (0, _core.WFComponent)("#emailInput"),
@@ -168,24 +168,24 @@ const loginForm = ()=>{
             message: "Please enter your password."
         }
     ];
-    // Component for displaying any request-level error messages
     const requestError = new (0, _core.WFComponent)("#requestError");
     const requestAnimation = new (0, _core.WFComponent)("#requestingAnimation");
-    // Initialize validation for text input fields
     fields.forEach(({ input, error, validationFn, message })=>{
-        (0, _formUtils.setupValidation)(input, error, (0, _formUtils.createValidationFunction)(input, validationFn, message), requestError // Includes clearing requestError on input change
-        );
+        (0, _formUtils.setupValidation)(input, error, (0, _formUtils.createValidationFunction)(input, validationFn, message), requestError);
     });
+    // Helper function to handle API responses
+    const handleApiResponse = (response)=>{
+        if (response.status !== "success") throw new Error(response.message || "An unknown error occurred.");
+        return response;
+    };
     form.onFormSubmit(async (formData, event)=>{
         event.preventDefault();
-        // Clear any previous request-level error messages
-        (0, _formUtils.toggleError)(requestError, "", false);
-        // Display loading animation
+        (0, _formUtils.toggleError)(requestError, "", false); // Clear previous errors
         requestAnimation.setStyle({
             display: "flex"
-        });
+        }); // Show loading animation
         let isFormValid = true;
-        // Validate all fields before proceeding
+        // Validate all fields
         fields.forEach(({ input, error, validationFn, message })=>{
             const errorMessage = (0, _formUtils.createValidationFunction)(input, validationFn, message)();
             if (errorMessage) {
@@ -194,68 +194,59 @@ const loginForm = ()=>{
             } else (0, _formUtils.toggleError)(error, "", false);
         });
         if (!isFormValid) {
-            console.log("Validation failed:", formData);
             (0, _formUtils.toggleError)(requestError, "Please correct all errors above.", true);
             requestAnimation.setStyle({
                 display: "none"
-            }); // Hide loading animation
+            });
             return;
         }
         // Handle reCAPTCHA verification
-        const recaptchaAction = "login"; // Changed action to "login" for better context
+        const recaptchaAction = "login";
         const isRecaptchaValid = await (0, _recaptchaUtils.handleRecaptcha)(recaptchaAction);
         if (!isRecaptchaValid) {
             (0, _formUtils.toggleError)(requestError, "reCAPTCHA verification failed.", true);
             requestAnimation.setStyle({
                 display: "none"
-            }); // Hide loading animation
+            });
             return;
         }
-        // Prepare data for login request
-        formData = form.getFormData();
-        // Send login request to API
+        formData = form.getFormData(); // Prepare form data
         try {
             const response = await (0, _apiConfig.apiClient).post("/auth/login", {
                 data: formData
             }).fetch();
-            if (response.status === "success" && response.user) {
-                // Transform the API response to match the expected UserData format
-                const user = {
-                    user_id: response.user.user_id,
-                    email: response.user.email,
-                    role: response.user.role,
-                    profile: response.user.profile ? {
-                        profile_id: response.user.profile.profile_id,
-                        first_name: response.user.profile.first_name,
-                        last_name: response.user.profile.last_name,
-                        profile_pic: response.user.profile.profile_picture
-                    } : undefined
-                };
-                // Update userAuth and localStorage
-                (0, _authConfig.authManager).setUser(user, user.role, response.authToken // Set the auth token
-                );
-                // Determine the redirect URL based on user role
-                let redirectUrl = "/dashboard"; // Default redirect
-                if (user.role === "STUDENT") redirectUrl = "/student-dashboard";
-                else if (user.role === "USER") redirectUrl = "/dashboard";
-                else // Handle other roles or set a default
-                redirectUrl = "/dashboard";
-                // Optionally, check for a stored redirect URL
-                const storedRedirect = localStorage.getItem("loginRedirect");
-                if (storedRedirect) {
-                    redirectUrl = storedRedirect;
-                    localStorage.removeItem("loginRedirect");
-                }
-                // Navigate to the determined URL
-                (0, _core.navigate)(redirectUrl);
-            } else throw new Error(response.message || "Login failed.");
+            // Handle API response
+            const result = handleApiResponse(response);
+            // Transform the API response to match the expected UserData format
+            const user = {
+                user_id: result.user?.id || "",
+                email: result.user?.email || "",
+                role: result.user?.role || "GUEST",
+                profile: result.user?.profile ? {
+                    profile_id: result.user.profile.id,
+                    first_name: result.user.profile.first_name,
+                    last_name: result.user.profile.last_name,
+                    profile_pic: result.user.profile.profile_pic
+                } : undefined
+            };
+            // Update userAuth and localStorage
+            (0, _authConfig.authManager).setUser(user, user.role, result.authToken // Set the auth token
+            );
+            // Determine the redirect URL based on user role
+            let redirectUrl = "/dashboard"; // Default redirect
+            if (user.role === "STUDENT") redirectUrl = "/student-dashboard";
+            else if (user.role === "USER") redirectUrl = "/dashboard";
+            else redirectUrl = "/dashboard";
+            // Optionally, check for a stored redirect URL
+            const storedRedirect = localStorage.getItem("loginRedirect");
+            if (storedRedirect) {
+                redirectUrl = storedRedirect;
+                localStorage.removeItem("loginRedirect");
+            }
+            (0, _core.navigate)(redirectUrl); // Navigate to the determined URL
         } catch (error) {
             console.error("Login failed:", error);
-            (0, _formUtils.toggleError)(requestError, error.response?.data?.message || error.message || "Failed to login.", true);
-            requestAnimation.setStyle({
-                display: "none"
-            }); // Hide loading animation
-            return;
+            (0, _formUtils.toggleError)(requestError, error.message || "Failed to login.", true);
         } finally{
             requestAnimation.setStyle({
                 display: "none"

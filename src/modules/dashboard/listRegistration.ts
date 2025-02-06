@@ -4,24 +4,28 @@ import { WFDynamicList, WFComponent } from "@xatom/core";
 import { WFImage } from "@xatom/image";
 import { apiClient } from "../../api/apiConfig";
 
-// Define the Subscription interface based on the API response
+// Define the shape of the program_details object
+interface ProgramDetails {
+  name: string;
+  Main_Image: string;
+}
+
+// Define the updated Subscription interface based on the new API response
 interface Subscription {
   id: number;
-  created_at: number; // Unix timestamp in milliseconds
-  status: string; // e.g., 'Active', 'Inactive', 'Deposit Paid'
-  subscription_type: string; // e.g., 'Annual', 'Monthly'
-  program_name: string;
-  workshop_name: string;
-  coupon?: string | null;
-  deposit_amount: number;
-  start_date: string; // ISO date string
-  next_charge_date?: string | null;
-  stripe_subscription_id?: string | null;
+  status: string; // e.g., 'Deposit Paid'
+  subscription_type: string; // e.g., 'Annual', 'Monthly', 'Pay-Per-Semester'
+  program: number; // numeric program ID
+  workshop: number; // numeric workshop ID (may be 0 if none)
+  next_charge_date: string | null;
+  next_charge_amount: number;
+  stripe_subscription_id: string;
   user_id: number;
-  program_id: string;
-  workshop_id: string;
+  contact_id: number;
   sale_id: number;
-  image_url: string;
+  created_at: number; // Unix timestamp in milliseconds
+  program_details: ProgramDetails;
+  // workshop_details?: WorkshopDetails; // We won't use this anymore
 }
 
 // Define the structure of the API response
@@ -74,30 +78,31 @@ export async function initializeDynamicSubscriptionList(
   list.rowRenderer(({ rowData, rowElement }) => {
     const registrationCard = new WFComponent(rowElement);
 
+    // Use only program details for the image
+    const imageUrl = rowData.program_details.Main_Image;
+
     // Set the profile image
     const registrationImage = new WFImage(
-      registrationCard
-        .getChildAsComponent("#cardRegistrationImage") // Using ID selector
-        .getElement()
+      registrationCard.getChildAsComponent("#cardRegistrationImage").getElement()
     );
-    if (rowData.image_url) {
-      registrationImage.setImage(rowData.image_url);
+    if (imageUrl) {
+      registrationImage.setImage(imageUrl);
     } else {
       registrationImage.setImage(
         "https://cdn.prod.website-files.com/66102236c16b61185de61fe3/66102236c16b61185de6204e_placeholder.svg"
       );
     }
 
-    // Set the program name
-    const programName =
-      registrationCard.getChildAsComponent("#cardProgramName"); // Using ID selector
-    programName.setText(rowData.program_name);
+    // Set the program name from program_details
+    const programNameComponent = registrationCard.getChildAsComponent(
+      "#cardProgramName"
+    );
+    programNameComponent.setText(rowData.program_details.name);
 
-    // Append the subscription parameter to the existing href
-    const currentHref =
-      registrationCard.getElement().getAttribute("href") || "#";
+    // Append the program parameter to the existing href
+    const currentHref = registrationCard.getElement().getAttribute("href") || "#";
     const separator = currentHref.includes("?") ? "&" : "?";
-    const newHref = `${currentHref}${separator}program=${rowData.program_id}`;
+    const newHref = `${currentHref}${separator}program=${rowData.program}`;
     registrationCard.getElement().setAttribute("href", newHref);
 
     // Show the list item
@@ -115,18 +120,20 @@ export async function initializeDynamicSubscriptionList(
 
     const subscriptions = await fetchSubscriptions();
 
-    // Filter unique subscriptions by program_id
-    const uniqueSubscriptionsMap = new Map<string, Subscription>();
+    // Filter unique subscriptions by numeric program ID
+    const uniqueSubscriptionsMap = new Map<number, Subscription>();
     subscriptions.forEach((sub) => {
-      if (!uniqueSubscriptionsMap.has(sub.program_id)) {
-        uniqueSubscriptionsMap.set(sub.program_id, sub);
+      // Only add the subscription if we haven't encountered this program ID yet
+      if (!uniqueSubscriptionsMap.has(sub.program)) {
+        uniqueSubscriptionsMap.set(sub.program, sub);
       }
     });
+
     const uniqueSubscriptions = Array.from(uniqueSubscriptionsMap.values());
 
-    // Sort subscriptions alphabetically by program name
+    // Sort subscriptions alphabetically by program_details.name
     uniqueSubscriptions.sort((a, b) =>
-      a.program_name.localeCompare(b.program_name)
+      a.program_details.name.localeCompare(b.program_details.name)
     );
 
     // Set the data to be displayed in the dynamic list

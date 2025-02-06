@@ -158,25 +158,45 @@ const magicLogin = async ()=>{
         resetPassword: urlParams.get("password-reset") || ""
     };
     const requestError = new (0, _core.WFComponent)("#requestError");
+    // Helper function to handle API responses
+    const handleApiResponse = (response)=>{
+        if (response.status !== "success") throw new Error(response.message || "An unknown error occurred.");
+        return response;
+    };
     if (params.token) try {
         const response = await (0, _apiConfig.apiClient).post("/auth/magic-login", {
             data: {
                 magic_token: params.token
             }
         }).fetch();
-        if (response.status === "success") {
-            // Set user information in AuthManager
-            (0, _authConfig.authManager).setUser(response.user, response.user.role, response.authToken);
-            // Handle navigation based on reset-password parameter
-            if (params.resetPassword === "true") (0, _core.navigate)("/create-account/reset-password");
-            else (0, _core.navigate)("/create-account/complete-profile");
-        } else throw new Error("Login failed.");
+        // Process the response
+        const result = handleApiResponse(response);
+        // Transform the API response to match the expected UserData format
+        const user = {
+            user_id: result.user?.user_id || "",
+            email: result.user?.email || "",
+            role: result.user?.role || "GUEST",
+            profile: result.user?.profile ? {
+                profile_id: result.user.profile.profile_id,
+                first_name: result.user.profile.first_name,
+                last_name: result.user.profile.last_name,
+                profile_pic: result.user.profile.profile_picture
+            } : undefined
+        };
+        // Set user information in AuthManager
+        (0, _authConfig.authManager).setUser(user, user.role, result.authToken);
+        // Handle navigation based on reset-password parameter
+        if (params.resetPassword === "true") (0, _core.navigate)("/create-account/reset-password");
+        else (0, _core.navigate)("/create-account/complete-profile");
     } catch (error) {
         console.error("Error during magic login:", error);
-        (0, _formUtils.toggleError)(requestError, error.response.data.message || "Failed to log in.", true);
+        (0, _formUtils.toggleError)(requestError, error.message || "Failed to log in.", true);
     }
-    else // Handle case where token is missing
-    console.error("Missing token in URL parameter");
+    else {
+        // Handle case where token is missing
+        console.error("Missing token in URL parameter");
+        (0, _formUtils.toggleError)(requestError, "Missing magic token in the URL.", true);
+    }
 };
 
 },{"@xatom/core":"j9zXV","../../utils/formUtils":"hvg7i","../../api/apiConfig":"2Lx0S","../../auth/authConfig":"gkGgf","@parcel/transformer-js/src/esmodule-helpers.js":"5oERU"}],"hvg7i":[function(require,module,exports) {

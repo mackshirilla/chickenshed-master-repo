@@ -107,4 +107,7 @@ export const addStudentProfile = async () => {
   initializeStepEight(slider, getFormData); // Pass both slider and getFormData to Step Eight
   initializeStepNine(slider);
   initializeStepTen(slider);
+
+  
 };
+

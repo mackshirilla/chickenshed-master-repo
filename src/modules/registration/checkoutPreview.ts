@@ -40,7 +40,7 @@ export const initializeCheckoutPreview = async () => {
     const registrationState = loadState();
 
     const response = await apiClient
-      .post<CheckoutPreviewResponse>("/registration/checkout-preview", {
+      .post<CheckoutPreviewResponse>("/registration/checkout-preview_new", {
         data: registrationState,
       })
       .fetch();

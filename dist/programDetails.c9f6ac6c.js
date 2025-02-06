@@ -199,10 +199,10 @@ function updateProgramDetails(program) {
     const programImageElement = document.getElementById("programImage");
     if (programImageElement) {
         const programImage = new (0, _image.WFImage)(programImageElement);
-        if (program.response.result.fieldData["main-image"].url) {
-            programImage.setImage(program.response.result.fieldData["main-image"].url);
+        if (program.Main_Image) {
+            programImage.setImage(program.Main_Image);
             const imgElement = programImage.getElement();
-            imgElement.alt = program.response.result.fieldData["main-image"].alt || "Program Image";
+            imgElement.alt = "Program Image";
         } else {
             programImage.setImage("https://cdn.prod.website-files.com/plugins/Basic/assets/placeholder.60f9b1840c.svg");
             const imgElement = programImage.getElement();
@@ -213,25 +213,25 @@ function updateProgramDetails(program) {
     const programNameElement = document.getElementById("programName");
     if (programNameElement) {
         const programName = new (0, _core.WFComponent)(programNameElement);
-        programName.setText(program.response.result.fieldData.name);
+        programName.setText(program.name);
     }
     // Update program breadcrumb
     const programBreadcrumbElement = document.getElementById("programBreadcrumb");
     if (programBreadcrumbElement) {
         const programBreadcrumb = new (0, _core.WFComponent)(programBreadcrumbElement);
-        programBreadcrumb.setText(program.response.result.fieldData.name);
+        programBreadcrumb.setText(program.name);
     }
     // Update Program Subheading
     const programSubheadingElement = document.getElementById("programSubheading");
     if (programSubheadingElement) {
         const programSubheading = new (0, _core.WFComponent)(programSubheadingElement);
-        programSubheading.setText(program.response.result.fieldData.subheading);
+        programSubheading.setText(program.Subheading);
     }
     // Update Program Short Description
     const programShortDescriptionElement = document.getElementById("programShortDescription");
     if (programShortDescriptionElement) {
         const programShortDescription = new (0, _core.WFComponent)(programShortDescriptionElement);
-        programShortDescription.setText(program.response.result.fieldData["short-description"]);
+        programShortDescription.setText(program.Short_description);
     }
 }
 // Function to display an error message on the page
@@ -263,45 +263,48 @@ async function initializeDynamicSubscriptionList(containerSelector, subscription
     });
     list.rowRenderer(({ rowData, rowElement })=>{
         const registrationCard = new (0, _core.WFComponent)(rowElement);
-        // Set the program image using image_url or fallback to program image
+        // 1) Create a fallback for the program's image if missing
+        const programImageFallback = program.Main_Image ? program.Main_Image : "https://cdn.prod.website-files.com/66102236c16b61185de61fe3/66102236c16b61185de6204e_placeholder.svg";
+        // 2) Grab the card image element
         const registrationImageComponent = registrationCard.getChildAsComponent("#cardRegistrationImage");
         if (registrationImageComponent) {
             const registrationImage = new (0, _image.WFImage)(registrationImageComponent.getElement());
-            if (rowData.image_url) registrationImage.setImage(rowData.image_url);
-            else if (program.response.result.fieldData["main-image"].url) registrationImage.setImage(program.response.result.fieldData["main-image"].url);
-            else registrationImage.setImage("https://cdn.prod.website-files.com/66102236c16b61185de61fe3/66102236c16b61185de6204e_placeholder.svg");
+            // Use the subscription's image, otherwise fall back to the program's.
+            if (rowData.image_url && rowData.image_url.trim() !== "") registrationImage.setImage(rowData.image_url);
+            else registrationImage.setImage(programImageFallback);
         }
-        // Set the program name
+        // 3) Set the program name (from the top-level `program` object)
         const programNameComponent = registrationCard.getChildAsComponent("#cardProgramName");
-        if (programNameComponent) programNameComponent.setText(rowData.program_name);
-        // Set the workshop name
+        if (programNameComponent) programNameComponent.setText(program.name);
+        // 4) Set the workshop name if present
         const workshopNameComponent = registrationCard.getChildAsComponent("#cardWorkshopName");
-        if (workshopNameComponent) workshopNameComponent.setText(rowData.workshop_name);
-        // Set the link with subscription and workshop parameters
+        if (workshopNameComponent) workshopNameComponent.setText(rowData.workshop_name || "");
+        // 5) Build the link with subscription and workshop parameters
         const subscriptionCardElement = registrationCard.getElement();
         const currentHref = subscriptionCardElement.getAttribute("href") || "#";
         const url = new URL(currentHref, window.location.origin);
-        url.searchParams.set("program", rowData.program_id);
-        url.searchParams.set("workshop", rowData.workshop_id);
+        url.searchParams.set("program", rowData.program.toString());
+        url.searchParams.set("workshop", rowData.workshop.toString());
         url.searchParams.set("subscription", rowData.id.toString());
         subscriptionCardElement.setAttribute("href", url.toString());
-        // Get the #cardActivePill and #cardDepositPill elements
+        // 6) Handle status pills (#cardActivePill and #cardDepositPill)
         const cardActivePill = registrationCard.getChildAsComponent("#cardActivePill");
         const cardDepositPill = registrationCard.getChildAsComponent("#cardDepositPill");
-        // Hide both pills by default
+        // Hide both by default
         cardActivePill.setStyle({
             display: "none"
         });
         cardDepositPill.setStyle({
             display: "none"
         });
-        // Set display based on the status
+        // Show relevant pill by status
         if (rowData.status === "Active") cardActivePill.setStyle({
             display: "block"
         });
         else if (rowData.status === "Deposit Paid") cardDepositPill.setStyle({
             display: "block"
         });
+        // Ensure the row is visible
         rowElement.setStyle({
             display: "block"
         });

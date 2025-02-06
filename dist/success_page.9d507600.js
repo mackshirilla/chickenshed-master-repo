@@ -213,7 +213,6 @@ class RegistrationCard {
         // Since #registrationCard is the link element, initialize it accordingly
         this.card = new (0, _core.WFComponent)(cardElement);
         // Initialize child elements within the link
-        // Assuming that these elements are nested inside the <a id="registrationCard">
         this.image = new (0, _image.WFImage)(this.card.getChildAsComponent("#cardRegistrationImage").getElement());
         this.programName = this.card.getChildAsComponent("#cardProgramName");
         this.workshopName = this.card.getChildAsComponent("#cardWorkshopName");
@@ -221,10 +220,10 @@ class RegistrationCard {
         this.invoiceDate = this.card.getChildAsComponent("#cardInvoiceDate");
         this.activePill = this.card.getChildAsComponent("#cardActivePill");
         this.depositPill = this.card.getChildAsComponent("#cardDepositPill");
-        this.successMessage = new (0, _core.WFComponent)("#successMessage"); // Initialize success message
+        this.successMessage = new (0, _core.WFComponent)("#successMessage");
         // Initialize programId to an empty string
         this.programId = "";
-        // Log if any essential child elements are missing
+        // Log warnings if any essential child elements are missing
         if (!this.programName) console.warn("Element with id 'cardProgramName' not found within the registration card.");
         if (!this.workshopName) console.warn("Element with id 'cardWorkshopName' not found within the registration card.");
         if (!this.subscriptionType) console.warn("Element with id 'cardSubscriptionType' not found within the registration card.");
@@ -237,34 +236,38 @@ class RegistrationCard {
     // Method to populate the registration card with data
     populate(data) {
         console.log("Populating registration card with data.");
-        // Set Program ID
-        this.programId = data.program_id;
+        // Set Program ID (store as string for URL parameter)
+        this.programId = data.program.id.toString();
         console.log("Program ID set to:", this.programId);
         // Set Program Name
-        this.programName.setText(data.program_name);
-        console.log("Set programName:", data.program_name);
-        // Set Workshop Name
-        this.workshopName.setText(data.workshop_name);
-        console.log("Set workshopName:", data.workshop_name);
+        this.programName.setText(data.program.name);
+        console.log("Set programName:", data.program.name);
+        // Set Workshop Name (if workshop exists)
+        const workshopName = data.workshop ? data.workshop.Name : "";
+        this.workshopName.setText(workshopName);
+        console.log("Set workshopName:", workshopName);
         // Set Subscription Type
         this.subscriptionType.setText(data.subscription_type);
         console.log("Set subscriptionType:", data.subscription_type);
-        // Set Next Invoice Date
+        // Set Next Invoice Date (or show a fallback)
         const formattedDate = data.next_charge_date ? new Date(data.next_charge_date).toLocaleDateString() : "Upon Student Approval";
         this.invoiceDate.setText(formattedDate);
         console.log("Set invoiceDate:", formattedDate);
-        // Determine source for image and success message
-        const source = data.workshop ? data.workshop.fieldData : data.program.response.result.fieldData;
+        // Determine the image and success message source
+        // If there's a workshop, use the workshop fields; otherwise, use the program fields
+        const imageUrl = data.workshop?.Main_Image || data.program.Main_Image;
+        const successMessage = data.workshop?.Success_Page_Message || data.program.Success_Page_Message;
         // Set Registration Image
-        if (source["main-image"].url) {
-            this.image.setImage(source["main-image"].url);
+        if (imageUrl) {
+            this.image.setImage(imageUrl);
             const imgElement = this.image.getElement();
-            imgElement.alt = source["main-image"].alt || "Workshop Image";
+            // No alt field is present in the new data; use a placeholder or the name
+            imgElement.alt = data.workshop ? data.workshop.Name || "Chickenshed Workshop" : data.program.name || "Chickenshed Program";
             console.log("Set registration image URL and alt text.");
         }
         // Set Success Message
-        if (source["success-page-message"]) {
-            this.successMessage.setHTML(source["success-page-message"]);
+        if (successMessage) {
+            this.successMessage.setHTML(successMessage);
             const successMessageElement = this.successMessage.getElement();
             successMessageElement.style.display = "block";
             console.log("Set and displayed success message.");

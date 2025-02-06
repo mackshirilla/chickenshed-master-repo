@@ -349,9 +349,14 @@ const setupNavigationHandlers = (slider)=>{
         try {
             // Load the current registration state
             const registrationState = (0, _registrationState.loadState)();
-            // Submit the registration state to the /session_registrations/begin_checkout endpoint
-            const response = await (0, _apiConfig.apiClient).post("/session_registrations/begin_checkout", {
-                data: registrationState
+            // Get the current URL without query parameters
+            const currentUrl = window.location.origin;
+            // Submit the registration state and current URL to the /registration/checkout endpoint
+            const response = await (0, _apiConfig.apiClient).post("/registration/checkout", {
+                data: {
+                    registrationState,
+                    currentUrl
+                }
             }).fetch();
             // Handle the response (e.g., redirect to the payment page or show a success message)
             console.log("Registration checkout response:", response);
@@ -376,7 +381,7 @@ const setupNavigationHandlers = (slider)=>{
 };
 
 },{"./programList":"bA83c","./workshopList":"dZi8x","./sessionsList":"2dV61","./checkoutPreview":"fXOWt","./state/selectedProgram":"fu9J6","./state/selectedWorkshop":"BqVJq","@xatom/core":"j9zXV","@xatom/slider":"2zMuG","./components/sidebarIndicators":"8jLLI","./components/dialogHandler":"cywSa","./components/urlParamNavigator":"2IiT3","./state/registrationState":"jIQ60","../../api/apiConfig":"2Lx0S","@parcel/transformer-js/src/esmodule-helpers.js":"5oERU"}],"bA83c":[function(require,module,exports) {
-// Assuming the code is from a file like src/registration/initializeProgramList.ts
+// src/registration/initializeProgramList.ts
 var parcelHelpers = require("@parcel/transformer-js/src/esmodule-helpers.js");
 parcelHelpers.defineInteropFlag(exports);
 parcelHelpers.export(exports, "initializeProgramList", ()=>initializeProgramList);
@@ -428,15 +433,16 @@ const initializeProgramList = async ()=>{
             const inputId = `programInput-${index}`;
             programInput.setAttribute("id", inputId);
             programInput.setAttribute("name", "program"); // Group radio buttons
-            programInput.setAttribute("value", rowData.id);
+            programInput.setAttribute("value", rowData.id.toString()); // Convert to string if necessary
             // Associate the label with the radio button
             const programLabel = programCard.getChildAsComponent("label");
             programLabel.setAttribute("for", inputId);
-            // Updated property access to match the response object
-            programTitle.setText(rowData.fieldData["name"]);
-            programDescription.setText(rowData.fieldData["short-description"]);
-            programAges.setText(rowData.fieldData["age-range"]);
-            programImage.setAttribute("src", rowData.fieldData["main-image"].url);
+            // Access properties directly from rowData
+            programTitle.setText(rowData.name);
+            programDescription.setText(rowData.Short_description);
+            programAges.setText(rowData.Age_range);
+            programImage.setAttribute("src", rowData.Main_Image);
+            programImage.setAttribute("alt", rowData.name ? `${rowData.name} Image` : "Program Image");
             // Get the #registrationTrue element inside the row
             const registrationTrueElement = programCard.getChildAsComponent("#registrationTrue");
             // Set display and input disabled state based on the 'registered' property
@@ -453,10 +459,10 @@ const initializeProgramList = async ()=>{
             }
             programInput.on("change", ()=>{
                 (0, _selectedProgram.saveSelectedProgram)({
-                    id: rowData.id,
-                    name: rowData.fieldData["name"],
-                    imageUrl: rowData.fieldData["main-image"].url,
-                    ageRange: rowData.fieldData["age-range"]
+                    id: rowData.id.toString(),
+                    name: rowData.name,
+                    imageUrl: rowData.Main_Image,
+                    ageRange: rowData.Age_range
                 });
             });
             rowElement.setStyle({
@@ -464,7 +470,7 @@ const initializeProgramList = async ()=>{
             });
             return rowElement;
         });
-        list.setData(programs);
+        list.setData(programs); // Directly set the 'programs' array
     } catch (error) {
         console.error("Error loading programs:", error);
         list.setData([]);
@@ -472,7 +478,7 @@ const initializeProgramList = async ()=>{
 };
 
 },{"../../api/programs":"65sQp","./state/selectedProgram":"fu9J6","@xatom/core":"j9zXV","@parcel/transformer-js/src/esmodule-helpers.js":"5oERU"}],"65sQp":[function(require,module,exports) {
-// api/programs.ts
+// src/api/programs.ts
 var parcelHelpers = require("@parcel/transformer-js/src/esmodule-helpers.js");
 parcelHelpers.defineInteropFlag(exports);
 parcelHelpers.export(exports, "fetchPrograms", ()=>fetchPrograms);
@@ -480,14 +486,15 @@ parcelHelpers.export(exports, "fetchProgramById", ()=>fetchProgramById);
 var _apiConfig = require("./apiConfig");
 const fetchPrograms = async ()=>{
     try {
-        const response = await (0, _apiConfig.apiClient).get("/registration/programs").fetch();
+        const response = await (0, _apiConfig.apiClient).get("/registration/programs_new").fetch();
         return response.programs;
     } catch (error) {
         console.error("Error fetching programs:", error);
         throw error;
     }
 };
-const fetchProgramById = async (programId)=>{
+const fetchProgramById = async (programId // Changed to number to match the ID type
+)=>{
     try {
         const programs = await fetchPrograms();
         return programs.find((program)=>program.id === programId) || null;
@@ -523,6 +530,7 @@ const saveSelectedProgram = (program)=>{
 };
 
 },{"@parcel/transformer-js/src/esmodule-helpers.js":"5oERU"}],"dZi8x":[function(require,module,exports) {
+// workshopList.ts
 var parcelHelpers = require("@parcel/transformer-js/src/esmodule-helpers.js");
 parcelHelpers.defineInteropFlag(exports);
 parcelHelpers.export(exports, "initializeWorkshopList", ()=>initializeWorkshopList);
@@ -576,11 +584,11 @@ const initializeWorkshopList = async (programId)=>{
             workshopInput.setAttribute("value", rowData.id);
             const workshopLabel = workshopCard.getChildAsComponent("label");
             workshopLabel.setAttribute("for", inputId);
-            // Updated property access to match the response object
-            workshopTitle.setText(rowData.fieldData["name"]);
-            workshopDescription.setText(rowData.fieldData["short-description"]);
-            workshopAges.setText(rowData.fieldData["age-range"]);
-            workshopImage.setAttribute("src", rowData.fieldData["main-image"].url);
+            // Updated property access to match the Workshop interface
+            workshopTitle.setText(rowData.fieldData.name);
+            workshopDescription.setText(rowData.fieldData.shortDescription);
+            workshopAges.setText(rowData.fieldData.ageRange);
+            workshopImage.setAttribute("src", rowData.fieldData.mainImage.url);
             // Get the #registrationTrue element inside the row
             const registrationTrueElement = workshopCard.getChildAsComponent("#registrationTrue");
             // Set display and input disabled state based on the 'registered' property
@@ -598,9 +606,9 @@ const initializeWorkshopList = async (programId)=>{
             workshopInput.on("change", ()=>{
                 (0, _selectedWorkshop.saveSelectedWorkshop)({
                     id: rowData.id,
-                    name: rowData.fieldData["name"],
-                    imageUrl: rowData.fieldData["main-image"].url,
-                    ageRange: rowData.fieldData["age-range"]
+                    name: rowData.fieldData.name,
+                    imageUrl: rowData.fieldData.mainImage.url,
+                    ageRange: rowData.fieldData.ageRange
                 });
             });
             rowElement.setStyle({
@@ -622,10 +630,42 @@ parcelHelpers.defineInteropFlag(exports);
 parcelHelpers.export(exports, "fetchWorkshops", ()=>fetchWorkshops);
 parcelHelpers.export(exports, "fetchWorkshopById", ()=>fetchWorkshopById);
 var _apiConfig = require("./apiConfig");
+/**
+ * Mapping function to transform ApiWorkshop to Workshop
+ * @param apiWorkshop - The workshop object received from the API
+ * @returns - Transformed Workshop object for frontend usage
+ */ const mapApiWorkshopToWorkshop = (apiWorkshop)=>({
+        id: apiWorkshop.id.toString(),
+        fieldData: {
+            name: apiWorkshop.Name,
+            shortDescription: apiWorkshop.Short_description,
+            ageRange: apiWorkshop.Age_range,
+            mainImage: {
+                url: apiWorkshop.Main_Image,
+                alt: null
+            },
+            // Include any additional fields you need on the frontend:
+            slug: apiWorkshop.Slug,
+            mainVideo: apiWorkshop.Main_Video,
+            subheading: apiWorkshop.Subheading,
+            priceDescription: apiWorkshop.Price_Description,
+            scheduleDescription: apiWorkshop.Schedule_Description,
+            financialAidDescription: apiWorkshop.Financial_Aid_Description,
+            accessibilityDescription: apiWorkshop.Accessibility_Description,
+            workshopOverviewDescription: apiWorkshop.Workshop_Overview_Description,
+            successPageMessage: apiWorkshop.Success_Page_Message,
+            colorTheme: apiWorkshop.Color_Theme,
+            parentProgram: apiWorkshop.Parent_Program
+        },
+        // If 'registered' is present in the API, use it; otherwise default to false
+        registered: apiWorkshop.registered ?? false
+    });
 const fetchWorkshops = async (programId)=>{
     try {
-        const response = await (0, _apiConfig.apiClient).get(`/registration/workshops?program_id=${programId}`).fetch();
-        return response.workshops;
+        const response = await (0, _apiConfig.apiClient).get(`/registration/workshops_new?program_id=${programId}`).fetch();
+        // Ensure workshops is always an array and map each ApiWorkshop to Workshop
+        const workshopArray = Array.isArray(response.workshops) ? response.workshops.map(mapApiWorkshopToWorkshop) : [];
+        return workshopArray;
     } catch (error) {
         console.error("Error fetching workshops:", error);
         throw error;
@@ -633,9 +673,10 @@ const fetchWorkshops = async (programId)=>{
 };
 const fetchWorkshopById = async (workshopId)=>{
     try {
-        // Assuming there's a similar endpoint to fetch a single workshop by ID
+        // Assuming there's an endpoint to fetch a single workshop by ID
         const response = await (0, _apiConfig.apiClient).get(`/registration/workshops/${workshopId}`).fetch();
-        return response.workshop || null;
+        if (response.workshop) return mapApiWorkshopToWorkshop(response.workshop);
+        else return null;
     } catch (error) {
         console.error(`Error fetching workshop with ID ${workshopId}:`, error);
         return null;
@@ -743,8 +784,9 @@ const initializeSessionList = async (workshopId, programId)=>{
         sessionInput.setAttribute("value", rowData.id);
         const label = sessionCard.getChildAsComponent("label");
         label.setAttribute("for", inputId);
+        // Updated property access to match the Session interface
         sessionWeekday.setText(rowData.fieldData.weekday);
-        sessionTime.setText(rowData.fieldData["time-block"]);
+        sessionTime.setText(rowData.fieldData.timeBlock);
         sessionLocation.setText(rowData.fieldData.location);
         const initialPrice = updateSessionPrice(sessionPrice, rowData);
         studentsList.removeAllChildren();
@@ -892,16 +934,16 @@ const updateSessionPrice = (sessionPrice, rowData)=>{
     let price;
     switch(selectedPricingOption){
         case "Annual":
-            price = rowData.fieldData["displayed-annual-price"];
+            price = rowData.fieldData.displayedAnnualPrice;
             break;
         case "Monthly":
-            price = rowData.fieldData["displayed-monthly-price"];
+            price = rowData.fieldData.displayedMonthlyPrice;
             break;
         case "Pay-Per-Semester":
-            price = rowData.fieldData["displayed-one-off-price"];
+            price = rowData.fieldData.displayedSemesterPrice;
             break;
         case "Deposit":
-            price = rowData.fieldData["displayed-deposit-price"];
+            price = rowData.fieldData.displayedDepositPrice;
             break;
         default:
             price = ""; // Or any default value you choose
@@ -970,10 +1012,28 @@ var parcelHelpers = require("@parcel/transformer-js/src/esmodule-helpers.js");
 parcelHelpers.defineInteropFlag(exports);
 parcelHelpers.export(exports, "fetchSessions", ()=>fetchSessions);
 var _apiConfig = require("./apiConfig");
+/**
+ * Mapping function to transform ApiSession to Session
+ * @param apiSession - The session object received from the API
+ * @returns - Transformed Session object for frontend usage
+ */ const mapApiSessionToSession = (apiSession)=>({
+        id: apiSession.id.toString(),
+        fieldData: {
+            weekday: apiSession.Weekday,
+            timeBlock: apiSession.Time_block,
+            location: apiSession.Location_details.Name,
+            displayedAnnualPrice: apiSession.Tuition_product_details.Displayed_annual_price || "",
+            displayedMonthlyPrice: apiSession.Tuition_product_details.Displayed_monthly_price || "",
+            displayedSemesterPrice: apiSession.Tuition_product_details.Displayed_semester_price || "",
+            displayedDepositPrice: apiSession.Deposit_product_details.Displayed_semester_price || ""
+        }
+    });
 const fetchSessions = async (workshopId, programId)=>{
     try {
-        const response = await (0, _apiConfig.apiClient).get(`/registration/sessions?workshop_id=${workshopId}&program_id=${programId}`).fetch();
-        return response.sessions || [];
+        const response = await (0, _apiConfig.apiClient).get(`/registration/sessions_new?workshop_id=${workshopId}&program_id=${programId}`).fetch();
+        // Ensure sessions is always an array and map each ApiSession to Session
+        const sessionArray = Array.isArray(response.sessions) ? response.sessions.map(mapApiSessionToSession) : [];
+        return sessionArray;
     } catch (error) {
         console.error("Error fetching sessions:", error);
         throw error;
@@ -1157,7 +1217,7 @@ var _alertBoxEarly = require("./components/alertBoxEarly"); // Import the new al
 const initializeCheckoutPreview = async ()=>{
     try {
         const registrationState = (0, _registrationState.loadState)();
-        const response = await (0, _apiConfig.apiClient).post("/registration/checkout-preview", {
+        const response = await (0, _apiConfig.apiClient).post("/registration/checkout-preview_new", {
             data: registrationState
         }).fetch();
         console.log("Checkout Preview Data:", response);
@@ -1567,7 +1627,6 @@ const updateSecondaryTotalAmount = ()=>{
 };
 
 },{"@xatom/core":"j9zXV","../state/registrationState":"jIQ60","../utils/formatting":"iRhp7","@parcel/transformer-js/src/esmodule-helpers.js":"5oERU"}],"gsqzm":[function(require,module,exports) {
-// components/registration/alertBoxEarly.ts
 var parcelHelpers = require("@parcel/transformer-js/src/esmodule-helpers.js");
 parcelHelpers.defineInteropFlag(exports);
 parcelHelpers.export(exports, "initializeAlertBoxEarly", ()=>initializeAlertBoxEarly);
@@ -1583,14 +1642,14 @@ const initializeAlertBoxEarly = ()=>{
     const { selectedPricingOption, early_registration, checkoutPreview } = state;
     // Check if selectedPricingOption is "Monthly" and early_registration is true
     if (selectedPricingOption === "Monthly" && early_registration && checkoutPreview && checkoutPreview.start_date) {
-        // Parse the start_date as UTC
+        // Parse the start_date from the Unix timestamp (in milliseconds)
         const startDate = new Date(checkoutPreview.start_date);
-        // Format the date in UTC to avoid timezone shifts
-        const formatter = new Intl.DateTimeFormat(undefined, {
+        // Format the date for Eastern Time (New York)
+        const formatter = new Intl.DateTimeFormat("en-US", {
             year: "numeric",
             month: "long",
             day: "numeric",
-            timeZone: "UTC"
+            timeZone: "America/New_York"
         });
         const formattedDate = formatter.format(startDate);
         // Update the startDate span
@@ -2511,7 +2570,7 @@ const initializeStateFromUrlParams = async (slider)=>{
                         (0, _selectedWorkshop.resetSelectedWorkshop)();
                         (0, _sidebarIndicators.markStepAsCompleted)(2);
                         (0, _sidebarIndicators.setActiveStep)(3);
-                        await (0, _sessionsList.initializeSessionList)(null, programId);
+                        await (0, _sessionsList.initializeSessionList)(undefined, programId);
                         slider.goToIndex(2); // Navigate to the session selection slide
                     } else if (workshopId) {
                         // Select the workshop based on the URL parameter

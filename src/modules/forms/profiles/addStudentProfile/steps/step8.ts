@@ -6,25 +6,24 @@ import { apiClient } from "../../../../../api/apiConfig";
 import { toggleError } from "../../../../../utils/formUtils";
 import { unmarkStepAsCompleted, unsetActiveStep } from "../sidebar";
 
-type StudentProfileResponse = {
+type ApiResponse<T> = {
   status: string;
   message?: string;
-  profile: {
-    id: number;
-    first_name: string;
-    last_name: string;
-    email: string;
-    phone: string;
-    profile_pic: {
-      url: string;
-    };
+  profile?: T;
+};
+
+type StudentProfile = {
+  id: number;
+  first_name: string;
+  last_name: string;
+  email: string;
+  phone: string;
+  profile_pic?: {
+    url?: string;
   };
 };
 
-export const initializeStepEight = (
-  slider: WFSlider,
-  getFormData: () => any
-) => {
+export const initializeStepEight = (slider: WFSlider, getFormData: () => any) => {
   console.log("Initialize Step Eight");
 
   // Initialize form review items
@@ -40,17 +39,13 @@ export const initializeStepEight = (
   const studentEmergencyName = new WFComponent("#studentEmergencyName");
   const studentEmergencyEmail = new WFComponent("#studentEmergencyEmail");
   const studentEmergencyPhone = new WFComponent("#studentEmergencyPhone");
-  const studentEmergencyRelationship = new WFComponent(
-    "#studentEmergencyRelationship"
-  );
+  const studentEmergencyRelationship = new WFComponent("#studentEmergencyRelationship");
   const studentDismissalNames = new WFComponent("#studentDismissalNames");
   const studentTravelTrue = new WFComponent("#studentTravelTrue");
   const studentTravelFalse = new WFComponent("#studentTravelFalse");
   const studentFamily = new WFComponent("#studentFamily");
   const studentPhotoTrue = new WFComponent("#studentPhotoTrue");
   const studentPhotoFalse = new WFComponent("#studentPhotoFalse");
-
-  // New components for displaying if the student opted for text messages
   const studentTextTrue = new WFComponent("#studentTextTrue");
   const studentTextFalse = new WFComponent("#studentTextFalse");
 
@@ -120,9 +115,7 @@ export const initializeStepEight = (
 
   // Handle Step Eight form submission (Review and Save)
   const submitStepEight = new WFComponent("#submitStepEight");
-  const stepEightRequestingAnimation = new WFComponent(
-    "#stepEightRequestingAnimation"
-  );
+  const stepEightRequestingAnimation = new WFComponent("#stepEightRequestingAnimation");
   const submitStepEightError = new WFComponent("#submitStepEightError");
 
   submitStepEight.on("click", async (event) => {
@@ -147,14 +140,14 @@ export const initializeStepEight = (
 
     try {
       const response = await apiClient
-        .post<StudentProfileResponse>("/profiles/students/complete-profile", {
+        .post<ApiResponse<StudentProfile>>("/profiles/students/complete-profile", {
           data: formData,
         })
         .fetch();
-
-      if (response.status === "success") {
-        const { profile } = response;
-
+    
+      if (response.status === "success" && response.profile) {
+        const profile = response.profile;
+    
         // Update the profile link template with the returned data
         const studentProfileLinkTemplate = new WFComponent("#studentCard");
         studentProfileLinkTemplate.updateTextViaAttrVar({
@@ -162,38 +155,32 @@ export const initializeStepEight = (
           email: profile.email,
           phone: profile.phone,
         });
-
+    
         // **Updated code to append ?id={student_id} to the #studentCard link**
-        // Get the student card element and update its href attribute
         const studentCardElement =
           studentProfileLinkTemplate.getElement() as HTMLAnchorElement;
         const currentHref = studentCardElement.getAttribute("href") || "";
         const newHref = `${currentHref}?id=${profile.id}`;
         studentCardElement.setAttribute("href", newHref);
-
+    
         // Update the profile card image with the profile picture if available
         const profileCardImg = new WFImage("#profileCardImg");
-        if (profile.profile_pic && profile.profile_pic.url != null) {
+        if (profile.profile_pic?.url) {
           profileCardImg.setImage(profile.profile_pic.url);
         } else {
-          // Set a default placeholder image if profile_pic is not available
           console.log("No profile picture available");
           profileCardImg.setImage(
             "https://cdn.prod.website-files.com/667f080f36260b9afbdc46b2/667f080f36260b9afbdc46be_placeholder.svg"
           );
         }
-
+    
         // Clear current student and uploaded image from local storage
         localStorage.removeItem("current_student");
         localStorage.removeItem("image_upload");
-
-        // Hide loading animation
-        stepEightRequestingAnimation.setStyle({ display: "none" });
-
-        // Navigate to the next step
-        slider.goNext();
+    
+        stepEightRequestingAnimation.setStyle({ display: "none" }); // Hide loading animation
+        slider.goNext(); // Navigate to the next step
       } else {
-        // Handle cases where response.status is not "success"
         toggleError(
           submitStepEightError,
           response.message || "Failed to complete profile.",

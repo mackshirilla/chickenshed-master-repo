@@ -1,5 +1,3 @@
-// components/registration/alertBoxEarly.ts
-
 import { loadState } from "../state/registrationState";
 
 /**
@@ -26,15 +24,15 @@ export const initializeAlertBoxEarly = () => {
     checkoutPreview &&
     checkoutPreview.start_date
   ) {
-    // Parse the start_date as UTC
+    // Parse the start_date from the Unix timestamp (in milliseconds)
     const startDate = new Date(checkoutPreview.start_date);
 
-    // Format the date in UTC to avoid timezone shifts
-    const formatter = new Intl.DateTimeFormat(undefined, {
+    // Format the date for Eastern Time (New York)
+    const formatter = new Intl.DateTimeFormat("en-US", {
       year: "numeric",
       month: "long",
       day: "numeric",
-      timeZone: "UTC", // Ensure formatting is done in UTC
+      timeZone: "America/New_York", // Ensure the date is displayed in New York time
     });
 
     const formattedDate = formatter.format(startDate);

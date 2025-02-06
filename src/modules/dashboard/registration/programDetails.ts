@@ -5,63 +5,37 @@ import { WFImage } from "@xatom/image";
 import { apiClient } from "../../../api/apiConfig";
 import { initializeDynamicProgramFileList } from "./components/listProgramFiles";
 
-// Define the Subscription interface based on the API response
+// Define the Subscription interface based on the NEW API response,
+// marking image_url and workshop_name as optional.
 interface Subscription {
   id: number;
-  created_at: number; // Unix timestamp in milliseconds
-  status: string; // e.g., 'Active', 'Cancelled', 'Deposit Paid', 'Pending'
-  subscription_type: string; // e.g., 'Annual', 'Monthly'
-  program_name: string;
-  workshop_name: string;
-  coupon?: string | null;
-  deposit_amount: number;
-  start_date: string; // ISO date string
-  next_charge_date?: string | null;
-  stripe_subscription_id?: string | null;
+  status: string; // e.g., "Active", "Deposit Paid", etc.
+  subscription_type: string; // e.g., "Annual", "Monthly", "Pay-Per-Semester"
+  program: number; // Program ID
+  workshop: number; // Workshop ID
+  next_charge_date: string | null;
+  next_charge_amount: number;
+  stripe_subscription_id: string;
   user_id: number;
-  program_id: string;
-  workshop_id: string;
-  sale_id: number;
-  image_url: string;
+  contact_id: number;
+  created_at: number; // Unix timestamp in milliseconds
+
+  // Optional fields, since not all responses contain them
+  image_url?: string;
+  workshop_name?: string;
 }
 
-// Define the Program interface based on the API response
+// Define the Program interface based on the NEW API response
 interface Program {
-  request: {
-    url: string;
-    method: string;
-    headers: string[];
-    params: any[];
-  };
-  response: {
-    headers: string[];
-    result: {
-      id: string;
-      cmsLocaleId: string;
-      lastPublished: string;
-      lastUpdated: string;
-      createdOn: string;
-      isArchived: boolean;
-      isDraft: boolean;
-      fieldData: {
-        subheading: string;
-        "short-description": string;
-        "age-range": string;
-        name: string;
-        slug: string;
-        "parent-program": string;
-        "main-image": {
-          fileId: string;
-          url: string;
-          alt: string | null;
-        };
-      };
-    };
-    status: number;
-  };
+  id: number;
+  name: string;
+  slug: string;
+  Main_Image: string;
+  Subheading: string;
+  Short_description: string;
 }
 
-// Define the structure of the API response
+// Define the structure of the NEW API response
 interface ProgramApiResponse {
   subscriptions: Subscription[];
   program: Program;
@@ -86,6 +60,7 @@ export async function fetchProgramDetails(
 export async function initializeProgramDetailsPage() {
   // Initialize the dynamic program files list
   await initializeDynamicProgramFileList("#filesList");
+
   // Utility function to parse URL parameters
   const getUrlParams = () => {
     const params = new URLSearchParams(window.location.search);
@@ -128,13 +103,11 @@ function updateProgramDetails(program: Program) {
   const programImageElement = document.getElementById("programImage");
   if (programImageElement) {
     const programImage = new WFImage(programImageElement);
-    if (program.response.result.fieldData["main-image"].url) {
-      programImage.setImage(
-        program.response.result.fieldData["main-image"].url
-      );
+
+    if (program.Main_Image) {
+      programImage.setImage(program.Main_Image);
       const imgElement = programImage.getElement() as HTMLImageElement;
-      imgElement.alt =
-        program.response.result.fieldData["main-image"].alt || "Program Image";
+      imgElement.alt = "Program Image";
     } else {
       programImage.setImage(
         "https://cdn.prod.website-files.com/plugins/Basic/assets/placeholder.60f9b1840c.svg"
@@ -148,21 +121,21 @@ function updateProgramDetails(program: Program) {
   const programNameElement = document.getElementById("programName");
   if (programNameElement) {
     const programName = new WFComponent(programNameElement);
-    programName.setText(program.response.result.fieldData.name);
+    programName.setText(program.name);
   }
 
   // Update program breadcrumb
   const programBreadcrumbElement = document.getElementById("programBreadcrumb");
   if (programBreadcrumbElement) {
     const programBreadcrumb = new WFComponent(programBreadcrumbElement);
-    programBreadcrumb.setText(program.response.result.fieldData.name);
+    programBreadcrumb.setText(program.name);
   }
 
   // Update Program Subheading
   const programSubheadingElement = document.getElementById("programSubheading");
   if (programSubheadingElement) {
     const programSubheading = new WFComponent(programSubheadingElement);
-    programSubheading.setText(program.response.result.fieldData.subheading);
+    programSubheading.setText(program.Subheading);
   }
 
   // Update Program Short Description
@@ -173,9 +146,7 @@ function updateProgramDetails(program: Program) {
     const programShortDescription = new WFComponent(
       programShortDescriptionElement
     );
-    programShortDescription.setText(
-      program.response.result.fieldData["short-description"]
-    );
+    programShortDescription.setText(program.Short_description);
   }
 }
 
@@ -217,7 +188,12 @@ async function initializeDynamicSubscriptionList(
   list.rowRenderer(({ rowData, rowElement }) => {
     const registrationCard = new WFComponent(rowElement);
 
-    // Set the program image using image_url or fallback to program image
+    // 1) Create a fallback for the program's image if missing
+    const programImageFallback = program.Main_Image
+      ? program.Main_Image
+      : "https://cdn.prod.website-files.com/66102236c16b61185de61fe3/66102236c16b61185de6204e_placeholder.svg";
+
+    // 2) Grab the card image element
     const registrationImageComponent =
       registrationCard.getChildAsComponent<HTMLImageElement>(
         "#cardRegistrationImage"
@@ -227,62 +203,58 @@ async function initializeDynamicSubscriptionList(
         registrationImageComponent.getElement()
       );
 
-      if (rowData.image_url) {
+      // Use the subscription's image, otherwise fall back to the program's.
+      if (rowData.image_url && rowData.image_url.trim() !== "") {
         registrationImage.setImage(rowData.image_url);
-      } else if (program.response.result.fieldData["main-image"].url) {
-        registrationImage.setImage(
-          program.response.result.fieldData["main-image"].url
-        );
       } else {
-        registrationImage.setImage(
-          "https://cdn.prod.website-files.com/66102236c16b61185de61fe3/66102236c16b61185de6204e_placeholder.svg"
-        );
+        registrationImage.setImage(programImageFallback);
       }
     }
 
-    // Set the program name
+    // 3) Set the program name (from the top-level `program` object)
     const programNameComponent =
       registrationCard.getChildAsComponent("#cardProgramName");
     if (programNameComponent) {
-      programNameComponent.setText(rowData.program_name);
+      programNameComponent.setText(program.name);
     }
 
-    // Set the workshop name
+    // 4) Set the workshop name if present
     const workshopNameComponent =
       registrationCard.getChildAsComponent("#cardWorkshopName");
     if (workshopNameComponent) {
-      workshopNameComponent.setText(rowData.workshop_name);
+      workshopNameComponent.setText(rowData.workshop_name || "");
     }
 
-    // Set the link with subscription and workshop parameters
+    // 5) Build the link with subscription and workshop parameters
     const subscriptionCardElement =
       registrationCard.getElement() as HTMLAnchorElement;
     const currentHref = subscriptionCardElement.getAttribute("href") || "#";
 
     const url = new URL(currentHref, window.location.origin);
-    url.searchParams.set("program", rowData.program_id);
-    url.searchParams.set("workshop", rowData.workshop_id);
+    url.searchParams.set("program", rowData.program.toString());
+    url.searchParams.set("workshop", rowData.workshop.toString());
     url.searchParams.set("subscription", rowData.id.toString());
 
     subscriptionCardElement.setAttribute("href", url.toString());
 
-    // Get the #cardActivePill and #cardDepositPill elements
+    // 6) Handle status pills (#cardActivePill and #cardDepositPill)
     const cardActivePill =
       registrationCard.getChildAsComponent("#cardActivePill");
     const cardDepositPill =
       registrationCard.getChildAsComponent("#cardDepositPill");
 
-    // Hide both pills by default
+    // Hide both by default
     cardActivePill.setStyle({ display: "none" });
     cardDepositPill.setStyle({ display: "none" });
 
-    // Set display based on the status
+    // Show relevant pill by status
     if (rowData.status === "Active") {
       cardActivePill.setStyle({ display: "block" });
     } else if (rowData.status === "Deposit Paid") {
       cardDepositPill.setStyle({ display: "block" });
     }
 
+    // Ensure the row is visible
     rowElement.setStyle({
       display: "block",
     });

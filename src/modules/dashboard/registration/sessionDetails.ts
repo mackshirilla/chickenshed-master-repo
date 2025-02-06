@@ -5,62 +5,147 @@ import { apiClient } from "../../../api/apiConfig";
 import { RemoveStudentDialog } from "./components/removeStudent";
 import { initializeDynamicSessionFileList } from "./components/listSessionFiles";
 
-interface SessionDetailsResponse {
-  workshop?: {
-    fieldData: {
-      name: string;
-      "short-description": string;
-      "parent-program": string;
-    };
-  };
-  subscription: {
-    id: string; // Add subscription ID here for type-safety
-  };
-  students: Array<{
-    student_name: string;
-    image_url: string;
-    student_profile_id: number;
-    id: number; // This represents the subscription item ID linked to each student
-  }>;
-  program: {
-    id: string;
-    cmsLocaleId: string;
-    lastPublished: string;
-    lastUpdated: string;
-    createdOn: string;
-    isArchived: boolean;
-    isDraft: boolean;
-    fieldData: {
-      subheading: string;
-      "short-description": string;
-      "age-range": string;
-      name: string;
-      slug: string;
-      "parent-program": string;
-      "main-image": {
-        fileId: string;
-        url: string;
-        alt: string | null;
-      };
-      "2nd-semester-charge-date"?: string; // Optional, based on API response
-      "subscription-pause-date"?: string; // Optional, based on API response
-    };
-  };
-  location: {
-    fieldData: {
-      name: string;
-      "map-embed": string;
-    };
-  };
-  session: {
-    fieldData: {
-      weekday: string;
-      "time-block": string;
-      name: string;
-    };
-  };
-  caregiver: boolean; // Indicates if the user is a caregiver
+// -------------------- UPDATED INTERFACES -------------------- //
+
+// Matches the new response for 'workshop'
+interface Workshop {
+  id: number;
+  Name: string;
+  Slug: string;
+  Main_Image: string;
+  Main_Video: string;
+  Subheading: string;
+  Short_description: string;
+  Age_range: string;
+  Price_Description: string;
+  Schedule_Description: string;
+  Financial_Aid_Description: string;
+  Accessibility_Description: string;
+  Workshop_Overview_Description: string;
+  Success_Page_Message: string;
+  Color_Theme: number;
+  Parent_Program: number;
 }
+
+// Matches the new 'subscription' fields
+interface Subscription {
+  id: number | string;
+  status: string;
+  subscription_type: string;
+  program: number;
+  workshop: number;
+  pending_students: boolean;
+  coupon: string;
+  deposit_amount: number;
+  // Updated here: switched from `string | null` to `number | null`
+  start_date: number | null;
+  next_charge_date: number | null;
+  next_charge_amount: number;
+  next_invoice_id: string;
+  stripe_subscription_id: string;
+  user_id: number;
+  contact_id: number;
+  sale_id: number;
+  cancellation_reason: string;
+  created_at: number;
+}
+
+// Each 'student' is really an enrolled subscription item (session-student link)
+interface Student {
+  id: number; // Subscription item ID
+  status: string;
+  subscription_type: string;
+  program: number;
+  workshop: number;
+  session: number;
+  subscription_id: number;
+  price_id: string;
+  user_id: number;
+  student_profile_id: number;
+  cancellation_reason: string;
+  created_at: number;
+  student_name: string;
+  image_url: string | null;
+}
+
+// Program object
+interface Program {
+  id: number | string;
+  name: string;
+  slug: string;
+  Main_Image: string;
+  Main_Video: string;
+  Subheading: string;
+  Short_description: string;
+  Age_range: string;
+  Price_Description: string;
+  Schedule_Description: string;
+  Financial_Aid_Description: string;
+  Accessibility_Description: string;
+  Program_Overview_Description: string;
+  Sort_Order?: number;
+  Color_Theme?: number;
+  Inquiry_Only?: boolean;
+  "1st_Semester_Start_Date"?: number;
+  "2nd_Semester_Charge_Date"?: number;
+  "Subscription_Pause_Date"?: number;
+  Success_Page_Message?: string;
+  // Additional fields as needed
+}
+
+// Location object
+interface Location {
+  id: number;
+  Name: string;
+  Slug: string;
+  Address_line_1: string;
+  City_state_zip: string;
+  Map_embed: string;
+  Location_Description?: string;
+}
+
+// Session object
+interface SessionObj {
+  id: number;
+  Name: string;
+  Slug: string;
+  Weekday: string;
+  Time_block: string;
+  Start_Date: string | null;
+  End_Date: string | null;
+  Location: number;
+  Parent_workshop: number;
+  Parent_program: number;
+  Tuition_product: number;
+  Deposit_product: number;
+}
+
+// The shape of the new response
+interface SessionDetailsResponse {
+  workshop?: Workshop;             // Possibly undefined
+  subscription: Subscription;
+  students: Student[];
+  program: Program;
+  location: Location;
+  session: SessionObj;
+  caregiver: boolean;
+}
+
+// For caregiver breadcrumb logic
+interface CaregiverBreadcrumbs {
+  student_id: number;
+  student_name: string;
+  workshop_name: string;
+  workshop_id: string;
+  program_name: string;
+  program_id: string;
+  subscription_id: number;
+  session_id?: string;
+  session_weekday?: string;
+  session_time_block?: string;
+}
+
+// -------------------- UTILITY / HELPER FUNCTIONS -------------------- //
 
 // Function to trigger a click on the success_trigger element
 function triggerSuccessEvent(selector: string) {
@@ -70,19 +155,18 @@ function triggerSuccessEvent(selector: string) {
   }
 }
 
-// Define the CaregiverBreadcrumbs interface
-interface CaregiverBreadcrumbs {
-  student_id: number;
-  student_name: string;
-  workshop_name: string;
-  workshop_id: string;
-  program_name: string;
-  program_id: string;
-  subscription_id: number;
-  session_id?: string; // Optional
-  session_weekday?: string; // Optional
-  session_time_block?: string; // Optional
+// Function to display an error message on the page and in an alert box
+function displayError(message: string) {
+  const errorElement = document.querySelector("#listRegistrationEmpty");
+  if (errorElement) {
+    errorElement.innerHTML = `<div>${message}</div>`;
+    errorElement.setAttribute("style", "display: flex;");
+  }
+  // Also display the error in an alert
+  alert(`Error: ${message}`);
 }
+
+// -------------------- API CALL -------------------- //
 
 // Function to fetch session details from the API
 async function fetchSessionDetails(
@@ -92,7 +176,6 @@ async function fetchSessionDetails(
   subscriptionId: string
 ): Promise<SessionDetailsResponse | undefined> {
   try {
-    // Make the API request
     const getSessionDetailsRequest = apiClient.get<SessionDetailsResponse>(
       `/dashboard/registration/session/${sessionId}`,
       {
@@ -108,36 +191,33 @@ async function fetchSessionDetails(
     const response = await getSessionDetailsRequest.fetch();
     return response;
   } catch (error: any) {
-    // Extract and display the error message
     let errorMessage = "An unexpected error occurred. Please try again.";
     if (error?.response?.data?.message) {
       errorMessage = error.response.data.message;
     } else if (error.message) {
       errorMessage = error.message;
     }
-
-    // Display the error message in an alert box
     alert(`Error: ${errorMessage}`);
 
-    // Navigate back to the previous page with a fallback
+    // Navigate back
     window.history.length > 1
       ? window.history.back()
       : (window.location.href = "/dashboard/registrations");
 
-    // Log the error for debugging purposes
     console.error("Fetch Session Details Error:", error);
-
-    // Return undefined to indicate failure
     return undefined;
   }
 }
 
-// Main function to initialize session details
+// -------------------- MAIN INITIALIZER -------------------- //
+
 export async function initializeSessionDetails() {
-  // initialize files
+  // Initialize files
   initializeDynamicSessionFileList("#filesList");
+
+  // Parse URL query params
   const params = new URLSearchParams(window.location.search);
-  const workshopId = params.get("workshop") || "none"; // Use "none" if workshopId is not provided
+  const workshopId = params.get("workshop") || "none"; 
   const programId = params.get("program");
   const sessionId = params.get("session");
   const subscriptionId = params.get("subscription");
@@ -149,19 +229,15 @@ export async function initializeSessionDetails() {
     return;
   }
 
-  // Fetch session details with program and subscription params
+  // Fetch session details
   const sessionDetails = await fetchSessionDetails(
     workshopId,
     programId,
     sessionId,
     subscriptionId
   );
-
-  // If fetchSessionDetails encounters an error, it handles it and navigates back,
-  // so the following code will not execute in that case.
   if (!sessionDetails) {
-    // In case fetchSessionDetails returns undefined due to an error
-    return;
+    return; // Already handled error or navigation
   }
 
   const {
@@ -174,86 +250,67 @@ export async function initializeSessionDetails() {
     caregiver,
   } = sessionDetails;
 
-  if (sessionDetails && location && students && session) {
-    // Populate UI Elements
+  // Check data completeness
+  if (subscription && program && students && location && session) {
+    // If we have workshop data, populate from it, else fallback to program
     if (workshop) {
       populateWorkshopDetails(workshop);
     } else {
       populateProgramDetailsAsWorkshop(program);
     }
+
     populateSessionDetails(session, location);
     initializeStudentList(students);
-    updateBreadcrumbs(
-      program,
-      workshop,
-      session,
-      subscriptionId,
-      workshopId,
-      caregiver
-    );
+    updateBreadcrumbs(program, workshop, session, subscriptionId, workshopId, caregiver);
 
-    // Initialize RemoveStudentDialog with relevant data
-    initializeRemoveStudentDialog(
-      subscription.id,
-      sessionId,
-      students,
-      caregiver
-    );
+    // Initialize RemoveStudentDialog (unless caregiver)
+    initializeRemoveStudentDialog(subscription.id.toString(), sessionId, students, caregiver);
 
-    // Trigger the success_trigger element
+    // Trigger success
     triggerSuccessEvent(".success_trigger");
   } else {
     displayError("Failed to fetch session details. Incomplete data.");
   }
 }
 
-// Function to populate workshop details (if workshop is available)
-function populateWorkshopDetails(workshop: SessionDetailsResponse["workshop"]) {
-  const workshopName = new WFComponent("#workshopName"); // Changed to class selector
-  workshopName.setText(workshop.fieldData.name);
+// -------------------- POPULATE UI FUNCTIONS -------------------- //
 
-  const workshopShortDescription = new WFComponent("#workshopShortDescription"); // Changed to class selector
-  workshopShortDescription.setText(workshop.fieldData["short-description"]);
+// Workshop details
+function populateWorkshopDetails(workshop: Workshop) {
+  const workshopName = new WFComponent("#workshopName");
+  workshopName.setText(workshop.Name);
+
+  const workshopShortDescription = new WFComponent("#workshopShortDescription");
+  workshopShortDescription.setText(workshop.Short_description);
 }
 
-// Function to populate program details as workshop details (fallback if workshop is unavailable)
-function populateProgramDetailsAsWorkshop(
-  program: SessionDetailsResponse["program"]
-) {
-  const workshopName = new WFComponent("#workshopName"); // Changed to class selector
-  workshopName.setText(program.fieldData.name);
+// Fallback: use program details if workshop is unavailable
+function populateProgramDetailsAsWorkshop(program: Program) {
+  const workshopName = new WFComponent("#workshopName");
+  workshopName.setText(program.name);
 
-  const workshopShortDescription = new WFComponent("#workshopShortDescription"); // Changed to class selector
-  workshopShortDescription.setText(program.fieldData["short-description"]);
+  const workshopShortDescription = new WFComponent("#workshopShortDescription");
+  workshopShortDescription.setText(program.Short_description);
 }
 
-// Function to populate session details, including location and time
-function populateSessionDetails(
-  session: SessionDetailsResponse["session"],
-  location: SessionDetailsResponse["location"]
-) {
-  const sessionWeekday = new WFComponent("#sessionWeekday"); // Changed to class selector
-  sessionWeekday.setText(session.fieldData.weekday);
+// Session + Location
+function populateSessionDetails(session: SessionObj, location: Location) {
+  const sessionWeekday = new WFComponent("#sessionWeekday");
+  sessionWeekday.setText(session.Weekday);
 
-  const sessionTime = new WFComponent("#sessionTime"); // Changed to class selector
-  sessionTime.setText(session.fieldData["time-block"]);
+  const sessionTime = new WFComponent("#sessionTime");
+  sessionTime.setText(session.Time_block);
 
-  const sessionLocation = new WFComponent("#sessionLocation"); // Changed to class selector
-  sessionLocation.setText(location.fieldData.name);
+  const sessionLocation = new WFComponent("#sessionLocation");
+  sessionLocation.setText(location.Name);
 
-  const sessionLocationMap = new WFComponent("#sessionLocationMap"); // Changed to class selector
-  sessionLocationMap.setHTML(location.fieldData["map-embed"]);
+  const sessionLocationMap = new WFComponent("#sessionLocationMap");
+  sessionLocationMap.setHTML(location.Map_embed);
 
-  // Apply styling to make sure the map and its container fill properly
-  const figureElement = document.querySelector(
-    "#sessionLocationMap figure" // Changed to class selector
-  ) as HTMLElement;
-  const iframeElement = document.querySelector(
-    "#sessionLocationMap iframe" // Changed to class selector
-  ) as HTMLElement;
-  const firstChildDiv = document.querySelector(
-    "#sessionLocationMap figure > div" // Changed to class selector
-  ) as HTMLElement;
+  // Optional: Adjust styling for the embed
+  const figureElement = document.querySelector("#sessionLocationMap figure") as HTMLElement;
+  const iframeElement = document.querySelector("#sessionLocationMap iframe") as HTMLElement;
+  const firstChildDiv = document.querySelector("#sessionLocationMap figure > div") as HTMLElement;
 
   if (figureElement) {
     figureElement.style.width = "100%";
@@ -261,11 +318,9 @@ function populateSessionDetails(
     figureElement.style.padding = "0";
     figureElement.style.margin = "0";
   }
-
   if (firstChildDiv) {
     firstChildDiv.style.height = "100%";
   }
-
   if (iframeElement) {
     iframeElement.style.width = "100%";
     iframeElement.style.height = "100%";
@@ -273,143 +328,120 @@ function populateSessionDetails(
   }
 }
 
-// Function to initialize student list
-function initializeStudentList(students: SessionDetailsResponse["students"]) {
-  const list = new WFDynamicList<any>("#listStudentProfiles", {
-    // Changed selector to class
-    rowSelector: "#listStudentCard", // Changed to class selector
-    loaderSelector: "#listStudentProfilesloading", // Changed to class selector
-    emptySelector: "#listStudentProfilesEmpty", // Changed to class selector
+// -------------------- STUDENTS LIST -------------------- //
+
+function initializeStudentList(students: Student[]) {
+  const list = new WFDynamicList<Student>("#listStudentProfiles", {
+    rowSelector: "#listStudentCard",
+    loaderSelector: "#listStudentProfilesloading",
+    emptySelector: "#listStudentProfilesEmpty",
   });
 
   list.rowRenderer(({ rowData, rowElement }) => {
     const studentCard = new WFComponent(rowElement);
-    const studentNameComponent =
-      studentCard.getChildAsComponent("#studentName"); // Changed to class selector
-    const studentImageComponent = studentCard.getChildAsComponent(
-      "#listStudentCardImage" // Changed to class selector
-    );
-    const studentLinkComponent =
-      studentCard.getChildAsComponent("#studentLink"); // Changed to class selector
-    const removeButtonComponent =
-      studentCard.getChildAsComponent(".remove_button"); // Select by class
 
+    // Student name
+    const studentNameComponent = studentCard.getChildAsComponent("#studentName");
     studentNameComponent?.setText(rowData.student_name);
-    studentImageComponent?.setAttribute("src", rowData.image_url);
 
-    // Append ?id={student_id} to the link
+    // Student image
+    const studentImageComponent = studentCard.getChildAsComponent("#listStudentCardImage");
+    // If `image_url` is null, you can provide a fallback
+    const imageSrc = rowData.image_url || "https://cdn.prod.website-files.com/66102236c16b61185de61fe3/66102236c16b61185de6204e_placeholder.svg";
+    studentImageComponent?.setAttribute("src", imageSrc);
+
+    // Student link
+    const studentLinkComponent = studentCard.getChildAsComponent("#studentLink");
     const studentId = rowData.student_profile_id;
     const existingHref = studentLinkComponent?.getAttribute("href") || "#";
     const url = new URL(existingHref, window.location.origin);
     url.searchParams.set("id", studentId.toString());
     studentLinkComponent?.setAttribute("href", url.toString());
 
-    // **Set data attributes on remove button**
-    removeButtonComponent?.setAttribute(
-      "data-student-id",
-      studentId.toString()
-    );
-    removeButtonComponent?.setAttribute(
-      "data-subscription-item-id",
-      rowData.id.toString()
-    );
+    // Remove button
+    const removeButtonComponent = studentCard.getChildAsComponent(".remove_button");
+    removeButtonComponent?.setAttribute("data-student-id", studentId.toString());
+    removeButtonComponent?.setAttribute("data-subscription-item-id", rowData.id.toString());
 
-    // **Set data-student-id on the row element for easy removal later**
+    // Data attribute on the row itself
     rowElement.setAttribute("data-student-id", studentId.toString());
 
     return rowElement;
   });
 
-  // Set data to be displayed in the list
   list.setData(students);
 }
 
-// Function to update breadcrumbs with program, workshop, and session details
+// -------------------- BREADCRUMBS -------------------- //
+
 function updateBreadcrumbs(
-  program: SessionDetailsResponse["program"],
-  workshop: SessionDetailsResponse["workshop"] | null,
-  session: SessionDetailsResponse["session"],
+  program: Program,
+  workshop: Workshop | undefined,
+  session: SessionObj,
   subscriptionId: string,
   workshopId: string,
   caregiver: boolean
 ) {
-  // Update program breadcrumb
-  const programBreadcrumbElement = document.querySelector("#programBreadcrumb"); // Changed to class selector
+  // Program breadcrumb
+  const programBreadcrumbElement = document.querySelector("#programBreadcrumb");
   if (programBreadcrumbElement) {
     const programBreadcrumb = new WFComponent(programBreadcrumbElement);
-    programBreadcrumb.setText(program.fieldData.name);
-    // Update href attribute with program parameter
+    programBreadcrumb.setText(program.name);
+
     const currentHref = programBreadcrumbElement.getAttribute("href") || "#";
     const url = new URL(currentHref, window.location.origin);
-    url.searchParams.set("program", program.id);
+    url.searchParams.set("program", program.id.toString());
     programBreadcrumb.setAttribute("href", url.toString());
   }
 
-  // Update workshop breadcrumb if workshop exists, otherwise fallback to program name
-  const workshopBreadcrumbElement = document.querySelector(
-    "#workshopBreadcrumb"
-  ); // Changed to class selector
+  // Workshop breadcrumb
+  const workshopBreadcrumbElement = document.querySelector("#workshopBreadcrumb");
   if (workshopBreadcrumbElement) {
     const workshopBreadcrumb = new WFComponent(workshopBreadcrumbElement);
     if (workshop) {
-      workshopBreadcrumb.setText(workshop.fieldData.name);
+      workshopBreadcrumb.setText(workshop.Name);
     } else {
-      workshopBreadcrumb.setText(program.fieldData.name);
+      workshopBreadcrumb.setText(program.name);
     }
 
-    // Update href attribute with program, subscription, and optionally workshop parameters
     const currentHref = workshopBreadcrumbElement.getAttribute("href") || "#";
     const url = new URL(currentHref, window.location.origin);
-    url.searchParams.set("program", program.id);
+    url.searchParams.set("program", program.id.toString());
     url.searchParams.set("subscription", subscriptionId);
-
     if (workshop && workshopId !== "none") {
       url.searchParams.set("workshop", workshopId);
     }
-
     workshopBreadcrumb.setAttribute("href", url.toString());
   }
 
-  // Update session breadcrumb
-  const sessionBreadcrumbElement = document.querySelector("#sessionBreadcrumb"); // Changed to class selector
+  // Session breadcrumb
+  const sessionBreadcrumbElement = document.querySelector("#sessionBreadcrumb");
   if (sessionBreadcrumbElement) {
     const sessionBreadcrumb = new WFComponent(sessionBreadcrumbElement);
-    // Set the text to the combination of the session weekday and time block
-    const sessionText = `${session.fieldData.weekday}, ${session.fieldData["time-block"]}`;
+    const sessionText = `${session.Weekday}, ${session.Time_block}`;
     sessionBreadcrumb.setText(sessionText);
   }
 
-  // Handle Breadcrumbs based on caregiver flag
-  handleBreadcrumbs(
-    caregiver,
-    program,
-    workshop,
-    session,
-    subscriptionId,
-    workshopId
-  );
+  // Handle caregiver
+  handleBreadcrumbs(caregiver, program, workshop, session, subscriptionId, workshopId);
 }
 
-// Function to handle Breadcrumbs based on caregiver flag
 function handleBreadcrumbs(
   caregiver: boolean,
-  program: SessionDetailsResponse["program"],
-  workshop: SessionDetailsResponse["workshop"] | null,
-  session: SessionDetailsResponse["session"],
+  program: Program,
+  workshop: Workshop | undefined,
+  session: SessionObj,
   subscriptionId: string,
   workshopId: string
 ) {
   if (caregiver) {
-    // Remove all .remove_button_wrap elements from the DOM
+    // Remove .remove_button_wrap from DOM
     const removeButtons = document.querySelectorAll(".remove_button_wrap");
     removeButtons.forEach((btn) => btn.remove());
 
-    // Hide userBreadcrumbList and show caregiverBreadcrumbList
-    const userBreadcrumbList = document.querySelector("#userBreadcumbList"); // Changed to class selector
-    const caregiverBreadcrumbList = document.querySelector(
-      "#caregiverBreadcrumbList" // Changed to class selector
-    );
-
+    // Hide userBreadcrumbList, show caregiverBreadcrumbList
+    const userBreadcrumbList = document.querySelector("#userBreadcumbList");
+    const caregiverBreadcrumbList = document.querySelector("#caregiverBreadcrumbList");
     if (userBreadcrumbList) {
       userBreadcrumbList.setAttribute("style", "display: none;");
     }
@@ -417,77 +449,50 @@ function handleBreadcrumbs(
       caregiverBreadcrumbList.setAttribute("style", "display: flex;");
     }
 
-    // Fetch caregiver_breadcrumbs from localStorage
+    // Load caregiver_breadcrumbs
     const caregiverBreadcrumbs = localStorage.getItem("caregiver_breadcrumbs");
     if (caregiverBreadcrumbs) {
       try {
-        const breadcrumbs = JSON.parse(
-          caregiverBreadcrumbs
-        ) as CaregiverBreadcrumbs;
+        const breadcrumbs = JSON.parse(caregiverBreadcrumbs) as CaregiverBreadcrumbs;
 
-        // Update studentBreadcrumb link
-        const studentBreadcrumb = document.querySelector("#studentBreadcrumb"); // Changed to class selector
+        // Student breadcrumb
+        const studentBreadcrumb = document.querySelector("#studentBreadcrumb");
         if (studentBreadcrumb) {
           const studentBreadcrumbComponent = new WFComponent(studentBreadcrumb);
           studentBreadcrumbComponent.setText(breadcrumbs.student_name);
 
-          // Update href with ?id={student_id}
-          const currentHref =
-            studentBreadcrumb.getAttribute("href") ||
-            "/dashboard/student/profile";
+          const currentHref = studentBreadcrumb.getAttribute("href") || "/dashboard/student/profile";
           const url = new URL(currentHref, window.location.origin);
           url.searchParams.set("id", breadcrumbs.student_id.toString());
           studentBreadcrumbComponent.setAttribute("href", url.toString());
         }
 
-        // Update caregiverWorkshopBreadcrumb text
-        const caregiverWorkshopBreadcrumb = document.querySelector(
-          "#caregiverWorkshopBreadcrumb" // Changed to class selector
-        );
+        // Caregiver workshop breadcrumb
+        const caregiverWorkshopBreadcrumb = document.querySelector("#caregiverWorkshopBreadcrumb");
         if (caregiverWorkshopBreadcrumb) {
-          const workshopBreadcrumbComponent = new WFComponent(
-            caregiverWorkshopBreadcrumb
-          );
+          const workshopBreadcrumbComponent = new WFComponent(caregiverWorkshopBreadcrumb);
+          const wName = breadcrumbs.workshop_name || breadcrumbs.program_name || "N/A";
+          workshopBreadcrumbComponent.setText(wName);
 
-          // Use workshop_name if present, otherwise use program_name
-          const workshopName = breadcrumbs.workshop_name
-            ? breadcrumbs.workshop_name
-            : breadcrumbs.program_name;
-          workshopBreadcrumbComponent.setText(workshopName);
-
-          // Update href with program, subscription, and optionally workshop parameters
-          const currentHref =
-            caregiverWorkshopBreadcrumb.getAttribute("href") || "#";
+          const currentHref = caregiverWorkshopBreadcrumb.getAttribute("href") || "#";
           const url = new URL(currentHref, window.location.origin);
           url.searchParams.set("program", breadcrumbs.program_id);
-          url.searchParams.set(
-            "subscription",
-            breadcrumbs.subscription_id.toString()
-          );
-
+          url.searchParams.set("subscription", breadcrumbs.subscription_id.toString());
           if (breadcrumbs.workshop_id && breadcrumbs.workshop_id !== "none") {
             url.searchParams.set("workshop", breadcrumbs.workshop_id);
           }
-
           caregiverWorkshopBreadcrumb.setAttribute("href", url.toString());
         }
 
-        // Update caregiverSessionBreadcrumb with session details
-        const caregiverSessionBreadcrumb = document.querySelector(
-          "#caregiverSessionBreadcrumb" // Changed to class selector
-        );
+        // Caregiver session breadcrumb
+        const caregiverSessionBreadcrumb = document.querySelector("#caregiverSessionBreadcrumb");
         if (caregiverSessionBreadcrumb) {
-          const sessionBreadcrumbComponent = new WFComponent(
-            caregiverSessionBreadcrumb
-          );
+          const sessionBreadcrumbComponent = new WFComponent(caregiverSessionBreadcrumb);
           const sessionText = `${breadcrumbs.session_weekday}, ${breadcrumbs.session_time_block}`;
           sessionBreadcrumbComponent.setText(sessionText);
         }
       } catch (parseError) {
-        console.error(
-          "Error parsing caregiver_breadcrumbs from localStorage:",
-          parseError
-        );
+        console.error("Error parsing caregiver_breadcrumbs:", parseError);
         alert("Failed to load caregiver breadcrumbs. Please try again.");
       }
     } else {
@@ -495,12 +500,9 @@ function handleBreadcrumbs(
       alert("Caregiver breadcrumbs data is missing.");
     }
   } else {
-    // If not a caregiver, ensure userBreadcrumbList is visible and caregiverBreadcrumbList is hidden
-    const userBreadcrumbList = document.querySelector("#userBreadcumbList"); // Changed to class selector
-    const caregiverBreadcrumbList = document.querySelector(
-      "#caregiverBreadcrumbList" // Changed to class selector
-    );
-
+    // Non-caregiver
+    const userBreadcrumbList = document.querySelector("#userBreadcumbList");
+    const caregiverBreadcrumbList = document.querySelector("#caregiverBreadcrumbList");
     if (userBreadcrumbList) {
       userBreadcrumbList.setAttribute("style", "display: flex;");
     }
@@ -510,16 +512,16 @@ function handleBreadcrumbs(
   }
 }
 
-// Function to initialize RemoveStudentDialog
+// -------------------- REMOVE STUDENT DIALOG -------------------- //
+
 function initializeRemoveStudentDialog(
   subscriptionId: string,
   sessionId: string,
-  students: SessionDetailsResponse["students"],
+  students: Student[],
   caregiver: boolean
 ) {
   if (caregiver) {
-    // If caregiver, you might want to handle dialogs differently or disable certain actions
-    // For now, we'll assume caregivers don't need the RemoveStudentDialog
+    // If caregiver, no remove dialog
     return;
   }
 
@@ -533,97 +535,4 @@ function initializeRemoveStudentDialog(
       student_name: student.student_name,
     })),
   });
-}
-
-// Function to display an error message on the page and in an alert box
-function displayError(message: string) {
-  const errorElement = document.querySelector("#listRegistrationEmpty"); // Changed to class selector
-  if (errorElement) {
-    errorElement.innerHTML = `<div>${message}</div>`;
-    errorElement.setAttribute("style", "display: flex;");
-  }
-  // Also display the error in an alert box
-  alert(`Error: ${message}`);
-}
-
-// Function to initialize and render the past invoices list using fetched data
-async function initializePastInvoicesList(
-  containerSelector: string,
-  invoices: any[]
-) {
-  // Initialize a new instance of WFDynamicList for Invoices
-  const list = new WFDynamicList<any>(containerSelector, {
-    rowSelector: "#invoiceLine", // Changed to class selector
-  });
-
-  // Customize the rendering of the loader
-  list.loaderRenderer((loaderElement) => {
-    loaderElement.setStyle({
-      display: "flex",
-    });
-    return loaderElement;
-  });
-
-  // Customize the rendering of the empty state
-  list.emptyRenderer((emptyElement) => {
-    emptyElement.setStyle({
-      display: "flex",
-    });
-    return emptyElement;
-  });
-
-  // Customize the rendering of list items (Invoice Rows)
-  list.rowRenderer(({ rowData, rowElement }) => {
-    const invoiceRow = new WFComponent(rowElement);
-
-    // Set the invoice date
-    const invoiceDateComponent = invoiceRow.getChildAsComponent("#invoiceDate"); // Changed to class selector
-    if (invoiceDateComponent) {
-      const invoiceDate = new WFComponent(invoiceDateComponent.getElement());
-      const formattedDate = new Date(rowData.created_at).toLocaleDateString();
-      invoiceDate.setText(formattedDate);
-    }
-
-    // Set the invoice amount
-    const invoiceAmountComponent =
-      invoiceRow.getChildAsComponent("#invoiceAmount"); // Changed to class selector
-    if (invoiceAmountComponent) {
-      const invoiceAmount = new WFComponent(
-        invoiceAmountComponent.getElement()
-      );
-      invoiceAmount.setText(`$${rowData.amount_total}`);
-    }
-
-    // Set the receipt link
-    const receiptButtonComponent =
-      invoiceRow.getChildAsComponent("#receiptButton"); // Changed to class selector
-    if (receiptButtonComponent) {
-      const receiptButton = new WFComponent(
-        receiptButtonComponent.getElement()
-      );
-      receiptButton.setAttribute("href", rowData.reciept_url);
-    }
-
-    // Show the list item
-    rowElement.setAttribute("style", "display: table-row;");
-
-    return rowElement;
-  });
-
-  // Load and display invoice data
-  try {
-    // Enable the loading state
-    list.changeLoadingStatus(true);
-
-    // Set the data to be displayed in the dynamic list
-    list.setData(invoices);
-
-    // Disable the loading state
-    list.changeLoadingStatus(false);
-  } catch (error) {
-    console.error("Error initializing past invoices list:", error);
-    alert("Failed to load past invoices. Please try again.");
-    list.setData([]);
-    list.changeLoadingStatus(false);
-  }
 }

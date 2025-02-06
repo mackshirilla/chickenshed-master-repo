@@ -435,7 +435,7 @@ const populateEditStudentForm = () => {
       profilePictureImage.setImage(student.profile_pic.url);
       console.log("Set profile picture to:", student.profile_pic.url);
     } else {
-      profilePictureImage.setImage("default-image-url");
+      profilePictureImage.setImage("https://cdn.prod.website-files.com/667f080f36260b9afbdc46b2/667f080f36260b9afbdc46be_placeholder.svg");
       console.log("Set profile picture to default-image-url");
     }
   } catch (error) {

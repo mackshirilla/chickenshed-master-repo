@@ -152,9 +152,7 @@ var _validationUtils = require("../../../utils/validationUtils");
 var _recaptchaUtils = require("../../../utils/recaptchaUtils"); // Ensure this function is implemented for reCAPTCHA handling
 var _apiConfig = require("../../../api/apiConfig"); // Ensure you have set up this API client for server interactions
 const signupForm = ()=>{
-    // Initialize the main form component with the specified form ID
     const form = new (0, _core.WFFormComponent)("#createAccountForm");
-    // Define fields with associated validation rules and messages
     const fields = [
         {
             input: new (0, _core.WFComponent)("#firstNameInput"),
@@ -186,18 +184,13 @@ const signupForm = ()=>{
             message: "Please agree to the terms and conditions."
         }
     ];
-    // Component for displaying any request-level error messages
     const requestError = new (0, _core.WFComponent)("#requestError");
     const requestAnimation = new (0, _core.WFComponent)("#requestingAnimation");
-    // Initialize validation for text input fields
     fields.forEach(({ input, error, validationFn, message })=>{
-        (0, _formUtils.setupValidation)(input, error, (0, _formUtils.createValidationFunction)(input, validationFn, message), requestError // Includes clearing requestError on input change
-        );
+        (0, _formUtils.setupValidation)(input, error, (0, _formUtils.createValidationFunction)(input, validationFn, message), requestError);
     });
-    // Initialize validation specifically for the checkbox
     const termsField = fields[fields.length - 1];
     (0, _formUtils.setupValidation)(termsField.input, termsField.error, (0, _formUtils.createCheckboxValidationFunction)(termsField.input, termsField.message), requestError);
-    // Dynamic feedback for password requirements
     const passwordRequirements = [
         new (0, _core.WFComponent)("#lengthCheck"),
         new (0, _core.WFComponent)("#lowercaseCheck"),
@@ -205,7 +198,6 @@ const signupForm = ()=>{
         new (0, _core.WFComponent)("#digitCheck"),
         new (0, _core.WFComponent)("#charCheck")
     ];
-    // Function to update visual indicators for password strength based on user input
     const updatePasswordRequirements = (password)=>{
         const checks = [
             password.length >= 8,
@@ -219,21 +211,23 @@ const signupForm = ()=>{
             else requirement.removeCssClass("passed");
         });
     };
-    // Attach a handler to update password requirements as the user types
     fields.find(({ input })=>input === fields[3].input)?.input.on("input", ()=>{
         const inputElement = fields[3].input.getElement();
         updatePasswordRequirements(inputElement.value);
     });
-    // Handle form submission
+    // Helper function to handle API responses
+    const handleApiResponse = (response)=>{
+        if (response.status !== "success") throw new Error(response.message || "An unknown error occurred.");
+        return response;
+    };
     form.onFormSubmit(async (formData, event)=>{
-        event.preventDefault(); // Stop the form from submitting normally
+        event.preventDefault();
         let isFormValid = true;
         requestAnimation.setStyle({
             display: "flex"
         }); // Show loading animation
-        // Clear the requestError at the beginning of each submission attempt
-        (0, _formUtils.toggleError)(requestError, "", false);
-        // Validate all fields before proceeding
+        (0, _formUtils.toggleError)(requestError, "", false); // Clear previous errors
+        // Validate all fields
         fields.forEach(({ input, error, validationFn, message })=>{
             const errorMessage = input === termsField.input ? (0, _formUtils.createCheckboxValidationFunction)(input, message)() : (0, _formUtils.createValidationFunction)(input, validationFn, message)();
             if (errorMessage) {
@@ -242,47 +236,39 @@ const signupForm = ()=>{
             } else (0, _formUtils.toggleError)(error, "", false);
         });
         if (!isFormValid) {
-            console.log("Validation failed:", formData);
             (0, _formUtils.toggleError)(requestError, "Please correct all errors above.", true);
             requestAnimation.setStyle({
                 display: "none"
-            }); // Hide loading animation
+            });
             return;
         }
-        // Handle reCAPTCHA verification
+        // Handle reCAPTCHA
         const recaptchaAction = "create_account";
         const isRecaptchaValid = await (0, _recaptchaUtils.handleRecaptcha)(recaptchaAction);
         if (!isRecaptchaValid) {
             (0, _formUtils.toggleError)(requestError, "reCAPTCHA verification failed.", true);
             requestAnimation.setStyle({
                 display: "none"
-            }); // Hide loading animation
+            });
             return;
         }
-        // Prepare data for submission
-        formData = form.getFormData();
-        console.log("Form data:", formData);
-        // Post data to a server endpoint
+        // Submit data
         try {
             const response = await (0, _apiConfig.apiClient).post("/auth/create-account", {
                 data: formData
             }).fetch();
-            if (response.status === "success") {
-                form.showSuccessState(); // Display success state for the form
-                const successTrigger = new (0, _core.WFComponent)("#onSuccessTrigger");
-                successTrigger.getElement()?.click();
-            } else throw new Error("Failed to create account.");
+            // Process the response
+            handleApiResponse(response);
+            form.showSuccessState();
+            const successTrigger = new (0, _core.WFComponent)("#onSuccessTrigger");
+            successTrigger.getElement()?.click();
         } catch (error) {
-            console.error("Account creation failed:", error);
-            (0, _formUtils.toggleError)(requestError, error.response.data.message || "Failed to create account.", true);
-            requestAnimation.setStyle({
-                display: "none"
-            }); // Hide loading animation
-            return;
+            console.error("Error:", error);
+            (0, _formUtils.toggleError)(requestError, error.message || "Failed to create account.", true);
         } finally{
             requestAnimation.setStyle({
                 display: "none"
-            }); // Hide loading animation
+            });
         }
     });
 };
