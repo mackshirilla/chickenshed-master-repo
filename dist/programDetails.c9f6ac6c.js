@@ -143,183 +143,194 @@
     }
   }
 })({"207Bq":[function(require,module,exports) {
-// src/pages/programDetails.ts
 var parcelHelpers = require("@parcel/transformer-js/src/esmodule-helpers.js");
 parcelHelpers.defineInteropFlag(exports);
-// Function to fetch program details and subscriptions from the API
-parcelHelpers.export(exports, "fetchProgramDetails", ()=>fetchProgramDetails);
-// Function to initialize and render the program details and subscriptions
+// ---- API Fetch ----
+/**
+ * Fetch program details, including subscription context if provided.
+ */ parcelHelpers.export(exports, "fetchProgramDetails", ()=>fetchProgramDetails);
+// ---- Page Init ----
 parcelHelpers.export(exports, "initializeProgramDetailsPage", ()=>initializeProgramDetailsPage);
 var _core = require("@xatom/core");
 var _image = require("@xatom/image");
 var _apiConfig = require("../../../api/apiConfig");
 var _listProgramFiles = require("./components/listProgramFiles");
-async function fetchProgramDetails(programId) {
-    try {
-        const getProgramDetails = (0, _apiConfig.apiClient).get(`/dashboard/registration/program/${programId}`);
-        const response = await getProgramDetails.fetch();
-        return response;
-    } catch (error) {
-        throw error;
-    }
+async function fetchProgramDetails(programId, subscriptionId) {
+    const params = {
+        program: programId
+    };
+    if (subscriptionId) params.subscription = subscriptionId;
+    const getProgramDetails = (0, _apiConfig.apiClient).get(`/dashboard/registration/program/${programId}`, {
+        data: params
+    });
+    const response = await getProgramDetails.fetch();
+    return response;
 }
 async function initializeProgramDetailsPage() {
-    // Initialize the dynamic program files list
     await (0, _listProgramFiles.initializeDynamicProgramFileList)("#filesList");
-    // Utility function to parse URL parameters
-    const getUrlParams = ()=>{
-        const params = new URLSearchParams(window.location.search);
-        const programId = params.get("program");
-        return {
-            programId
-        };
-    };
-    const { programId } = getUrlParams();
-    if (!programId) {
-        displayError("Invalid access. Program ID is missing.");
-        return;
-    }
+    const params = new URLSearchParams(window.location.search);
+    const programId = params.get("program");
+    const subscriptionId = params.get("subscription") || undefined;
+    if (!programId) return displayError("Invalid access. Program ID is missing.");
     try {
-        // Fetch program details and subscriptions
-        const apiResponse = await fetchProgramDetails(programId);
-        const { subscriptions, program } = apiResponse;
-        // Update program details on the page
+        const { program, workshops } = await fetchProgramDetails(programId, subscriptionId);
         updateProgramDetails(program);
-        // Initialize and render the subscriptions list using fetched data
-        await initializeDynamicSubscriptionList("#listRegistration", subscriptions, program);
-        // Trigger the success_trigger element
-        triggerSuccessEvent(".success_trigger");
-    } catch (error) {
+        // Sort items alphabetically by name or by weekday+time
+        const sortedItems = [
+            ...workshops
+        ].sort((a, b)=>{
+            if (a.weekday && b.weekday) return `${a.weekday} ${a.time_block}`.localeCompare(`${b.weekday} ${b.time_block}`);
+            return a.name.localeCompare(b.name);
+        });
+        // Elements
+        const workshopBox = document.getElementById("program-workshops");
+        const sessionBox = document.getElementById("program-sessions");
+        // Hide both by default
+        if (workshopBox) workshopBox.style.display = "none";
+        if (sessionBox) sessionBox.style.display = "none";
+        // Determine which to show
+        const hasWorkshops = sortedItems.length > 0 && sortedItems[0].weekday === undefined;
+        if (hasWorkshops) {
+            if (workshopBox) workshopBox.style.display = "flex";
+            await initializeDynamicWorkshopList("#program-workshops #listRegistration", sortedItems, program, subscriptionId);
+        } else {
+            if (sessionBox) sessionBox.style.display = "flex";
+            await initializeDynamicSessionList("#program-sessions #listRegistration", sortedItems, program.id, subscriptionId);
+        }
+        // trigger hidden success element for any downstream listeners
+        const trigger = document.querySelector(".success_trigger");
+        if (trigger instanceof HTMLElement) trigger.click();
+    } catch  {
         displayError("An error occurred while loading the program details.");
     }
 }
-// Function to update program details on the page
+// ---- DOM Updaters ----
 function updateProgramDetails(program) {
-    // Update Program Image
-    const programImageElement = document.getElementById("programImage");
-    if (programImageElement) {
-        const programImage = new (0, _image.WFImage)(programImageElement);
-        if (program.Main_Image) {
-            programImage.setImage(program.Main_Image);
-            const imgElement = programImage.getElement();
-            imgElement.alt = "Program Image";
-        } else {
-            programImage.setImage("https://cdn.prod.website-files.com/plugins/Basic/assets/placeholder.60f9b1840c.svg");
-            const imgElement = programImage.getElement();
-            imgElement.alt = "Program Image";
-        }
+    const imgEl = document.getElementById("programImage");
+    if (imgEl) {
+        const img = new (0, _image.WFImage)(imgEl);
+        img.setImage(program.Main_Image || "https://cdn.prod.website-files.com/plugins/Basic/assets/placeholder.60f9b1840c.svg");
+        img.getElement().alt = program.name;
     }
-    // Update Program Name
-    const programNameElement = document.getElementById("programName");
-    if (programNameElement) {
-        const programName = new (0, _core.WFComponent)(programNameElement);
-        programName.setText(program.name);
-    }
-    // Update program breadcrumb
-    const programBreadcrumbElement = document.getElementById("programBreadcrumb");
-    if (programBreadcrumbElement) {
-        const programBreadcrumb = new (0, _core.WFComponent)(programBreadcrumbElement);
-        programBreadcrumb.setText(program.name);
-    }
-    // Update Program Subheading
-    const programSubheadingElement = document.getElementById("programSubheading");
-    if (programSubheadingElement) {
-        const programSubheading = new (0, _core.WFComponent)(programSubheadingElement);
-        programSubheading.setText(program.Subheading);
-    }
-    // Update Program Short Description
-    const programShortDescriptionElement = document.getElementById("programShortDescription");
-    if (programShortDescriptionElement) {
-        const programShortDescription = new (0, _core.WFComponent)(programShortDescriptionElement);
-        programShortDescription.setText(program.Short_description);
-    }
+    const mappings = [
+        [
+            "programName",
+            program.name
+        ],
+        [
+            "programBreadcrumb",
+            program.name
+        ],
+        [
+            "programSubheading",
+            program.Subheading
+        ],
+        [
+            "programShortDescription",
+            program.Short_description
+        ]
+    ];
+    mappings.forEach(([id, text])=>{
+        const el = document.getElementById(id);
+        if (el) new (0, _core.WFComponent)(el).setText(text);
+    });
 }
-// Function to display an error message on the page
 function displayError(message) {
-    const errorElement = document.getElementById("listRegistrationEmpty");
-    if (errorElement) {
-        errorElement.innerHTML = `<div>${message}</div>`;
-        errorElement.style.display = "flex";
+    const empty = document.getElementById("listRegistrationEmpty");
+    if (empty) {
+        empty.innerHTML = `<div>${message}</div>`;
+        empty.style.display = "flex";
     }
 }
-// Function to initialize and render the dynamic subscription list
-async function initializeDynamicSubscriptionList(containerSelector, subscriptions, program) {
+// ---- Dynamic Workshop List ----
+async function initializeDynamicWorkshopList(containerSelector, workshops, program, subscriptionId) {
     const list = new (0, _core.WFDynamicList)(containerSelector, {
         rowSelector: "#listRegistrationCard",
         loaderSelector: "#listRegistrationloading",
         emptySelector: "#listRegistrationEmpty"
     });
-    list.loaderRenderer((loaderElement)=>{
-        loaderElement.setStyle({
+    list.loaderRenderer((el)=>{
+        el.setStyle({
             display: "flex"
         });
-        return loaderElement;
+        return el;
     });
-    list.emptyRenderer((emptyElement)=>{
-        emptyElement.setStyle({
+    list.emptyRenderer((el)=>{
+        el.setStyle({
             display: "flex"
         });
-        return emptyElement;
+        return el;
     });
     list.rowRenderer(({ rowData, rowElement })=>{
-        const registrationCard = new (0, _core.WFComponent)(rowElement);
-        // 1) Create a fallback for the program's image if missing
-        const programImageFallback = program.Main_Image ? program.Main_Image : "https://cdn.prod.website-files.com/66102236c16b61185de61fe3/66102236c16b61185de6204e_placeholder.svg";
-        // 2) Grab the card image element
-        const registrationImageComponent = registrationCard.getChildAsComponent("#cardRegistrationImage");
-        if (registrationImageComponent) {
-            const registrationImage = new (0, _image.WFImage)(registrationImageComponent.getElement());
-            // Use the subscription's image, otherwise fall back to the program's.
-            if (rowData.image_url && rowData.image_url.trim() !== "") registrationImage.setImage(rowData.image_url);
-            else registrationImage.setImage(programImageFallback);
+        const card = new (0, _core.WFComponent)(rowElement);
+        // Image
+        const imgComp = card.getChildAsComponent("#cardRegistrationImage");
+        if (imgComp) {
+            const img = new (0, _image.WFImage)(imgComp.getElement());
+            img.setImage(rowData.Main_Image || program.Main_Image);
         }
-        // 3) Set the program name (from the top-level `program` object)
-        const programNameComponent = registrationCard.getChildAsComponent("#cardProgramName");
-        if (programNameComponent) programNameComponent.setText(program.name);
-        // 4) Set the workshop name if present
-        const workshopNameComponent = registrationCard.getChildAsComponent("#cardWorkshopName");
-        if (workshopNameComponent) workshopNameComponent.setText(rowData.workshop_name || "");
-        // 5) Build the link with subscription and workshop parameters
-        const subscriptionCardElement = registrationCard.getElement();
-        const currentHref = subscriptionCardElement.getAttribute("href") || "#";
-        const url = new URL(currentHref, window.location.origin);
-        url.searchParams.set("program", rowData.program.toString());
-        url.searchParams.set("workshop", rowData.workshop.toString());
-        url.searchParams.set("subscription", rowData.id.toString());
-        subscriptionCardElement.setAttribute("href", url.toString());
-        // 6) Handle status pills (#cardActivePill and #cardDepositPill)
-        const cardActivePill = registrationCard.getChildAsComponent("#cardActivePill");
-        const cardDepositPill = registrationCard.getChildAsComponent("#cardDepositPill");
-        // Hide both by default
-        cardActivePill.setStyle({
-            display: "none"
-        });
-        cardDepositPill.setStyle({
-            display: "none"
-        });
-        // Show relevant pill by status
-        if (rowData.status === "Active") cardActivePill.setStyle({
-            display: "block"
-        });
-        else if (rowData.status === "Deposit Paid") cardDepositPill.setStyle({
-            display: "block"
-        });
-        // Ensure the row is visible
+        // Title
+        card.getChildAsComponent("#cardProgramName")?.setText(rowData.name);
+        card.getChildAsComponent("#cardWorkshopName")?.setText(program.name);
+        // Link: program, workshop, subscription
+        const anchor = card.getElement();
+        const url = new URL("/dashboard/registration/workshop", window.location.origin);
+        url.searchParams.set("program", String(program.id));
+        url.searchParams.set("workshop", String(rowData.id));
+        if (subscriptionId) url.searchParams.set("subscription", subscriptionId);
+        anchor.setAttribute("href", url.toString());
         rowElement.setStyle({
-            display: "block"
+            display: "flex"
         });
         return rowElement;
     });
     try {
-        list.setData(subscriptions);
-    } catch (error) {
+        list.setData(workshops);
+    } catch  {
         list.setData([]);
     }
 }
-// Function to trigger a click on the success_trigger element
-function triggerSuccessEvent(selector) {
-    const successTrigger = document.querySelector(selector);
-    if (successTrigger instanceof HTMLElement) successTrigger.click();
+// ---- Dynamic Session List ----
+async function initializeDynamicSessionList(containerSelector, sessions, programId, subscriptionId) {
+    const list = new (0, _core.WFDynamicList)(containerSelector, {
+        rowSelector: "#listRegistrationCard",
+        loaderSelector: "#listRegistrationloading",
+        emptySelector: "#listRegistrationEmpty"
+    });
+    list.loaderRenderer((el)=>{
+        el.setStyle({
+            display: "flex"
+        });
+        return el;
+    });
+    list.emptyRenderer((el)=>{
+        el.setStyle({
+            display: "flex"
+        });
+        return el;
+    });
+    list.rowRenderer(({ rowData, rowElement })=>{
+        const card = new (0, _core.WFComponent)(rowElement);
+        card.getChildAsComponent("#cardSessionDay")?.setText(rowData.weekday || "");
+        card.getChildAsComponent("#cardSessionTimeBlock")?.setText(rowData.time_block || "");
+        card.getChildAsComponent("#cardSessionLocation")?.setText(rowData.location_name || "");
+        // Link
+        const anchor = card.getElement();
+        const url = new URL("/dashboard/registration/session", window.location.origin);
+        url.searchParams.set("program", String(programId));
+        if (subscriptionId) url.searchParams.set("subscription", subscriptionId);
+        url.searchParams.set("session", String(rowData.id));
+        anchor.setAttribute("href", url.toString());
+        rowElement.setStyle({
+            display: "flex"
+        });
+        return rowElement;
+    });
+    try {
+        list.setData(sessions);
+    } catch  {
+        list.setData([]);
+    }
 }
 
 },{"@xatom/core":"j9zXV","@xatom/image":"ly8Ay","../../../api/apiConfig":"2Lx0S","./components/listProgramFiles":"hU0CB","@parcel/transformer-js/src/esmodule-helpers.js":"5oERU"}],"ly8Ay":[function(require,module,exports) {
@@ -384,34 +395,43 @@ o = module.exports, n = u, Object.keys(n).forEach(function(t) {
 // src/pages/listStudentFiles.ts
 var parcelHelpers = require("@parcel/transformer-js/src/esmodule-helpers.js");
 parcelHelpers.defineInteropFlag(exports);
-// Function to fetch files for a specific student
+// Function to fetch files for a specific program (+ optional subscription)
 parcelHelpers.export(exports, "fetchProgramFiles", ()=>fetchProgramFiles);
-// Function to initialize and render the dynamic file list for a student
+// Function to initialize and render the dynamic file list for a program
 parcelHelpers.export(exports, "initializeDynamicProgramFileList", ()=>initializeDynamicProgramFileList);
 var _core = require("@xatom/core");
 var _apiConfig = require("../../../../api/apiConfig");
-// Function to get the student_id from URL parameters
+// Function to get the program_id from URL parameters
 function getProgramIdFromUrl() {
     const urlParams = new URLSearchParams(window.location.search);
     return urlParams.get("program");
 }
-async function fetchProgramFiles(programId) {
+// Function to get the subscription from URL parameters
+function getSubscriptionFromUrl() {
+    const urlParams = new URLSearchParams(window.location.search);
+    return urlParams.get("subscription");
+}
+async function fetchProgramFiles(programId, subscriptionId) {
     try {
-        const getFiles = (0, _apiConfig.apiClient).get(`/student_files/program/${programId}`);
+        // build path with optional subscription query
+        const path = subscriptionId ? `/student_files/program/${programId}?subscription=${encodeURIComponent(subscriptionId)}` : `/student_files/program/${programId}`;
+        const getFiles = (0, _apiConfig.apiClient).get(path);
         const response = await getFiles.fetch();
         return response;
     } catch (error) {
-        console.error("Error fetching files for student:", error);
+        console.error("Error fetching files for program:", error);
         throw error;
     }
 }
 async function initializeDynamicProgramFileList(containerSelector) {
-    // Get the student ID from the URL
+    // Get the program ID from the URL
     const programId = getProgramIdFromUrl();
     if (!programId) {
-        console.error("No student ID provided in URL");
+        console.error("No program ID provided in URL");
         return;
     }
+    // Get optional subscription ID
+    const subscriptionId = getSubscriptionFromUrl();
     // Initialize a new instance of WFDynamicList for Files
     const list = new (0, _core.WFDynamicList)(containerSelector, {
         rowSelector: "#fileCard",
@@ -435,12 +455,9 @@ async function initializeDynamicProgramFileList(containerSelector) {
     // Customize the rendering of list items (File Cards)
     list.rowRenderer(({ rowData, rowElement })=>{
         const fileCard = new (0, _core.WFComponent)(rowElement);
-        // Set the fileCard's href to file_url
         fileCard.setAttribute("href", rowData.file_url);
-        // Set the fileName to file_name
         const fileName = fileCard.getChildAsComponent("#fileName");
         fileName.setText(rowData.file_name);
-        // Show the list item
         rowElement.setStyle({
             display: "block"
         });
@@ -448,20 +465,14 @@ async function initializeDynamicProgramFileList(containerSelector) {
     });
     // Load and display file data
     try {
-        // Enable the loading state
         list.changeLoadingStatus(true);
-        const files = await fetchProgramFiles(programId);
-        // Sort files alphabetically by file_name
+        const files = await fetchProgramFiles(programId, subscriptionId);
         files.sort((a, b)=>a.file_name.localeCompare(b.file_name));
-        // Set the data to be displayed in the dynamic list
         list.setData(files);
-        // Disable the loading state
-        list.changeLoadingStatus(false);
     } catch (error) {
         console.error("Error loading files:", error);
-        // If there's an error, set an empty array to trigger the empty state
         list.setData([]);
-        // Disable the loading state
+    } finally{
         list.changeLoadingStatus(false);
     }
 }

@@ -1163,165 +1163,73 @@ const updateEmergencyContactFullName = ()=>{
 var parcelHelpers = require("@parcel/transformer-js/src/esmodule-helpers.js");
 parcelHelpers.defineInteropFlag(exports);
 // ----- FETCHING FUNCTION -----
-/**
- * Fetch registrations for a student from the new endpoint/response.
- */ parcelHelpers.export(exports, "fetchStudentRegistrations", ()=>fetchStudentRegistrations);
+parcelHelpers.export(exports, "fetchStudentRegistrations", ()=>fetchStudentRegistrations);
 // ----- INITIALIZER FOR THE DYNAMIC LIST -----
-/**
- * Initializes the dynamic list of registrations for a given student.
- * @param studentId - The ID of the student.
- */ parcelHelpers.export(exports, "initializeStudentRegistrations", ()=>initializeStudentRegistrations);
+parcelHelpers.export(exports, "initializeStudentRegistrations", ()=>initializeStudentRegistrations);
 var _core = require("@xatom/core");
-var _image = require("@xatom/image");
 var _apiConfig = require("../../../api/apiConfig");
 async function fetchStudentRegistrations(studentId) {
     try {
-        const response = await (0, _apiConfig.apiClient).get(`/dashboard/profiles/student/${studentId}/registrations`).fetch();
-        // The API directly returns an array of Registration objects
-        if (response) {
-            const registrations = response;
-            return registrations;
-        } else {
-            console.error("No registrations found for the student.");
-            return [];
-        }
+        return await (0, _apiConfig.apiClient).get(`/dashboard/profiles/student/${studentId}/registrations`).fetch() || [];
     } catch (error) {
         console.error("Error fetching student registrations:", error);
         return [];
     }
 }
 async function initializeStudentRegistrations(studentId) {
-    // 1) Create the dynamic list
     const list = new (0, _core.WFDynamicList)("#listRegistration", {
         rowSelector: "#listRegistrationCard",
         loaderSelector: "#listRegistrationloading",
         emptySelector: "#listRegistrationEmpty"
     });
-    // 2) Customize the loader
+    // Loader
     list.loaderRenderer((loaderElement)=>{
         loaderElement.setStyle({
             display: "flex"
         });
         return loaderElement;
     });
-    // 3) Customize the empty state
+    // Empty state
     list.emptyRenderer((emptyElement)=>{
         emptyElement.setStyle({
             display: "flex"
         });
         return emptyElement;
     });
-    // 4) Customize how each row (registration card) is rendered
+    // Each card
     list.rowRenderer(({ rowData, rowElement })=>{
-        const registrationCard = new (0, _core.WFComponent)(rowElement);
-        // Retrieve the student's name from localStorage
-        const currentStudent = localStorage.getItem("current_student");
-        let studentName = "N/A";
-        if (currentStudent) try {
-            const student = JSON.parse(currentStudent);
-            studentName = `${student.first_name || ""} ${student.last_name || ""}`.trim() || "N/A";
-        } catch (parseError) {
-            console.error("Error parsing current_student from localStorage:", parseError);
-        }
-        else console.warn("current_student not found in localStorage.");
-        // Build the link
-        // rowData.program is the numeric Program ID
-        // rowData.subscription_id is the numeric subscription
-        // rowData.workshop might be 0 if no workshop
-        let href = `/dashboard/registration/subscription/workshop?program=${encodeURIComponent(String(rowData.program))}&subscription=${encodeURIComponent(String(rowData.subscription_id))}`;
-        // If workshop > 0, add workshop param
-        if (rowData.workshop && rowData.workshop !== 0) href += `&workshop=${encodeURIComponent(String(rowData.workshop))}`;
-        // Set this link on the card element
-        registrationCard.setAttribute("href", href);
-        // Add the 'registration-link' class for possible event delegation
-        registrationCard.addCssClass("registration-link");
-        // ----- Breadcrumb Data Attributes -----
-        registrationCard.setAttribute("data-student-id", String(rowData.student_profile_id));
-        registrationCard.setAttribute("data-student-name", studentName);
-        // The new data has `program_details` and possibly `workshop_details`
-        const programNameStr = rowData.program_details.name || "";
-        const workshopNameStr = rowData.workshop_details?.Name || "";
-        registrationCard.setAttribute("data-program-name", programNameStr);
-        registrationCard.setAttribute("data-program-id", String(rowData.program));
-        // If there's a real workshop, store it
-        if (rowData.workshop && rowData.workshop !== 0) {
-            registrationCard.setAttribute("data-workshop-name", workshopNameStr);
-            registrationCard.setAttribute("data-workshop-id", String(rowData.workshop));
-        } else {
-            // No workshop
-            registrationCard.setAttribute("data-workshop-name", "");
-            registrationCard.setAttribute("data-workshop-id", "");
-        }
-        registrationCard.setAttribute("data-subscription-id", String(rowData.subscription_id));
-        // ----- Update UI Elements in the Card -----
-        // #cardProgramName => from rowData.program_details.name
-        const programNameCmp = registrationCard.getChildAsComponent("#cardProgramName");
-        if (programNameCmp) programNameCmp.setText(programNameStr || "N/A");
-        else console.warn("#cardProgramName not found in registrationCard.");
-        // #cardWorkshopName => from rowData.workshop_details?.Name
-        const workshopNameCmp = registrationCard.getChildAsComponent("#cardWorkshopName");
-        if (workshopNameCmp) workshopNameCmp.setText(workshopNameStr || "");
-        else console.warn("#cardWorkshopName not found in registrationCard.");
-        // #cardRegistrationImage => from rowData.program_details.Main_Image
-        // (The new response does not include a direct image_url for each registration,
-        //  so we'll assume the program image is the fallback.)
-        const registrationImageElement = registrationCard.getChildAsComponent("#cardRegistrationImage");
-        if (registrationImageElement) {
-            const registrationImage = new (0, _image.WFImage)(registrationImageElement.getElement());
-            if (rowData.program_details?.Main_Image) registrationImage.setImage(rowData.program_details.Main_Image);
-            else registrationImage.setImage("https://cdn.prod.website-files.com/667f080f36260b9afbdc46b2/667f080f36260b9afbdc46be_placeholder.svg");
-        } else console.warn("#cardRegistrationImage not found in registrationCard.");
-        // ----- Status Pills (#cardActivePill, #cardDepositPill, etc.) -----
-        const activePill = registrationCard.getChildAsComponent("#cardActivePill");
-        const depositPill = registrationCard.getChildAsComponent("#cardDepositPill");
-        if (activePill && depositPill) {
-            if (rowData.status === "Active") {
-                activePill.setStyle({
-                    display: "block"
-                });
-                depositPill.setStyle({
-                    display: "none"
-                });
-            } else if (rowData.status === "Deposit Paid") {
-                activePill.setStyle({
-                    display: "none"
-                });
-                depositPill.setStyle({
-                    display: "block"
-                });
-            } else {
-                // Handle other statuses if needed
-                activePill.setStyle({
-                    display: "none"
-                });
-                depositPill.setStyle({
-                    display: "none"
-                });
-            }
-        } else console.warn("Status pills (#cardActivePill or #cardDepositPill) not found in registrationCard.");
-        // Finally, ensure the card is displayed
+        const card = new (0, _core.WFComponent)(rowElement);
+        // Build link to session details
+        const url = new URL("/dashboard/registration/session", window.location.origin);
+        url.searchParams.set("program", String(rowData.program_id));
+        url.searchParams.set("subscription", String(rowData.subscription_id));
+        if (rowData.workshop_id !== null) url.searchParams.set("workshop", String(rowData.workshop_id));
+        url.searchParams.set("session", String(rowData.session_id));
+        card.setAttribute("href", url.toString());
+        card.addCssClass("registration-link");
+        // Title: session name, fallback to workshop or program
+        card.getChildAsComponent("#cardSessionTitle")?.setText(rowData.session_details.Name || rowData.workshop_name || rowData.program_name);
+        // Day & time
+        card.getChildAsComponent("#cardSessionDay")?.setText(rowData.weekday);
+        card.getChildAsComponent("#cardSessionTimeBlock")?.setText(rowData.time_block);
+        // Location: try nested, then top‐level
+        const nestedLoc = rowData.session_details.location_details?.Name;
+        const loc = nestedLoc && nestedLoc !== "" ? nestedLoc : rowData.location;
+        card.getChildAsComponent("#cardSessionLocation")?.setText(loc);
         rowElement.setStyle({
             display: "block"
         });
-        // Return rowElement to WFDynamicList
         return rowElement;
     });
-    // 5) Fetch and load the registrations
-    try {
-        list.changeLoadingStatus(true);
-        const registrations = await fetchStudentRegistrations(studentId);
-        // Optionally sort descending by created_at
-        registrations.sort((a, b)=>b.created_at - a.created_at);
-        list.setData(registrations);
-        list.changeLoadingStatus(false);
-    } catch (error) {
-        console.error("Error initializing student registrations:", error);
-        list.setData([]); // Empty state
-        list.changeLoadingStatus(false);
-    }
+    // Load data
+    list.changeLoadingStatus(true);
+    const regs = await fetchStudentRegistrations(studentId);
+    regs.sort((a, b)=>b.created_at - a.created_at);
+    list.setData(regs);
+    list.changeLoadingStatus(false);
 }
 
-},{"@xatom/core":"j9zXV","@xatom/image":"ly8Ay","../../../api/apiConfig":"2Lx0S","@parcel/transformer-js/src/esmodule-helpers.js":"5oERU"}],"djYny":[function(require,module,exports) {
+},{"@xatom/core":"j9zXV","../../../api/apiConfig":"2Lx0S","@parcel/transformer-js/src/esmodule-helpers.js":"5oERU"}],"djYny":[function(require,module,exports) {
 // src/modules/pages/studentProfile/deleteStudent.ts
 var parcelHelpers = require("@parcel/transformer-js/src/esmodule-helpers.js");
 parcelHelpers.defineInteropFlag(exports);

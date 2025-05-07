@@ -664,7 +664,7 @@ async function updateStudentProfile(id, formData) {
     else throw new Error(response.message || "Failed to update student profile.");
 }
 
-},{"@xatom/core":"j9zXV","../../../../../utils/formUtils":"hvg7i","../../../../../utils/validationUtils":"dMBjH","../../../../../api/apiConfig":"2Lx0S","../../../../../auth/authConfig":"gkGgf","@parcel/transformer-js/src/esmodule-helpers.js":"5oERU","../../../../../utils/recaptchaUtils":"d0IfT"}],"hvg7i":[function(require,module,exports) {
+},{"@xatom/core":"j9zXV","../../../../../utils/formUtils":"hvg7i","../../../../../utils/validationUtils":"dMBjH","../../../../../utils/recaptchaUtils":"d0IfT","../../../../../api/apiConfig":"2Lx0S","../../../../../auth/authConfig":"gkGgf","@parcel/transformer-js/src/esmodule-helpers.js":"5oERU"}],"hvg7i":[function(require,module,exports) {
 var parcelHelpers = require("@parcel/transformer-js/src/esmodule-helpers.js");
 parcelHelpers.defineInteropFlag(exports);
 parcelHelpers.export(exports, "toggleError", ()=>toggleError);
@@ -1576,7 +1576,12 @@ var _recaptchaUtils = require("../../../../../utils/recaptchaUtils");
 var _apiConfig = require("../../../../../api/apiConfig");
 var _formUtils = require("../../../../../utils/formUtils");
 var _sidebar = require("../sidebar");
+// Prevent double-binding on initialization
+let step8Initialized = false;
 const initializeStepEight = (slider, getFormData)=>{
+    // Guard to ensure this setup runs only once
+    if (step8Initialized) return;
+    step8Initialized = true;
     console.log("Initialize Step Eight");
     // Initialize form review items
     const studentProfilePic = new (0, _image.WFImage)("#studentProfilePic");
@@ -1740,7 +1745,7 @@ const initializeStepEight = (slider, getFormData)=>{
             (0, _formUtils.toggleError)(submitStepEightError, error.response?.data?.message || "Failed to complete profile.", true);
             stepEightRequestingAnimation.setStyle({
                 display: "none"
-            }); // Hide loading animation
+            });
         }
     });
     // Handle back button for Step 8

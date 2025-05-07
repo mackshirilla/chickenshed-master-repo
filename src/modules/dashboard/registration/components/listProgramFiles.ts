@@ -15,38 +15,50 @@ interface FileItem {
   created_at: number;
 }
 
-// Function to get the student_id from URL parameters
+// Function to get the program_id from URL parameters
 function getProgramIdFromUrl(): string | null {
   const urlParams = new URLSearchParams(window.location.search);
   return urlParams.get("program");
 }
 
-// Function to fetch files for a specific student
+// Function to get the subscription from URL parameters
+function getSubscriptionFromUrl(): string | null {
+  const urlParams = new URLSearchParams(window.location.search);
+  return urlParams.get("subscription");
+}
+
+// Function to fetch files for a specific program (+ optional subscription)
 export async function fetchProgramFiles(
-  programId: string
+  programId: string,
+  subscriptionId?: string
 ): Promise<FileItem[]> {
   try {
-    const getFiles = apiClient.get<FileItem[]>(
-      `/student_files/program/${programId}`
-    );
+    // build path with optional subscription query
+    const path = subscriptionId
+      ? `/student_files/program/${programId}?subscription=${encodeURIComponent(subscriptionId)}`
+      : `/student_files/program/${programId}`;
+
+    const getFiles = apiClient.get<FileItem[]>(path);
     const response = await getFiles.fetch();
     return response;
   } catch (error) {
-    console.error("Error fetching files for student:", error);
+    console.error("Error fetching files for program:", error);
     throw error;
   }
 }
 
-// Function to initialize and render the dynamic file list for a student
+// Function to initialize and render the dynamic file list for a program
 export async function initializeDynamicProgramFileList(
   containerSelector: string
 ) {
-  // Get the student ID from the URL
+  // Get the program ID from the URL
   const programId = getProgramIdFromUrl();
   if (!programId) {
-    console.error("No student ID provided in URL");
+    console.error("No program ID provided in URL");
     return;
   }
+  // Get optional subscription ID
+  const subscriptionId = getSubscriptionFromUrl();
 
   // Initialize a new instance of WFDynamicList for Files
   const list = new WFDynamicList<FileItem>(containerSelector, {
@@ -57,61 +69,36 @@ export async function initializeDynamicProgramFileList(
 
   // Customize the rendering of the loader
   list.loaderRenderer((loaderElement) => {
-    loaderElement.setStyle({
-      display: "flex",
-    });
+    loaderElement.setStyle({ display: "flex" });
     return loaderElement;
   });
 
   // Customize the rendering of the empty state
   list.emptyRenderer((emptyElement) => {
-    emptyElement.setStyle({
-      display: "flex",
-    });
+    emptyElement.setStyle({ display: "flex" });
     return emptyElement;
   });
 
   // Customize the rendering of list items (File Cards)
   list.rowRenderer(({ rowData, rowElement }) => {
     const fileCard = new WFComponent(rowElement);
-
-    // Set the fileCard's href to file_url
     fileCard.setAttribute("href", rowData.file_url);
-
-    // Set the fileName to file_name
     const fileName = fileCard.getChildAsComponent("#fileName");
     fileName.setText(rowData.file_name);
-
-    // Show the list item
-    rowElement.setStyle({
-      display: "block",
-    });
-
+    rowElement.setStyle({ display: "block" });
     return rowElement;
   });
 
   // Load and display file data
   try {
-    // Enable the loading state
     list.changeLoadingStatus(true);
-
-    const files = await fetchProgramFiles(programId);
-
-    // Sort files alphabetically by file_name
+    const files = await fetchProgramFiles(programId, subscriptionId);
     files.sort((a, b) => a.file_name.localeCompare(b.file_name));
-
-    // Set the data to be displayed in the dynamic list
     list.setData(files);
-
-    // Disable the loading state
-    list.changeLoadingStatus(false);
   } catch (error) {
     console.error("Error loading files:", error);
-
-    // If there's an error, set an empty array to trigger the empty state
     list.setData([]);
-
-    // Disable the loading state
+  } finally {
     list.changeLoadingStatus(false);
   }
 }

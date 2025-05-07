@@ -25,7 +25,6 @@ interface Subscription {
   sale_id: number;
   created_at: number; // Unix timestamp in milliseconds
   program_details: ProgramDetails;
-  // workshop_details?: WorkshopDetails; // We won't use this anymore
 }
 
 // Define the structure of the API response
@@ -37,7 +36,7 @@ interface SubscriptionApiResponse {
 export async function fetchSubscriptions(): Promise<Subscription[]> {
   try {
     const getSubscriptions = apiClient.get<SubscriptionApiResponse>(
-      "/subscriptions" // Ensure this endpoint is correct
+      "/subscriptions"
     );
     const response = await getSubscriptions.fetch();
     return response.subscriptions;
@@ -51,103 +50,101 @@ export async function fetchSubscriptions(): Promise<Subscription[]> {
 export async function initializeDynamicSubscriptionList(
   containerSelector: string
 ) {
+  // Grab and hide both buttons until we know list state
+  const addBtn = document.getElementById("add-registration-button");
+  const manageBtn = document.getElementById("manage-registration-button");
+  if (addBtn) addBtn.style.display = "none";
+  if (manageBtn) manageBtn.style.display = "none";
+
   // Initialize a new instance of WFDynamicList for Subscriptions
   const list = new WFDynamicList<Subscription>(containerSelector, {
-    rowSelector: "#listRegistrationCard", // Using ID selector for template
-    loaderSelector: "#listRegistrationloading", // Selector for the loader
-    emptySelector: "#listRegistrationEmpty", // Selector for the empty state
+    rowSelector: "#listRegistrationCard",       // Template for each card
+    loaderSelector: "#listRegistrationloading", // Loader spinner
+    emptySelector: "#listRegistrationEmpty",    // Empty state container
   });
 
-  // Customize the rendering of the loader
-  list.loaderRenderer((loaderElement) => {
-    loaderElement.setStyle({
-      display: "flex",
-    });
-    return loaderElement;
+  // Loader renderer
+  list.loaderRenderer(loaderEl => {
+    loaderEl.setStyle({ display: "flex" });
+    return loaderEl;
   });
 
-  // Customize the rendering of the empty state
-  list.emptyRenderer((emptyElement) => {
-    emptyElement.setStyle({
-      display: "flex",
-    });
-    return emptyElement;
+  // Empty state renderer
+  list.emptyRenderer(emptyEl => {
+    emptyEl.setStyle({ display: "flex" });
+    return emptyEl;
   });
 
-  // Customize the rendering of list items (Subscription Cards)
+  // Card renderer
   list.rowRenderer(({ rowData, rowElement }) => {
-    const registrationCard = new WFComponent(rowElement);
+    const card = new WFComponent(rowElement);
 
-    // Use only program details for the image
-    const imageUrl = rowData.program_details.Main_Image;
-
-    // Set the profile image
-    const registrationImage = new WFImage(
-      registrationCard.getChildAsComponent("#cardRegistrationImage").getElement()
+    // 1) Program image
+    const imgComp = card.getChildAsComponent<HTMLImageElement>(
+      "#cardRegistrationImage"
     );
-    if (imageUrl) {
-      registrationImage.setImage(imageUrl);
-    } else {
-      registrationImage.setImage(
-        "https://cdn.prod.website-files.com/66102236c16b61185de61fe3/66102236c16b61185de6204e_placeholder.svg"
+    if (imgComp) {
+      const img = new WFImage(imgComp.getElement());
+      img.setImage(
+        rowData.program_details.Main_Image ||
+          "https://cdn.prod.website-files.com/66102236c16b61185de61fe3/66102236c16b61185de6204e_placeholder.svg"
       );
     }
 
-    // Set the program name from program_details
-    const programNameComponent = registrationCard.getChildAsComponent(
-      "#cardProgramName"
-    );
-    programNameComponent.setText(rowData.program_details.name);
+    // 2) Program name
+    card
+      .getChildAsComponent<HTMLDivElement>("#cardProgramName")
+      ?.setText(rowData.program_details.name);
 
-    // Append the program parameter to the existing href
-    const currentHref = registrationCard.getElement().getAttribute("href") || "#";
-    const separator = currentHref.includes("?") ? "&" : "?";
-    const newHref = `${currentHref}${separator}program=${rowData.program}`;
-    registrationCard.getElement().setAttribute("href", newHref);
+    // 3) Update card href with program & subscription params
+    const anchor = card.getElement() as HTMLAnchorElement;
+    const url = new URL(anchor.getAttribute("href") || "#", window.location.origin);
+    url.searchParams.set("program", String(rowData.program));
+    url.searchParams.set("subscription", String(rowData.id));
+    anchor.setAttribute("href", url.toString());
 
-    // Show the list item
-    rowElement.setStyle({
-      display: "block",
-    });
-
+    // 4) Show the card
+    rowElement.setStyle({ display: "block" });
     return rowElement;
   });
 
-  // Load and display subscription data
+  // Load and render data
+  list.changeLoadingStatus(true);
   try {
-    // Enable the loading state
-    list.changeLoadingStatus(true);
+    const subs = await fetchSubscriptions();
 
-    const subscriptions = await fetchSubscriptions();
+    // Dedupe: one subscription per program
+    const uniqueByProgram = Array.from(
+      subs.reduce<Map<number, Subscription>>((map, sub) => {
+        if (!map.has(sub.program)) map.set(sub.program, sub);
+        return map;
+      }, new Map()).values()
+    );
 
-    // Filter unique subscriptions by numeric program ID
-    const uniqueSubscriptionsMap = new Map<number, Subscription>();
-    subscriptions.forEach((sub) => {
-      // Only add the subscription if we haven't encountered this program ID yet
-      if (!uniqueSubscriptionsMap.has(sub.program)) {
-        uniqueSubscriptionsMap.set(sub.program, sub);
-      }
-    });
-
-    const uniqueSubscriptions = Array.from(uniqueSubscriptionsMap.values());
-
-    // Sort subscriptions alphabetically by program_details.name
-    uniqueSubscriptions.sort((a, b) =>
+    // Sort alphabetically by program name
+    uniqueByProgram.sort((a, b) =>
       a.program_details.name.localeCompare(b.program_details.name)
     );
 
-    // Set the data to be displayed in the dynamic list
-    list.setData(uniqueSubscriptions);
+    // Render into the list
+    list.setData(uniqueByProgram);
 
-    // Disable the loading state
-    list.changeLoadingStatus(false);
+    // Toggle buttons based on list length
+    if (uniqueByProgram.length === 0) {
+      if (addBtn) addBtn.style.display = "block";
+      if (manageBtn) manageBtn.style.display = "none";
+    } else {
+      if (addBtn) addBtn.style.display = "none";
+      if (manageBtn) manageBtn.style.display = "block";
+    }
   } catch (error) {
     console.error("Error loading subscriptions:", error);
-
-    // If there's an error, set an empty array to trigger the empty state
     list.setData([]);
 
-    // Disable the loading state
+    // On error, treat as empty list
+    if (addBtn) addBtn.style.display = "block";
+    if (manageBtn) manageBtn.style.display = "none";
+  } finally {
     list.changeLoadingStatus(false);
   }
 }

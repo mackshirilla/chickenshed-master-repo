@@ -1,347 +1,150 @@
-// src/success_page/registration_success.ts
+// src/success_page/registration_success_index.ts
 
 import { WFComponent } from "@xatom/core";
-import { WFImage } from "@xatom/image";
 import { apiClient } from "../../api/apiConfig";
 
-// Define the structure of the new registration response
-export interface RegistrationResponse {
-  data: {
-    id: number;
-    status: string; // e.g. 'Active', 'Deposit Paid'
-    subscription_type: string; // e.g. 'Annual', 'Pay-Per-Semester'
-    program: Program;
-    workshop: Workshop | null; // workshop may be null
-    pending_students: boolean;
-    coupon: string;
-    deposit_amount: number;
-    start_date: string | null; // Possibly null
-    next_charge_date: string | null;
-    next_charge_amount: number;
-    next_invoice_id: string;
-    stripe_subscription_id: string;
-    user_id: number;
-    contact_id: number;
-    sale_id: number;
-    cancellation_reason: string;
-    created_at: number;
-  };
-}
+// Utility functions for formatting values
+const capitalize = (str: string) => str.charAt(0).toUpperCase() + str.slice(1);
+const formatBoolean = (val: boolean) => capitalize(val.toString());
+const formatCurrency = (val: number) =>
+  new Intl.NumberFormat("en-US", { style: "currency", currency: "USD" }).format(val);
 
-// Define the Program interface
-interface Program {
-  id: number;
-  name: string;
-  slug: string;
-  Collection_ID: string;
-  Locale_ID: string;
-  Item_ID: string;
-  Created_On: string;
-  Updated_On: string;
-  Published_On: string;
-  Main_Image: string;
-  Main_Video: string;
-  Subheading: string;
-  Short_description: string;
-  Age_range: string;
-  Price_Description: string;
-  Schedule_Description: string;
-  Financial_Aid_Description: string;
-  Accessibility_Description: string;
-  Program_Overview_Description: string;
-  Sort_Order: number;
-  Color_Theme: number;
-  Inquiry_Only: boolean;
-  ["1st_Semester_Start_Date"]: number | null;
-  ["2nd_Semester_Charge_Date"]: number | null;
-  Subscription_Pause_Date: number | null;
-  Success_Page_Message: string;
-}
-
-// Define the Workshop interface
-interface Workshop {
-  id: number;
-  Name: string;
-  Slug: string;
-  Collection_ID: string;
-  Locale_ID: string;
-  Item_ID: string;
-  Created_On: string | null;
-  Updated_On: string | null;
-  Published_On: string | null;
-  Main_Image: string;
-  Main_Video: string;
-  Subheading: string;
-  Short_description: string;
-  Age_range: string;
-  Price_Description: string;
-  Schedule_Description: string;
-  Financial_Aid_Description: string;
-  Accessibility_Description: string;
-  Workshop_Overview_Description: string;
-  Success_Page_Message: string;
-  Color_Theme: number;
-  Parent_Program: number;
-}
-
-// Define a RegistrationCard component to manage the registration card DOM
-class RegistrationCard {
-  private card: WFComponent;
-  private image: WFImage;
-  private programName: WFComponent;
-  private workshopName: WFComponent;
-  private subscriptionType: WFComponent;
-  private invoiceDate: WFComponent;
-  private activePill: WFComponent;
-  private depositPill: WFComponent;
-  private successMessage: WFComponent;
-  private programId: string; // We'll store the program id as a string
-
-  constructor(cardId: string) {
-    const cardElement = document.getElementById(cardId);
-    if (!cardElement) {
-      throw new Error(`Element with id '${cardId}' not found.`);
-    }
-
-    // Since #registrationCard is the link element, initialize it accordingly
-    this.card = new WFComponent(cardElement);
-
-    // Initialize child elements within the link
-    this.image = new WFImage(
-      this.card.getChildAsComponent("#cardRegistrationImage").getElement()
-    );
-    this.programName = this.card.getChildAsComponent("#cardProgramName");
-    this.workshopName = this.card.getChildAsComponent("#cardWorkshopName");
-    this.subscriptionType = this.card.getChildAsComponent(
-      "#cardSubscriptionType"
-    );
-    this.invoiceDate = this.card.getChildAsComponent("#cardInvoiceDate");
-    this.activePill = this.card.getChildAsComponent("#cardActivePill");
-    this.depositPill = this.card.getChildAsComponent("#cardDepositPill");
-    this.successMessage = new WFComponent("#successMessage");
-
-    // Initialize programId to an empty string
-    this.programId = "";
-
-    // Log warnings if any essential child elements are missing
-    if (!this.programName) {
-      console.warn(
-        "Element with id 'cardProgramName' not found within the registration card."
-      );
-    }
-    if (!this.workshopName) {
-      console.warn(
-        "Element with id 'cardWorkshopName' not found within the registration card."
-      );
-    }
-    if (!this.subscriptionType) {
-      console.warn(
-        "Element with id 'cardSubscriptionType' not found within the registration card."
-      );
-    }
-    if (!this.invoiceDate) {
-      console.warn(
-        "Element with id 'cardInvoiceDate' not found within the registration card."
-      );
-    }
-    if (!this.activePill) {
-      console.warn(
-        "Element with id 'cardActivePill' not found within the registration card."
-      );
-    }
-    if (!this.depositPill) {
-      console.warn(
-        "Element with id 'cardDepositPill' not found within the registration card."
-      );
-    }
-    if (!this.image) {
-      console.warn(
-        "Element with id 'cardRegistrationImage' not found within the registration card."
-      );
-    }
-    if (!this.successMessage) {
-      console.warn("Element with id 'successMessage' not found on the page.");
-    }
-  }
-
-  // Method to populate the registration card with data
-  populate(data: RegistrationResponse["data"]) {
-    console.log("Populating registration card with data.");
-
-    // Set Program ID (store as string for URL parameter)
-    this.programId = data.program.id.toString();
-    console.log("Program ID set to:", this.programId);
-
-    // Set Program Name
-    this.programName.setText(data.program.name);
-    console.log("Set programName:", data.program.name);
-
-    // Set Workshop Name (if workshop exists)
-    const workshopName = data.workshop ? data.workshop.Name : "";
-    this.workshopName.setText(workshopName);
-    console.log("Set workshopName:", workshopName);
-
-    // Set Subscription Type
-    this.subscriptionType.setText(data.subscription_type);
-    console.log("Set subscriptionType:", data.subscription_type);
-
-    // Set Next Invoice Date (or show a fallback)
-    const formattedDate = data.next_charge_date
-      ? new Date(data.next_charge_date).toLocaleDateString()
-      : "Upon Student Approval";
-    this.invoiceDate.setText(formattedDate);
-    console.log("Set invoiceDate:", formattedDate);
-
-    // Determine the image and success message source
-    // If there's a workshop, use the workshop fields; otherwise, use the program fields
-    const imageUrl = data.workshop?.Main_Image || data.program.Main_Image;
-    const successMessage =
-      data.workshop?.Success_Page_Message || data.program.Success_Page_Message;
-
-    // Set Registration Image
-    if (imageUrl) {
-      this.image.setImage(imageUrl);
-      const imgElement = this.image.getElement() as HTMLImageElement;
-      // No alt field is present in the new data; use a placeholder or the name
-      imgElement.alt = data.workshop
-        ? data.workshop.Name || "Chickenshed Workshop"
-        : data.program.name || "Chickenshed Program";
-      console.log("Set registration image URL and alt text.");
-    }
-
-    // Set Success Message
-    if (successMessage) {
-      this.successMessage.setHTML(successMessage);
-      const successMessageElement = this.successMessage.getElement();
-      successMessageElement.style.display = "block";
-      console.log("Set and displayed success message.");
-    }
-
-    // Determine which status pill to display
-    const status = data.status.toLowerCase();
-    if (status === "active") {
-      this.activePill.setText("Active");
-      this.activePill.getElement().style.display = "block";
-      this.depositPill.getElement().style.display = "none";
-      console.log("Displayed Active pill.");
-    } else if (status === "deposit paid") {
-      this.depositPill.setText("Deposit Paid");
-      this.depositPill.getElement().style.display = "block";
-      this.activePill.getElement().style.display = "none";
-      console.log("Displayed Deposit Paid pill.");
-    } else {
-      // Hide both pills if status doesn't match expected values
-      this.activePill.getElement().style.display = "none";
-      this.depositPill.getElement().style.display = "none";
-      console.log("Hid both status pills.");
-    }
-
-    // Add the `program` parameter to the registration card link
-    this.updateRegistrationLink();
-  }
-
-  // Method to update the registration link with the program parameter
-  private updateRegistrationLink() {
-    // Since #registrationCard is the link element, manipulate its href directly
-    const registrationLinkElement = this.card.getElement() as HTMLAnchorElement;
-
-    if (!registrationLinkElement) {
-      console.warn("registrationCard element is not an anchor element.");
-      return;
-    }
-
-    const currentHref = registrationLinkElement.getAttribute("href") || "#";
-    console.log("Current href before update:", currentHref);
-
-    try {
-      const url = new URL(currentHref, window.location.origin);
-      url.searchParams.set("program", this.programId);
-      registrationLinkElement.setAttribute("href", url.toString());
-      console.log(
-        "Updated registration link with program parameter:",
-        url.toString()
-      );
-    } catch (error) {
-      console.error(
-        "Invalid URL in registrationCard href:",
-        currentHref,
-        error
-      );
-    }
-  }
-
-  // Method to display the registration card
-  show() {
-    // Since #registrationCard is a link, ensure it's visible if it's hidden
-    this.card.getElement().style.display = "block";
-    console.log("Displayed registration card.");
-  }
-}
-
-// Utility function to parse URL parameters
-const getUrlParams = () => {
-  const params = new URLSearchParams(window.location.search);
-  const isRegistration = params.has("registration");
-  const subscriptionId = params.get("subscription");
-  return { isRegistration, subscriptionId };
+// Trigger the hidden success animation/trigger element (Webflow interaction)
+const triggerSuccess = () => {
+  const triggerEl = document.querySelector<HTMLElement>(".success_trigger");
+  if (triggerEl) triggerEl.click();
 };
 
-// Main function to handle registration success
-export const handleRegistrationSuccess = async () => {
-  console.log("Handling registration success");
-  const { isRegistration, subscriptionId } = getUrlParams();
+// Shape of the registration data returned by the API
+interface RegistrationData {
+  id: number;
+  subscription_name: string;
+  status: string;
+  subscription_type: string;
+  update_subscription_type: string;
+  user_id: number;
+  contact_id: number;
+  current_finaid_id: number;
+  pending_students: boolean;
+  early_registration: boolean;
+  checkout_session_id: string;
+  last_invoice_id: number | null;
+  last_invoice_is_draft: boolean;
+  stripe_subscription_id: string | null;
+  coupon: string;
+  deposit_amount: number;
+  subscription_subtotal: number;
+  subscription_total: number;
+  subscription_amount_discount: number;
+  created_at: number;
+  cancellation_reason: string;
+  invoice_history: any[];
+  prorate_changes: boolean;
+  charge_proration: string;
+  free_trial_end: number | null;
+}
 
-  if (isRegistration && subscriptionId) {
-    try {
-      console.log("Fetching registration data...");
-      // Make the GET request to fetch registration data
-      const request = apiClient.get<RegistrationResponse>(
-        `/success_page/registration/${subscriptionId}`
-      );
+// Set of field IDs that should display as currency
+const currencyFields = new Set([
+  "subtotal",
+  "depositPaid",
+  "AmountDiscount",
+  "subscriptionTotal",
+  "dueUponApproval",
+]);
 
-      // Wrap the event-based response in a Promise for easier handling
-      const registrationData: RegistrationResponse["data"] = await new Promise(
-        (resolve, reject) => {
-          request.onData((response) => {
-            console.log("Registration data received:", response.data);
-            resolve(response.data);
-          });
+// Update a field component with given value or hide it
+const updateField = (
+  component: WFComponent,
+  rawValue: string | number | boolean | null | undefined
+) => {
+  const el = component.getElement() as HTMLElement;
+  // Reset display
+  el.style.display = "";
+  // Hide if null, empty, false, or zero-number
+  if (
+    rawValue == null ||
+    rawValue === "" ||
+    rawValue === false ||
+    (typeof rawValue === "number" && rawValue === 0)
+  ) {
+    el.style.display = "none";
+    return;
+  }
 
-          request.onError((error) => {
-            console.error("API Error:", error);
-            reject(error);
-          });
-
-          // Initiate the request
-          request.fetch();
-        }
-      );
-
-      // Trigger the success_trigger element (assuming it has an event listener)
-      const successTrigger = document.querySelector(".success_trigger");
-      if (successTrigger) {
-        console.log("Triggering success_trigger element.");
-        (successTrigger as HTMLElement).click();
-      }
-
-      // Initialize and populate the registration card
-      const registrationCard = new RegistrationCard("registrationCard");
-      registrationCard.populate(registrationData);
-      registrationCard.show();
-    } catch (error) {
-      console.error("Error fetching registration data:", error);
-      // Optionally, display an error message to the user
-      const errorMessageElement = document.getElementById("errorMessage");
-      if (errorMessageElement) {
-        errorMessageElement.innerHTML = `
-          <p>An error occurred while processing your registration.</p>
-          <p>Please contact us for assistance.</p>
-        `;
-        errorMessageElement.style.display = "block";
-        console.log("Displayed error message.");
-      }
-    }
+  let display: string;
+  if (typeof rawValue === "boolean") {
+    display = formatBoolean(rawValue);
+  } else if (typeof rawValue === "string") {
+    display = capitalize(rawValue);
   } else {
-    console.log("Registration parameters not found in URL.");
+    display = currencyFields.has(el.id)
+      ? formatCurrency(rawValue as number)
+      : rawValue.toString();
+  }
+
+  // Preserve label and bold the value
+  const label = el.textContent?.split(":")[0] || "";
+  el.innerHTML = `${label}: <strong>${display}</strong>`;
+};
+
+// Main handler for registration success
+export const handleRegistrationSuccessIndex = async () => {
+  try {
+    const request = apiClient.get<{ data: RegistrationData }>(
+      "/success_page/registration"
+    );
+    request.onData((res) => {
+      const data = res.data;
+      const dueUponApproval = data.subscription_total - data.deposit_amount;
+      const aidPercent =
+        data.subscription_subtotal > 0 && data.subscription_amount_discount > 0
+          ? `${Math.round(
+              (data.subscription_amount_discount / data.subscription_subtotal) * 100
+            )}%`
+          : null;
+
+      const isActive = (data.status || "").toUpperCase() === "ACTIVE";
+
+      // Handle hiding of dueUponApproval element entirely if active
+      const dueEl = document.getElementById("dueUponApproval");
+      if (dueEl) {
+        dueEl.style.display = isActive ? "none" : "";
+      }
+
+      // Map xatom components to their data keys
+      const fields: Array<{ id: string; value: any }> = [
+        { id: "status", value: data.status },
+        { id: "billingCycle", value: data.subscription_type },
+        { id: "pendingStudents", value: data.pending_students },
+        { id: "financialAidRequested", value: data.current_finaid_id > 0 },
+        { id: "financialAidApplied", value: aidPercent },
+        { id: "subtotal", value: data.subscription_subtotal },
+        { id: "depositPaid", value: data.deposit_amount },
+        { id: "AmountDiscount", value: data.subscription_amount_discount },
+        { id: "subscriptionTotal", value: data.subscription_total },
+        { id: "dueUponApproval", value: dueUponApproval },
+      ];
+
+      fields.forEach(({ id, value }) => {
+        // Skip updating dueUponApproval if it's hidden
+        if (id === "dueUponApproval" && isActive) return;
+        const el = document.getElementById(id);
+        if (!el) return;
+        updateField(new WFComponent(el), value);
+      });
+
+      // After populating all fields, trigger Webflow interaction
+      triggerSuccess();
+    });
+    request.onError((err) => console.error("API Error:", err));
+    request.fetch();
+  } catch (err) {
+    console.error("Error loading registration success data:", err);
   }
 };
+
+// Initialize on DOM ready
+document.addEventListener("DOMContentLoaded", () => {
+  handleRegistrationSuccessIndex();
+});

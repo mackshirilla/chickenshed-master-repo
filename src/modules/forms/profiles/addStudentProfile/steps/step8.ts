@@ -6,6 +6,9 @@ import { apiClient } from "../../../../../api/apiConfig";
 import { toggleError } from "../../../../../utils/formUtils";
 import { unmarkStepAsCompleted, unsetActiveStep } from "../sidebar";
 
+// Prevent double-binding on initialization
+let step8Initialized = false;
+
 type ApiResponse<T> = {
   status: string;
   message?: string;
@@ -24,6 +27,10 @@ type StudentProfile = {
 };
 
 export const initializeStepEight = (slider: WFSlider, getFormData: () => any) => {
+  // Guard to ensure this setup runs only once
+  if (step8Initialized) return;
+  step8Initialized = true;
+
   console.log("Initialize Step Eight");
 
   // Initialize form review items
@@ -195,7 +202,7 @@ export const initializeStepEight = (slider: WFSlider, getFormData: () => any) =>
         error.response?.data?.message || "Failed to complete profile.",
         true
       );
-      stepEightRequestingAnimation.setStyle({ display: "none" }); // Hide loading animation
+      stepEightRequestingAnimation.setStyle({ display: "none" });
     }
   });
 

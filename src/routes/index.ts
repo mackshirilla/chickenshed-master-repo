@@ -237,7 +237,7 @@ new WFRoute("/dashboard").execute(async () => {
 
   // dashboard registration pages
   //program details
-  new WFRoute("/dashboard/registration/subscription").execute(async () => {
+  new WFRoute("/dashboard/registration/program").execute(async () => {
     try {
       const isValidUser = await validateUser();
 
@@ -254,7 +254,7 @@ new WFRoute("/dashboard").execute(async () => {
   });
 
   //workshop details
-  new WFRoute("/dashboard/registration/subscription/workshop").execute(
+  new WFRoute("/dashboard/registration/workshop").execute(
     async () => {
       try {
         const isValidUser = await validateUser();
@@ -274,7 +274,7 @@ new WFRoute("/dashboard").execute(async () => {
   );
 
   //session details
-  new WFRoute("/dashboard/registration/subscription/session").execute(
+  new WFRoute("/dashboard/registration/session").execute(
     async () => {
       try {
         const isValidUser = await validateUser();
@@ -293,13 +293,14 @@ new WFRoute("/dashboard").execute(async () => {
   );
 
   // Registration Routes
+
   new WFRoute("/program-registration").execute(async () => {
     try {
       const isValidUser = await validateUser();
 
       if (isValidUser) {
-        import("../modules/registration/programRegistration").then(
-          ({ programRegistration }) => programRegistration()
+        import("../modules/registration_new/index").then(
+          ({ newProgramRegistration }) => newProgramRegistration()
         );
       } else {
         navigate("/login");
@@ -308,6 +309,23 @@ new WFRoute("/dashboard").execute(async () => {
       console.error("Error validating user:", error);
     }
   });
+
+  new WFRoute("/dashboard/registration/manage-subscription").execute(async () => {
+    try {
+      const isValidUser = await validateUser();
+
+      if (isValidUser) {
+        import("../modules/manageSubscription/index").then(
+          ({ manageSubscriptionPage }) => manageSubscriptionPage()
+        );
+      } else {
+        navigate("/login");
+      }
+    } catch (error) {
+      console.error("Error validating user:", error);
+    }
+  });
+  
 
   // Ticket Purchase Routes
   new WFRoute("/purchase-tickets").execute(() => {
@@ -341,12 +359,21 @@ new WFRoute("/dashboard/donations/donation").execute(async () => {
   }
 });
 
-// Success Page
-new WFRoute("/success").execute(() => {
-  import("../modules/success_page/index").then(({ initializeSuccessPage }) =>
-    initializeSuccessPage()
+//--------------------------------//
+// Success Pages
+new WFRoute("/checkout-success/registration").execute(() => {
+  import("../modules/success_page/registration_success").then(({ handleRegistrationSuccessIndex }) =>
+    handleRegistrationSuccessIndex()
   );
 });
+
+
+//--------------------------------//
+
+
+
+
+
 
 //--------------------------------//
 //student dashboard routes
