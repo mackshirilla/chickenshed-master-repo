@@ -1,5 +1,3 @@
-// donationState.ts
-
 export interface DonationState {
   selectedCampaignId?: string;
   selectedCampaignName?: string;
@@ -9,11 +7,17 @@ export interface DonationState {
   selectedProductId?: string;
   selectedProductName?: string;
   selectedProductAmount?: number;
+  Single_sale_price_id?: string;
+  Monthly_price_id?: string;
+  Annual_price_id?: string;
   email?: string;
   firstName?: string;
   lastName?: string;
-  isAnonymous?: boolean; // For anonymous donations
-  inNameOf?: string; // New field for "In Someone Else's Name" donations
+  isAnonymous?: boolean;
+  inNameOf?: string;
+  selectedDonationType?: "one-time" | "month" | "year"; // ✅ added
+  currentPageUrl?: string; // ✅ Add this
+
 }
 
 const DONATION_STATE_KEY = "donationState";
@@ -72,6 +76,9 @@ export const getSelectedProduct = () => {
     id: state.selectedProductId || null,
     name: state.selectedProductName || null,
     amount: state.selectedProductAmount || null,
+    Single_sale_price_id: state.Single_sale_price_id || null,
+    Monthly_price_id: state.Monthly_price_id || null,
+    Annual_price_id: state.Annual_price_id || null,
   };
 };
 
@@ -80,11 +87,17 @@ export const saveSelectedProduct = (product: {
   id: string;
   name: string;
   amount: number;
+  Single_sale_price_id?: string;
+  Monthly_price_id?: string;
+  Annual_price_id?: string;
 }) => {
   saveDonationState({
     selectedProductId: product.id,
     selectedProductName: product.name,
     selectedProductAmount: product.amount,
+    Single_sale_price_id: product.Single_sale_price_id,
+    Monthly_price_id: product.Monthly_price_id,
+    Annual_price_id: product.Annual_price_id,
   });
 };
 
@@ -96,7 +109,7 @@ export const getDonorDetails = () => {
     firstName: state.firstName || null,
     lastName: state.lastName || null,
     isAnonymous: state.isAnonymous || false,
-    inNameOf: state.inNameOf || null, // Include inNameOf in donor details
+    inNameOf: state.inNameOf || null,
   };
 };
 
@@ -106,13 +119,23 @@ export const saveDonorDetails = (donor: {
   firstName: string;
   lastName: string;
   isAnonymous: boolean;
-  inNameOf?: string; // Make inNameOf optional
+  inNameOf?: string;
 }) => {
   saveDonationState({
     email: donor.email,
     firstName: donor.firstName,
     lastName: donor.lastName,
     isAnonymous: donor.isAnonymous,
-    inNameOf: donor.inNameOf, // Save inNameOf if provided
+    inNameOf: donor.inNameOf,
   });
+};
+
+// Get and save donation type
+export const getSelectedDonationType = (): "one-time" | "month" | "year" => {
+  const state = loadDonationState();
+  return (state.selectedDonationType as "one-time" | "month" | "year") || "one-time";
+};
+
+export const saveSelectedDonationType = (type: "one-time" | "month" | "year") => {
+  saveDonationState({ selectedDonationType: type });
 };

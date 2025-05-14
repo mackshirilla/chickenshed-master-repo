@@ -61,7 +61,7 @@ export function initManageRegistrationTable(
     newRow.setAttribute("data-program-id", String(item.program_id));
     newRow.setAttribute("data-workshop-id", String(item.workshop_id));
     newRow.setAttribute("data-session-id", String(item.session_id));
-    newRow.setAttribute("data-student-id", String(item.student_profile.id));
+    newRow.setAttribute("data-student-id", String(item.student_profile?.id || item.student_id));
 
     // Populate text fields
     const programText = newRow.querySelector("#item_program_name");

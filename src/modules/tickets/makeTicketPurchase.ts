@@ -211,20 +211,25 @@ export const makeTicketPurchase = async () => {
     }
 
     // Validate Custom Question
-    const customQuestionError = new WFComponent("#customQuestionInputError");
-    const customQuestionValidation = createValidationFunction(
-      customQuestionInput,
-      validateNotEmpty,
-      "This field is required."
-    );
-    const customQuestionValidationResult = customQuestionValidation();
-    toggleError(
-      customQuestionError,
-      customQuestionValidationResult,
-      !!customQuestionValidationResult
-    );
-    formIsValid = formIsValid && !customQuestionValidationResult;
-    clearErrorOnInteraction(customQuestionInput, customQuestionError);
+    // Only validate the custom question if that entire section is shown
+const customQuestionWrap = document.getElementById("customQuestionWrap")!;
+if (customQuestionWrap.style.display !== "none") {
+  const customQuestionError = new WFComponent("#customQuestionInputError");
+  const customQuestionValidation = createValidationFunction(
+    customQuestionInput,
+    validateNotEmpty,
+    "This field is required."
+  );
+  const customQuestionValidationResult = customQuestionValidation();
+  toggleError(
+    customQuestionError,
+    customQuestionValidationResult,
+    !!customQuestionValidationResult
+  );
+  formIsValid = formIsValid && !customQuestionValidationResult;
+  clearErrorOnInteraction(customQuestionInput, customQuestionError);
+}
+
 
     // Validate that at least one bundle or ticket is selected
     const selectedBundles = getSelectedBundles();

@@ -25,6 +25,10 @@ export async function manageSubscriptionPage(): Promise<void> {
   const data = await apiClient
     .post<ManageSubscriptionResponse>("/subscriptions/manage-subscription")
     .fetch();
+    if (!data || !data.id) {
+      window.location.href = "/dashboard";
+      return;
+    }
   const initialType = data.update_subscription_type || data.subscription_type;
   saveState({
     apiData: data,

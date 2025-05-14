@@ -103,24 +103,22 @@ export const initializeStateFromUrlParams = async (slider: WFSlider) => {
 
         // Find and select the campaign based on the URL parameter
         const selectedCampaign = campaigns.find(
-          (campaign) => campaign.id === campaignId
+          (campaign) => campaign.id.toString() === campaignId
         );
         if (selectedCampaign) {
           saveSelectedCampaign({
-            id: selectedCampaign.id,
-            name: selectedCampaign.fieldData.name,
-            imageUrl: selectedCampaign.fieldData["main-image"].url, // Ensure the correct field for the image URL
-            description: selectedCampaign.fieldData["short-description"], // Ensure the correct field for the description
-            subheading: selectedCampaign.fieldData.subheading,
+            id: selectedCampaign.id.toString(),
+            name: selectedCampaign.Name,
+            imageUrl: selectedCampaign.Main_Image,
+            description: selectedCampaign.Short_Description,
+            subheading: selectedCampaign.Subheading,
           });
-
+        
           markStepAsCompleted(1);
           setActiveStep(2);
-
-          // Update the UI with the selected campaign details
-          updateSelectedCampaignDisplay(); // Call this function to update the display
-
-          // Select the campaign in the UI
+        
+          updateSelectedCampaignDisplay();
+        
           const campaignComponent = document.querySelector(
             `input[value="${campaignId}"]`
           );
@@ -128,10 +126,9 @@ export const initializeStateFromUrlParams = async (slider: WFSlider) => {
             (campaignComponent as HTMLInputElement).checked = true;
             campaignComponent.dispatchEvent(new Event("change"));
           }
-
-          // Initialize the product list for the selected campaign
+        
           await initializeDynamicProductList("#selectProductList", campaignId);
-          slider.goToIndex(1); // Navigate to the next step in the form
+          slider.goToIndex(1);
         } else {
           console.error(`Campaign with ID ${campaignId} not found`);
           displayErrorMessage(

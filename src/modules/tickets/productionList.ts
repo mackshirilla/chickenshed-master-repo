@@ -8,7 +8,6 @@ let initialTemplateState: HTMLElement | null = null;
 export const initializeProductionList = async (
   containerSelector: string
 ): Promise<Production[]> => {
-  // Update return type to Promise<Production[]>
   const container = document.querySelector(containerSelector);
   if (!container) {
     console.error("Production list container not found.");
@@ -38,22 +37,22 @@ export const initializeProductionList = async (
     return emptyElement;
   });
 
-  list.rowRenderer(({ rowData, rowElement, index }) => {
+  list.rowRenderer(({ rowData: rawData, rowElement, index }) => {
+    // Cast rawData to match API response fields
+    const rowData = rawData as unknown as {
+      id: number;
+      Name: string;
+      Short_Description: string;
+      Age_Description: string;
+      Main_Image: string;
+    };
+
     const productionCard = new WFComponent(rowElement);
-    const productionTitle = productionCard.getChildAsComponent(
-      "#cardProductionTitle"
-    );
-    const productionDescription = productionCard.getChildAsComponent(
-      "#cardProductionDescription"
-    );
-    const productionAges = productionCard.getChildAsComponent(
-      "#cardProductionAges"
-    );
-    const productionImage = productionCard.getChildAsComponent(
-      "#cardProductionImage"
-    );
-    const productionInput =
-      productionCard.getChildAsComponent(".input_card_input");
+    const productionTitle = productionCard.getChildAsComponent("#cardProductionTitle");
+    const productionDescription = productionCard.getChildAsComponent("#cardProductionDescription");
+    const productionAges = productionCard.getChildAsComponent("#cardProductionAges");
+    const productionImage = productionCard.getChildAsComponent("#cardProductionImage");
+    const productionInput = productionCard.getChildAsComponent(".input_card_input");
     const productionLabel = productionCard.getChildAsComponent("label");
 
     if (
@@ -68,47 +67,34 @@ export const initializeProductionList = async (
       return;
     }
 
-    if (rowData && rowData.fieldData) {
-      const inputId = `productionInput-${index}`;
-      productionInput.setAttribute("id", inputId);
-      productionInput.setAttribute("value", rowData.id);
-      productionLabel.setAttribute("for", inputId);
+    const inputId = `productionInput-${index}`;
+    productionInput.setAttribute("id", inputId);
+    productionInput.setAttribute("value", rowData.id.toString());
+    productionLabel.setAttribute("for", inputId);
 
-      productionTitle.setText(rowData.fieldData.name);
-      productionDescription.setText(rowData.fieldData["short-description"]);
-      productionAges.setText(rowData.fieldData["age-description"]);
+    productionTitle.setText(rowData.Name);
+    productionDescription.setText(rowData.Short_Description);
+    productionAges.setText(rowData.Age_Description);
 
-      if (rowData.fieldData["main-image"]?.url) {
-        productionImage.setAttribute(
-          "src",
-          rowData.fieldData["main-image"].url
-        );
-        productionImage.setAttribute(
-          "alt",
-          rowData.fieldData["main-image"].alt || "Production Image"
-        );
-      } else {
-        console.warn(`Production ID ${rowData.id} does not have a main image.`);
-      }
-
-      productionInput.on("change", () => {
-        selectedProductionId = (
-          productionInput.getElement() as HTMLInputElement
-        ).value;
-        saveSelectedProduction({
-          id: rowData.id,
-          name: rowData.fieldData.name,
-          description: rowData.fieldData["short-description"],
-          imageUrl: rowData.fieldData["main-image"].url, // Save production image URL
-        });
-        console.log("Selected Production ID:", selectedProductionId);
-      });
-
-      rowElement.setStyle({ display: "flex" });
+    if (rowData.Main_Image) {
+      productionImage.setAttribute("src", rowData.Main_Image);
+      productionImage.setAttribute("alt", rowData.Name || "Production Image");
     } else {
-      console.error("Incomplete production data:", rowData);
+      console.warn(`Production ID ${rowData.id} does not have a main image.`);
     }
 
+    productionInput.on("change", () => {
+      selectedProductionId = (productionInput.getElement() as HTMLInputElement).value;
+      saveSelectedProduction({
+        id: Number(selectedProductionId),
+        name: rowData.Name,
+        description: rowData.Short_Description,
+        imageUrl: rowData.Main_Image,
+      });
+      console.log("Selected Production ID:", selectedProductionId);
+    });
+
+    rowElement.setStyle({ display: "flex" });
     return rowElement;
   });
 
@@ -117,18 +103,13 @@ export const initializeProductionList = async (
     const productions = await fetchProductions();
     console.log("Fetched productions:", productions);
 
-    if (productions.length > 0) {
-      list.setData(productions);
-    } else {
-      list.setData([]); // Trigger the empty state
-    }
-
+    list.setData(productions);
     list.changeLoadingStatus(false);
-    return productions; // Return the list of productions
+    return productions;
   } catch (error) {
     console.error("Error loading productions:", error);
     list.setData([]);
     list.changeLoadingStatus(false);
-    return []; // Return an empty array in case of error
+    return [];
   }
 };

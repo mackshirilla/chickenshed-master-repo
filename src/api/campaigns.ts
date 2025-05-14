@@ -1,12 +1,11 @@
 import { apiClient } from "./apiConfig";
 
 export interface Campaign {
-  id: string;
-  fieldData: {
-    name: string;
-    subheading: string;
-    shortDescription: string;
-  };
+  id: number;
+  Name: string;
+  Main_Image: string;
+  Subheading: string;
+  Short_Description: string;
 }
 
 interface CampaignApiResponse {

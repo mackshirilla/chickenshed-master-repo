@@ -219,7 +219,8 @@ new WFRoute("/dashboard").execute(async () => {
   });
 
   // dashboard ticket order pages
-  new WFRoute("/dashboard/ticket-order/ticket-order").execute(async () => {
+  new WFRoute("/dashboard/ticket-order/performance").execute(async () => {
+    console.log("ticket order")
     try {
       const isValidUser = await validateUser();
 
@@ -367,6 +368,19 @@ new WFRoute("/checkout-success/registration").execute(() => {
   );
 });
 
+new WFRoute("/checkout-success/tickets").execute(() => {
+  import("../modules/success_page/ticket_success").then(({ populateTicketSuccess }) =>
+    populateTicketSuccess()
+  );
+});
+
+new WFRoute("/checkout-success/donation").execute(() => {
+  import("../modules/success_page/donation_success").then(({ handleDonationSuccess }) =>
+    handleDonationSuccess()
+  );
+});
+
+
 
 //--------------------------------//
 
@@ -422,6 +436,16 @@ new WFRoute("/student-dashboard").execute(async () => {
 new WFRoute("/ticket-order").execute(() => {
   import("../modules/pages/ticketOrderNoLogin").then(({ initializeTicketOrderNoLoginPage }) =>
     initializeTicketOrderNoLoginPage()
+  ).catch(error => {
+    console.error("Error loading /ticket-order page:", error);
+    navigate("/error"); // Optional: Redirect to an error page
+  });
+});
+
+
+new WFRoute("/donation-details").execute(() => {
+  import("../modules/dashboard/donations/donationDetails").then(({ initializeDonationDetailsPage }) =>
+    initializeDonationDetailsPage()
   ).catch(error => {
     console.error("Error loading /ticket-order page:", error);
     navigate("/error"); // Optional: Redirect to an error page

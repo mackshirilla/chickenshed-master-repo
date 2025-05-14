@@ -10,7 +10,7 @@ export interface BundleItem {
 }
 
 export interface TicketPurchaseState {
-  selectedProductionId?: string;
+  selectedProductionId?: number;
   selectedProductionName?: string;
   selectedProductionDescription?: string;
   selectedProductionImageUrl?: string;
@@ -32,65 +32,69 @@ export interface TicketPurchaseState {
 
 const TICKET_PURCHASE_STATE_KEY = "ticketPurchaseState";
 
-// Utility function to safely convert unknown types to number
+// Utility to convert unknown to number
 const safeNumber = (value: unknown): number =>
   typeof value === "number" ? value : 0;
 
 export const loadTicketPurchaseState = (): TicketPurchaseState => {
-  const savedState = localStorage.getItem(TICKET_PURCHASE_STATE_KEY);
-  return savedState ? JSON.parse(savedState) : {};
+  const saved = localStorage.getItem(TICKET_PURCHASE_STATE_KEY);
+  return saved ? JSON.parse(saved) : {};
 };
 
 export const saveTicketPurchaseState = (
   state: Partial<TicketPurchaseState>
 ) => {
-  const currentState = loadTicketPurchaseState();
-  const newState = { ...currentState, ...state };
-  localStorage.setItem(TICKET_PURCHASE_STATE_KEY, JSON.stringify(newState));
+  const current = loadTicketPurchaseState();
+  const merged = { ...current, ...state };
+  localStorage.setItem(
+    TICKET_PURCHASE_STATE_KEY,
+    JSON.stringify(merged)
+  );
 };
 
 export const clearTicketPurchaseState = () => {
   localStorage.removeItem(TICKET_PURCHASE_STATE_KEY);
 };
 
-// Production-related functions
+// Production-related
 export const getSelectedProduction = () => {
-  const state = loadTicketPurchaseState();
+  const s = loadTicketPurchaseState();
   return {
-    id: state.selectedProductionId || null,
-    name: state.selectedProductionName || null,
-    description: state.selectedProductionDescription || null,
-    imageUrl: state.selectedProductionImageUrl || null, // Retrieve production image URL
+    id: s.selectedProductionId ?? null,
+    name: s.selectedProductionName ?? null,
+    description: s.selectedProductionDescription ?? null,
+    imageUrl: s.selectedProductionImageUrl ?? null,
   };
 };
 
 export const saveSelectedProduction = (production: {
-  id: string;
+  id: number;
   name: string;
   description: string;
-  imageUrl: string; // Store production image URL
+  imageUrl: string;
 }) => {
   saveTicketPurchaseState({
     selectedProductionId: production.id,
     selectedProductionName: production.name,
     selectedProductionDescription: production.description,
-    selectedProductionImageUrl: production.imageUrl, // Save production image URL
+    selectedProductionImageUrl: production.imageUrl,
   });
 };
 
-// Performance-related functions
+// Performance-related
 export const getSelectedPerformance = () => {
-  const state = loadTicketPurchaseState();
+  const s = loadTicketPurchaseState();
   return {
-    id: state.selectedPerformanceId || null,
-    name: state.selectedPerformanceName || null,
-    dateTime: state.selectedPerformanceDateTime || null,
-    imageUrl: state.selectedPerformanceImageUrl || null,
-    location: state.selectedPerformanceLocation || null, // Retrieve performance location
+    id: s.selectedPerformanceId ?? null,
+    name: s.selectedPerformanceName ?? null,
+    dateTime: s.selectedPerformanceDateTime ?? null,
+    description: s.selectedPerformanceDescription ?? null,
+    imageUrl: s.selectedPerformanceImageUrl ?? null,
+    location: s.selectedPerformanceLocation ?? null,
   };
 };
 
-export const saveSelectedPerformance = (performance: {
+export const saveSelectedPerformance = (perf: {
   id: string;
   name: string;
   dateTime: string;
@@ -99,162 +103,89 @@ export const saveSelectedPerformance = (performance: {
   location: string;
 }) => {
   saveTicketPurchaseState({
-    selectedPerformanceId: performance.id,
-    selectedPerformanceName: performance.name,
-    selectedPerformanceDateTime: performance.dateTime,
-    selectedPerformanceDescription: performance.description, // Save description to state
-    selectedPerformanceImageUrl: performance.imageUrl,
-    selectedPerformanceLocation: performance.location,
+    selectedPerformanceId: perf.id,
+    selectedPerformanceName: perf.name,
+    selectedPerformanceDateTime: perf.dateTime,
+    selectedPerformanceDescription: perf.description,
+    selectedPerformanceImageUrl: perf.imageUrl,
+    selectedPerformanceLocation: perf.location,
   });
 };
 
-// Bundle-related functions
+// Bundle functions
 export const getSelectedBundles = (): BundleItem[] => {
-  const state = loadTicketPurchaseState();
-  return state.selectedBundles || [];
+  return loadTicketPurchaseState().selectedBundles || [];
 };
 
 export const saveSelectedBundle = (bundleId: string, quantity: number) => {
   const bundles = getSelectedBundles();
-  const existingBundle = bundles.find((b) => b.bundle_id === bundleId);
-
-  if (existingBundle) {
-    if (quantity > 0) {
-      existingBundle.quantity = quantity;
-    } else {
-      // Remove bundle if quantity is 0
-      const index = bundles.indexOf(existingBundle);
-      bundles.splice(index, 1);
-    }
+  const idx = bundles.findIndex((b) => b.bundle_id === bundleId);
+  if (idx > -1) {
+    if (quantity > 0) bundles[idx].quantity = quantity;
+    else bundles.splice(idx, 1);
   } else if (quantity > 0) {
     bundles.push({ bundle_id: bundleId, quantity });
   }
-
   saveTicketPurchaseState({ selectedBundles: bundles });
 };
 
 export const removeSelectedBundle = (bundleId: string) => {
-  const bundles = getSelectedBundles();
-  const updatedBundles = bundles.filter((b) => b.bundle_id !== bundleId);
-  saveTicketPurchaseState({ selectedBundles: updatedBundles });
-
-  // After removing a bundle, check if any bundle is selected and remove "bundle_required" tickets if none are selected
-  removeBundleRequiredTicketsIfNeeded();
-};
-
-// New function to remove "bundle_required: true" tickets if no bundles are selected
-export const removeBundleRequiredTicketsIfNeeded = () => {
-  const bundles = getSelectedBundles();
-  const totalBundlesSelected = bundles.reduce(
-    (sum, bundle) => sum + safeNumber(bundle.quantity),
-    0
-  );
-
-  if (totalBundlesSelected <= 0) {
-    const tickets = getSelectedTickets();
-    const updatedTickets = tickets.filter((t) => !t.bundle_required);
-    saveTicketPurchaseState({ selectedTickets: updatedTickets });
+  const remaining = getSelectedBundles().filter((b) => b.bundle_id !== bundleId);
+  saveTicketPurchaseState({ selectedBundles: remaining });
+  // Remove bundle_required tickets if none selected
+  const total = remaining.reduce((sum, b) => sum + safeNumber(b.quantity), 0);
+  if (total === 0) {
+    const tickets = getSelectedTickets().filter((t) => !t.bundle_required);
+    saveTicketPurchaseState({ selectedTickets: tickets });
   }
 };
 
-// Ticket-related functions
+// Ticket functions
 export const getSelectedTickets = (): TicketItem[] => {
-  const state = loadTicketPurchaseState();
-  return state.selectedTickets || [];
+  return loadTicketPurchaseState().selectedTickets || [];
 };
 
 export const saveSelectedTicket = (
-  ticket_tier_id: string,
+  tierId: string,
   quantity: number,
   bundle_required: boolean
 ) => {
   const tickets = getSelectedTickets();
-  const existingTicket = tickets.find(
-    (t) => t.ticket_tier_id === ticket_tier_id
-  );
-
-  if (existingTicket) {
-    if (quantity > 0) {
-      existingTicket.quantity = quantity;
-    } else {
-      // Remove ticket if quantity is 0
-      const index = tickets.indexOf(existingTicket);
-      tickets.splice(index, 1);
-    }
+  const idx = tickets.findIndex((t) => t.ticket_tier_id === tierId);
+  if (idx > -1) {
+    if (quantity > 0) tickets[idx].quantity = quantity;
+    else tickets.splice(idx, 1);
   } else if (quantity > 0) {
-    tickets.push({ ticket_tier_id, quantity, bundle_required });
+    tickets.push({ ticket_tier_id: tierId, quantity, bundle_required });
   }
-
   saveTicketPurchaseState({ selectedTickets: tickets });
 };
 
-export const removeSelectedTicket = (ticket_tier_id: string) => {
-  const tickets = getSelectedTickets();
-  const updatedTickets = tickets.filter(
-    (t) => t.ticket_tier_id !== ticket_tier_id
-  );
-  saveTicketPurchaseState({ selectedTickets: updatedTickets });
+export const removeSelectedTicket = (tierId: string) => {
+  const remaining = getSelectedTickets().filter((t) => t.ticket_tier_id !== tierId);
+  saveTicketPurchaseState({ selectedTickets: remaining });
 };
 
-// Assistance-related functions
-export const getCustomQuestion = () => {
-  const state = loadTicketPurchaseState();
-  return state.customQuestion || null;
-};
+// Assistance
+export const getCustomQuestion = () => loadTicketPurchaseState().customQuestion ?? null;
+export const saveCustomQuestion = (q: string) => saveTicketPurchaseState({ customQuestion: q });
+export const getAssistanceNeeded = () => loadTicketPurchaseState().assistanceNeeded ?? false;
+export const saveAssistanceNeeded = (v: boolean) => saveTicketPurchaseState({ assistanceNeeded: v });
+export const getAssistanceMessage = () => loadTicketPurchaseState().assistanceMessage ?? '';
+export const saveAssistanceMessage = (m: string) => saveTicketPurchaseState({ assistanceMessage: m });
 
-export const saveCustomQuestion = (question: string) => {
-  saveTicketPurchaseState({ customQuestion: question });
-};
+// User details
+export const saveUserDetails = (d: { firstName?: string; lastName?: string; email?: string }) =>
+  saveTicketPurchaseState(d);
 
-export const getAssistanceNeeded = (): boolean => {
-  const state = loadTicketPurchaseState();
-  return state.assistanceNeeded || false; // Default to false if not set
-};
-
-export const saveAssistanceNeeded = (needed: boolean) => {
-  saveTicketPurchaseState({ assistanceNeeded: needed });
-};
-
-export const getAssistanceMessage = (): string => {
-  const state = loadTicketPurchaseState();
-  return state.assistanceMessage || ""; // Default to empty string if not set
-};
-
-export const saveAssistanceMessage = (message: string) => {
-  saveTicketPurchaseState({ assistanceMessage: message });
-};
-
-// User-related functions
-export const saveUserDetails = (details: {
-  firstName?: string;
-  lastName?: string;
-  email?: string;
-}) => {
-  saveTicketPurchaseState(details);
-};
-
-// Function to clear the selected performance from the state
-export const clearSelectedPerformance = () => {
-  saveTicketPurchaseState({
-    selectedPerformanceId: undefined,
-    selectedPerformanceName: undefined,
-    selectedPerformanceDateTime: undefined,
-    selectedPerformanceDescription: undefined,
-    selectedPerformanceImageUrl: undefined,
-    selectedPerformanceLocation: undefined,
-  });
-};
-
-// Function to clear the selected bundles from the state
-export const clearSelectedBundles = () => {
-  saveTicketPurchaseState({
-    selectedBundles: [],
-  });
-};
-
-// Function to clear the selected tickets from the state
-export const clearSelectedTickets = () => {
-  saveTicketPurchaseState({
-    selectedTickets: [],
-  });
-};
+// Clearers
+export const clearSelectedPerformance = () => saveTicketPurchaseState({
+  selectedPerformanceId: undefined,
+  selectedPerformanceName: undefined,
+  selectedPerformanceDateTime: undefined,
+  selectedPerformanceDescription: undefined,
+  selectedPerformanceImageUrl: undefined,
+  selectedPerformanceLocation: undefined,
+});
+export const clearSelectedBundles = () => saveTicketPurchaseState({ selectedBundles: [] });
+export const clearSelectedTickets = () => saveTicketPurchaseState({ selectedTickets: [] });

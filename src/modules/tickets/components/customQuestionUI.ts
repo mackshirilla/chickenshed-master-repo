@@ -1,21 +1,27 @@
 import { WFComponent } from "@xatom/core";
-import { saveCustomQuestion } from "../state/ticketPurchaseState"; // Correct function name
+import { saveCustomQuestion } from "../state/ticketPurchaseState";
 
 export const updateCustomQuestion = (questionText: string) => {
-  const customQuestionLabel = new WFComponent(
-    "label[for='customQuestionInput']"
-  );
-  const customQuestionInput = new WFComponent("#customQuestionInput");
+  const wrapper = new WFComponent("#customQuestionWrap");
+  const divider = new WFComponent("#customQuestionDivider");
+  const label = new WFComponent("label[for='customQuestionInput']");
+  const input = new WFComponent("#customQuestionInput");
 
-  if (customQuestionLabel && customQuestionInput) {
-    customQuestionLabel.setText(
-      questionText || "No custom question available."
-    );
-
-    customQuestionInput.on("input", () => {
-      const answer = (customQuestionInput.getElement() as HTMLInputElement)
-        .value;
-      saveCustomQuestion(answer); // Use the correct function name
-    });
+  if (!questionText) {
+    wrapper.setStyle({ display: "none" });
+    divider.setStyle({ display: "none" });
+    return;
   }
+
+  wrapper.setStyle({ display: "" });
+  divider.setStyle({ display: "" });
+
+  // Set the label text inside the wrapper
+  label.setText(questionText);
+
+  // Wire up input save
+  input.on("input", () => {
+    const answer = (input.getElement() as HTMLInputElement).value;
+    saveCustomQuestion(answer);
+  });
 };

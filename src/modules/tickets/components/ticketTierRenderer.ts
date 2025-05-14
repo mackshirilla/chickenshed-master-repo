@@ -1,5 +1,8 @@
 import { WFComponent, WFDynamicList } from "@xatom/core";
-import { TicketOffered } from "../../../api/ticketTiersAPI";
+import {
+  TicketOfferedFlat,
+  TicketTierAvailability,
+} from "../../../api/ticketTiersAPI";
 import {
   saveSelectedTicket,
   removeSelectedTicket,
@@ -18,39 +21,42 @@ const clearNoTicketsError = () => {
 let initialTicketTierTemplate: HTMLElement | null = null;
 
 export const revalidateTicketTierQuantities = () => {
-  const ticketTierCards = document.querySelectorAll(
+  const cards = document.querySelectorAll(
     "[data-requires-bundle='true']"
   );
-  ticketTierCards.forEach((card) => {
-    const ticketTierMaxAlert = new WFComponent(
-      card.querySelector(".maximum_alert")
-    );
-    const ticketTierQuantityInput = new WFComponent(
+  cards.forEach((card) => {
+    const maxAlert = new WFComponent(card.querySelector(".maximum_alert"));
+    const qtyInput = new WFComponent(
       card.querySelector("#ticketTierQuantityInput")
     );
-
     const selectedBundles = getSelectedBundles();
-    const totalBundlesSelected = selectedBundles.reduce(
-      (sum, bundle) => sum + safeNumber(bundle.quantity),
+    const totalBundles = selectedBundles.reduce(
+      (sum, b) => sum + safeNumber(b.quantity),
       0
     );
-
-    if (totalBundlesSelected <= 0) {
-      (ticketTierQuantityInput.getElement() as HTMLInputElement).value = "0";
-      ticketTierMaxAlert.setText(
+    if (totalBundles <= 0) {
+      (qtyInput.getElement() as HTMLInputElement).value = "0";
+      maxAlert.setText(
         "This item requires a ticket bundle purchase. Please add a ticket bundle from the options above."
       );
-      (ticketTierMaxAlert.getElement() as HTMLElement).style.display = "block";
+      (maxAlert.getElement() as HTMLElement).style.display = "block";
     } else {
-      (ticketTierMaxAlert.getElement() as HTMLElement).style.display = "none";
+      (maxAlert.getElement() as HTMLElement).style.display = "none";
     }
   });
 };
 
 export const renderTicketTiers = (
-  tickets: TicketOffered[],
+  tickets: TicketOfferedFlat[],
+  availabilities: TicketTierAvailability[],
   containerSelector: string
 ) => {
+  // Build availability lookup
+  const availabilityMap = new Map<number, number>();
+  availabilities.forEach((rec) => {
+    availabilityMap.set(rec.Ticket_Tier, rec.Quantity_Available);
+  });
+
   const container = document.querySelector(containerSelector);
   if (!container) {
     console.error("Ticket tier list container not found.");
@@ -60,104 +66,96 @@ export const renderTicketTiers = (
   if (!initialTicketTierTemplate) {
     initialTicketTierTemplate = container.cloneNode(true) as HTMLElement;
   }
-
   container.innerHTML = "";
   container.appendChild(initialTicketTierTemplate.cloneNode(true));
 
-  const list = new WFDynamicList<TicketOffered>(containerSelector, {
+  const list = new WFDynamicList<TicketOfferedFlat>(containerSelector, {
     rowSelector: "#ticketTierCard",
     loaderSelector: "#ticketTierListLoading",
     emptySelector: "#ticketTierListEmpty",
   });
 
-  list.loaderRenderer((loaderElement) => {
-    (loaderElement.getElement() as HTMLElement).style.display = "flex";
-    return loaderElement;
+  list.loaderRenderer((loader) => {
+    (loader.getElement() as HTMLElement).style.display = "flex";
+    return loader;
+  });
+  list.emptyRenderer((empty) => {
+    (empty.getElement() as HTMLElement).style.display = "flex";
+    return empty;
   });
 
-  list.emptyRenderer((emptyElement) => {
-    (emptyElement.getElement() as HTMLElement).style.display = "flex";
-    return emptyElement;
-  });
+  list.rowRenderer(({ rowData, rowElement }) => {
+    const card = new WFComponent(rowElement);
+    const requiresBundle = rowData.Requires_Bundle_Purchase;
+    rowElement.setAttribute(
+      "data-requires-bundle",
+      requiresBundle ? "true" : "false"
+    );
 
-  list.rowRenderer(({ rowData, rowElement, index }) => {
-    const ticketTierCard = new WFComponent(rowElement);
-    if (rowData.fieldData["requires-bundle-purchase"] === true) {
-      rowElement.setAttribute("data-requires-bundle", "true");
-    } else {
-      rowElement.setAttribute("data-requires-bundle", "false");
-    }
-
-    const ticketTierName =
-      ticketTierCard.getChildAsComponent("#ticketTierName");
-    const ticketTierPrice =
-      ticketTierCard.getChildAsComponent("#ticketTierPrice");
-    const ticketTierSoldOut =
-      ticketTierCard.getChildAsComponent("#ticketTierSoldOut");
-    const ticketTierDescription = ticketTierCard.getChildAsComponent(
-      "#ticketTierDescription"
-    );
-    const ticketTierQuantityInput = ticketTierCard.getChildAsComponent(
-      "#ticketTierQuantityInput"
-    );
-    const ticketTierIncrementButton = ticketTierCard.getChildAsComponent(
-      "#ticketTierQuantityIncrease"
-    );
-    const ticketTierDecrementButton = ticketTierCard.getChildAsComponent(
-      "#ticketTierQuantityDecrease"
-    );
-    const ticketTierMaxAlert =
-      ticketTierCard.getChildAsComponent(".maximum_alert");
-    const numberInputWrapper = ticketTierCard.getChildAsComponent(
-      ".number_input_wrapper"
-    );
+    const nameEl = card.getChildAsComponent("#ticketTierName");
+    const priceEl = card.getChildAsComponent("#ticketTierPrice");
+    const soldOutEl = card.getChildAsComponent("#ticketTierSoldOut");
+    const descEl = card.getChildAsComponent("#ticketTierDescription");
+    const qtyInput = card.getChildAsComponent("#ticketTierQuantityInput");
+    const incBtn = card.getChildAsComponent("#ticketTierQuantityIncrease");
+    const decBtn = card.getChildAsComponent("#ticketTierQuantityDecrease");
+    const maxAlert = card.getChildAsComponent(".maximum_alert");
+    const wrapper = card.getChildAsComponent(".number_input_wrapper");
 
     if (
-      !ticketTierName ||
-      !ticketTierPrice ||
-      !ticketTierSoldOut ||
-      !ticketTierDescription ||
-      !ticketTierQuantityInput ||
-      !ticketTierIncrementButton ||
-      !ticketTierDecrementButton ||
-      !ticketTierMaxAlert ||
-      !numberInputWrapper
+      !nameEl ||
+      !priceEl ||
+      !soldOutEl ||
+      !descEl ||
+      !qtyInput ||
+      !incBtn ||
+      !decBtn ||
+      !maxAlert ||
+      !wrapper
     ) {
       console.error("Ticket tier elements not found.");
       return;
     }
 
-    const displayedName =
-      rowData.fieldData["displayed-name"] || "Unknown Ticket Tier";
-    const price = rowData.price ? `${rowData.price.toString()}` : "N/A";
-    const description = rowData.fieldData["short-description"] || "";
+    // Availability for this tier
+    const available = availabilityMap.get(rowData.id) ?? 0;
 
-    ticketTierName.setText(displayedName);
-    ticketTierPrice.setText(price);
-    ticketTierDescription.setText(description);
-    ticketTierQuantityInput.setAttribute("max", String(rowData.quantity || 0));
-    ticketTierQuantityInput.setAttribute("value", "0");
+    // Populate UI
+    nameEl.setText(rowData.Displayed_Name);
+    // show the formatted price from product_details
+    priceEl.setText(rowData.product_details.Displayed_single_sale_price);
+    descEl.setText(rowData.Short_Description);
+
+    // enforce stock limit in the quantity input
+    qtyInput.setAttribute("max", String(available));
+    qtyInput.setAttribute("value", "0");
+
+    if (available <= 0) {
+      soldOutEl.setText("Sold out");
+      (soldOutEl.getElement() as HTMLElement).style.display = "block";
+      wrapper.addCssClass("is-disabled");
+    } else {
+      (soldOutEl.getElement() as HTMLElement).style.display = "none";
+      wrapper.removeCssClass("is-disabled");
+    }
 
     const updateAlertVisibility = (message: string) => {
-      ticketTierMaxAlert.setText(message);
-      (ticketTierMaxAlert.getElement() as HTMLElement).style.display = "block";
+      maxAlert.setText(message);
+      (maxAlert.getElement() as HTMLElement).style.display = "block";
     };
 
-    ticketTierIncrementButton.on("click", () => {
-      const inputElement =
-        ticketTierQuantityInput.getElement() as HTMLInputElement;
-      let currentQuantity = Number(inputElement.value);
+    // Increment handler
+    incBtn.on("click", () => {
+      const inputEl = qtyInput.getElement() as HTMLInputElement;
+      let current = Number(inputEl.value);
 
-      (ticketTierMaxAlert.getElement() as HTMLElement).style.display = "none";
-
-      if (rowData.fieldData["requires-bundle-purchase"]) {
-        const selectedBundles = getSelectedBundles();
-        const totalBundlesSelected = selectedBundles.reduce(
-          (sum, bundle) => sum + safeNumber(bundle.quantity),
+      // bundle-required guard
+      if (requiresBundle) {
+        const totalBundles = getSelectedBundles().reduce(
+          (sum, b) => sum + safeNumber(b.quantity),
           0
         );
-
-        if (totalBundlesSelected <= 0) {
+        if (totalBundles <= 0) {
           updateAlertVisibility(
             "This item requires a ticket bundle purchase. Please add a ticket bundle from the options above."
           );
@@ -165,16 +163,12 @@ export const renderTicketTiers = (
         }
       }
 
-      if (currentQuantity < rowData.quantity) {
-        currentQuantity++;
-        inputElement.value = String(currentQuantity);
-        saveSelectedTicket(
-          rowData.id,
-          currentQuantity,
-          rowData.fieldData["requires-bundle-purchase"]
-        );
-        revalidateTicketTierQuantities();
+      if (current < available) {
+        current++;
+        inputEl.value = String(current);
+        saveSelectedTicket(rowData.id.toString(), current, requiresBundle);
         clearNoTicketsError();
+        revalidateTicketTierQuantities();
       } else {
         updateAlertVisibility(
           "You have reached the maximum available quantity."
@@ -182,76 +176,38 @@ export const renderTicketTiers = (
       }
     });
 
-    ticketTierDecrementButton.on("click", () => {
-      const inputElement =
-        ticketTierQuantityInput.getElement() as HTMLInputElement;
-      let currentQuantity = Number(inputElement.value);
-
-      if (currentQuantity > 0) {
-        currentQuantity--;
-        inputElement.value = String(currentQuantity);
-
-        if (currentQuantity > 0) {
-          saveSelectedTicket(
-            rowData.id,
-            currentQuantity,
-            rowData.fieldData["requires-bundle-purchase"]
-          );
-          clearNoTicketsError();
+    // Decrement handler
+    decBtn.on("click", () => {
+      const inputEl = qtyInput.getElement() as HTMLInputElement;
+      let current = Number(inputEl.value);
+      if (current > 0) {
+        current--;
+        inputEl.value = String(current);
+        if (current > 0) {
+          saveSelectedTicket(rowData.id.toString(), current, requiresBundle);
         } else {
-          removeSelectedTicket(rowData.id);
+          removeSelectedTicket(rowData.id.toString());
         }
-
+        clearNoTicketsError();
         revalidateTicketTierQuantities();
       }
     });
 
-    ticketTierQuantityInput.on("input", () => {
-      const inputElement =
-        ticketTierQuantityInput.getElement() as HTMLInputElement;
-      let currentQuantity = Number(inputElement.value);
-      if (currentQuantity > rowData.quantity) {
-        inputElement.value = String(rowData.quantity);
+    // Manual input handler
+    qtyInput.on("input", () => {
+      clearNoTicketsError();
+      const inputEl = qtyInput.getElement() as HTMLInputElement;
+      let val = Number(inputEl.value);
+      if (val > available) {
+        inputEl.value = String(available);
         updateAlertVisibility(
           "You have reached the maximum available quantity."
         );
-      } else if (
-        rowData.fieldData["requires-bundle-purchase"] &&
-        currentQuantity > 0
-      ) {
-        const selectedBundles = getSelectedBundles();
-        const totalBundlesSelected = selectedBundles.reduce(
-          (sum, bundle) => sum + safeNumber(bundle.quantity),
-          0
-        );
-
-        if (totalBundlesSelected <= 0) {
-          inputElement.value = "0";
-          updateAlertVisibility(
-            "This item requires a ticket bundle purchase. Please add a ticket bundle from the options above."
-          );
-        } else {
-          (ticketTierMaxAlert.getElement() as HTMLElement).style.display =
-            "none";
-        }
-      } else {
-        (ticketTierMaxAlert.getElement() as HTMLElement).style.display = "none";
       }
-      clearNoTicketsError();
+      revalidateTicketTierQuantities();
     });
-
-    if (rowData.quantity <= 0) {
-      (ticketTierSoldOut.getElement() as HTMLElement).style.display = "block";
-      (ticketTierPrice.getElement() as HTMLElement).style.display = "none";
-      numberInputWrapper.addCssClass("is-disabled");
-    } else {
-      (ticketTierSoldOut.getElement() as HTMLElement).style.display = "none";
-      (ticketTierPrice.getElement() as HTMLElement).style.display = "block";
-      numberInputWrapper.removeCssClass("is-disabled");
-    }
 
     rowElement.setStyle({ display: "flex" });
-
     return rowElement;
   });
 

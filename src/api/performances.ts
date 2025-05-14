@@ -1,44 +1,72 @@
+// src/api/performances.ts
 import { apiClient } from "./apiConfig";
 
+/**
+ * Details about the venue/location
+ */
+export interface LocationDetails {
+  id: number;
+  Name: string;
+  Slug: string;
+  Collection_ID: string;
+  Locale_ID: string;
+  Item_ID: string;
+  Created_On: string | null;
+  Updated_On: string | null;
+  Published_On: string | null;
+  Address_line_1: string;
+  City_state_zip: string;
+  Map_embed: string;
+  Location_Description: string;
+}
+
+/**
+ * A single performance as returned by `/tickets/performances`.
+ */
 export interface Performance {
-  id: string;
-  cmsLocaleId: string;
-  lastPublished: string;
-  lastUpdated: string;
-  createdOn: string;
-  isArchived: boolean;
-  isDraft: boolean;
-  fieldData: {
-    "date-time": string;
-    "short-description": string;
-    name: string;
-    slug: string;
-    "parent-production": string;
-    location: string;
-    "main-image": {
-      fileId: string;
-      url: string;
-      alt: string | null;
-    };
-    "custom-question": string;
-    "displayed-name": string;
-  };
-  location_name: string;
+  id: number;
+  Name: string;
+  Slug: string;
+  Collection_ID: string;
+  Locale_ID: string;
+  Item_ID: string;
+  Archived: boolean;
+  Draft: boolean;
+  Created_On: string;
+  Updated_On: string;
+  Published_On: string;
+  Displayed_Name: string;
+  Main_Image: string;
+  Short_Description: string;
+  /**
+   * Unix‐millisecond timestamp
+   */
+  Date_Time: number;
+  Custom_Question: string;
+  Parent_Production: number;
+  ticket_tiers_offered: number[];
+  ticket_bundles_offered: number[];
+  Location: number;
+  location_details: LocationDetails;
 }
 
 interface PerformanceApiResponse {
   performances: Performance[];
 }
 
-// Fetch performances from the server
-export const fetchPerformances = async (productionId: string) => {
+/**
+ * Fetch all performances for a given production.
+ */
+export const fetchPerformances = async (
+  productionId: string
+): Promise<Performance[]> => {
   try {
-    const response = await apiClient
+    const { performances } = await apiClient
       .post<PerformanceApiResponse>("/tickets/performances", {
-        data: { production_id: productionId }, // Send production_id in the body
+        data: { production_id: productionId },
       })
       .fetch();
-    return response.performances;
+    return performances;
   } catch (error) {
     console.error("Error fetching performances:", error);
     throw error;

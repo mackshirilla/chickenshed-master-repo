@@ -4,443 +4,251 @@ import { WFComponent, WFDynamicList } from "@xatom/core";
 import { WFImage } from "@xatom/image";
 import { apiClient } from "../../../api/apiConfig";
 
-// Define the Ticket interface based on the API response
+// ——————————————————————————————————————————————————
+// DATA INTERFACES
+// ——————————————————————————————————————————————————
 interface Ticket {
   id: number;
   status: string;
-  production_name: string;
-  performance_name: string;
-  performance_date_time: number;
-  customer_first_name: string;
-  customer_last_name: string;
-  customer_email: string;
-  ticket_tier_name: string;
-  seating_assignment: string;
-  checked_in: boolean;
-  checked_in_time?: string | null;
   ticket_order_id: number;
-  user_id: number;
-  contact_id: number;
-  ticket_tier_id: string;
-  performance_id: string;
-  tickets_available_id: string;
-  created_at: number;
-  qr_code: {
-    url: string;
-  };
+  ticket_tier: { id: number; Displayed_Name: string }[];
+  seating_assignment: string;
 }
 
-// Define the Ticket Order interface
-interface TicketOrder {
+interface Order {
   id: number;
+  order_uuid: string;
   status: string;
-  production_name: string;
-  performance_name: string;
-  location: string;
+  production_details: { id: number; Name: string };
+  performance_id: number;
   performance_date_time: number;
-  customer_first_name: string;
-  customer_last_name: string;
-  customer_email: string;
-  custom_question_answer: string;
   assistance_required: boolean;
   assistance_message: string;
-  checked_in: boolean;
-  checked_in_time?: string | null;
-  user_id: number;
-  contact_id: number;
-  performance_id: string;
-  created_at: number;
-  sale_id: number;
-  image_url: string;
 }
 
-// Define the Sale interface
-interface Sale {
-  id: number;
-  created_at: number;
-  contact_id: number;
-  user_id: number;
-  customer_first_name: string;
-  customer_last_name: string;
-  customer_email: string;
-  amount_total: number;
-  reciept_url: string;
-}
-
-// Define the Performance interface
 interface Performance {
-  performance: {
-    response: {
-      result: {
-        fieldData: {
-          "short-description": string;
-        };
-      };
-    };
-  };
-  production: {
-    response: {
-      result: {
-        fieldData: {
-          name: string;
-          "short-description": string;
-        };
-      };
-    };
-  };
-  location: {
-    response: {
-      result: {
-        fieldData: {
-          "map-embed": string;
-        };
-      };
-    };
+  id: number;
+  Displayed_Name: string;
+  Main_Image: string;
+  Short_Description: string;
+  Date_Time: number;
+  production_details: { id: number; Name: string };
+  location_details: {
+    id: number;
+    Name: string;
+    Address_line_1: string;
+    City_state_zip: string;
+    Map_embed: string;
   };
 }
 
-// Function to fetch ticket details from the API
-export async function fetchTickets(orderId: number): Promise<{
-  tickets: Ticket[];
-  order: TicketOrder;
-  sale: Sale;
-  performance: Performance;
-} | null> {
+// ——————————————————————————————————————————————————
+// FETCH FUNCTION (uses UUID)
+// ——————————————————————————————————————————————————
+export async function fetchTickets(
+  orderUuid: string
+): Promise<{ tickets: Ticket[]; order: Order; performance: Performance } | null> {
   try {
-    const getTickets = apiClient.get<{
+    const req = apiClient.get<{
       tickets: Ticket[];
-      order: TicketOrder;
-      sale: Sale;
+      order: Order;
       performance: Performance;
-    }>(`/dashboard/get_tickets/${orderId}`);
-    const response = await getTickets.fetch();
-    return response;
+    }>(`/dashboard/get_tickets/${orderUuid}`);
+    return await req.fetch();
   } catch (error) {
     console.error("Error fetching tickets:", error);
     return null;
   }
 }
 
-// Function to initialize and render the ticket order page
+// ——————————————————————————————————————————————————
+// PAGE INITIALIZER
+// ——————————————————————————————————————————————————
 export async function initializeTicketOrderPage() {
-  // Extract the order ID from the URL parameters
-  const urlParams = new URLSearchParams(window.location.search);
-  const orderId = parseInt(urlParams.get("order")?.replace("?", "") || "0", 10);
-  if (!orderId) {
-    console.error("Invalid order ID");
+  const params = new URLSearchParams(window.location.search);
+  const orderUuid = params.get("order");
+  if (!orderUuid) {
+    console.error("Missing order UUID");
     return;
   }
 
-  try {
-    // Fetch ticket details
-    const response = await fetchTickets(orderId);
+  const data = await fetchTickets(orderUuid);
+  if (!data) {
+    console.error("Failed to fetch ticket details");
+    return;
+  }
+  const { tickets, order, performance } = data;
 
-    if (!response) {
-      console.error("Failed to fetch ticket details");
-      return;
-    }
-    triggerSuccessEvent(".success_trigger");
-    const { tickets, order, sale, performance } = response;
+  // Trigger success if needed
+  document.querySelector<HTMLElement>(".success_trigger")?.click();
 
-    // Set the production and performance details
-    const productionName = new WFComponent("#productionName");
-    productionName.setText(order.production_name);
-
-    const performanceName = new WFComponent("#performanceName");
-    performanceName.setText(order.performance_name);
-
-    const performanceLocation = new WFComponent("#performanceLocation");
-    performanceLocation.setText(order.location);
-
-    // Set the performance time and date separately
-    const performanceDate = new WFComponent("#performanceDate");
-    const date = new Date(order.performance_date_time);
-    performanceDate.setText(
-      date.toLocaleDateString([], {
-        month: "2-digit",
-        day: "2-digit",
-        year: "2-digit",
-      })
-    );
-
-    const performanceTime = new WFComponent("#performanceTime");
-    performanceTime.setText(
-      date.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })
-    );
-
-    // Set the performance name, date, and time to the breadcrumb
-    const ticketOrderBreadcrumb = document.querySelector(
-      "#ticketOrderBreadcrumb"
-    );
-    if (ticketOrderBreadcrumb) {
-      const breadcrumbComponent = new WFComponent("#ticketOrderBreadcrumb");
-
-      // Set the text to include performance name and date/time
-      breadcrumbComponent.setText(
-        `${order.performance_name} - ${date.toLocaleDateString([], {
-          month: "2-digit",
-          day: "2-digit",
-          year: "2-digit",
-        })} at ${date.toLocaleTimeString([], {
-          hour: "2-digit",
-          minute: "2-digit",
-        })}`
-      );
-    }
-
-    // Set the location map
-    const performanceLocationMap = new WFComponent("#performanceLocationMap");
-    performanceLocationMap.getElement().innerHTML =
-      performance.location.response.result.fieldData["map-embed"];
-
-    // Apply styling to make sure the map and its container fill properly
-    const figureElement = document.querySelector(
-      "#performanceLocationMap figure"
-    ) as HTMLElement;
-    const iframeElement = document.querySelector(
-      "#performanceLocationMap iframe"
-    ) as HTMLElement;
-    const firstChildDiv = document.querySelector(
-      "#performanceLocationMap figure > div"
-    ) as HTMLElement;
-
-    if (figureElement) {
-      figureElement.style.width = "100%";
-      figureElement.style.height = "100%";
-      figureElement.style.padding = "0";
-      figureElement.style.margin = "0";
-    }
-
-    if (firstChildDiv) {
-      firstChildDiv.style.height = "100%";
-    }
-
-    if (iframeElement) {
-      iframeElement.style.width = "100%";
-      iframeElement.style.height = "100%";
-      iframeElement.style.border = "0";
-    }
-
-    // Set the description
-    const performanceShortDescription = new WFComponent(
-      "#performanceShortDescription"
-    );
-    performanceShortDescription.setText(
-      performance.performance.response.result.fieldData["short-description"] ||
-        "Description not available."
-    );
-
-    // Set assistance requested status
-    const assistanceRequestedTrue = new WFComponent("#assistanceRequestedTrue");
-    const assistanceRequestedFalse = new WFComponent(
-      "#assistanceRequestedFalse"
-    );
-    if (order.assistance_required) {
-      assistanceRequestedTrue.setStyle({ display: "block" });
-      assistanceRequestedFalse.setStyle({ display: "none" });
-    } else {
-      assistanceRequestedTrue.setStyle({ display: "none" });
-      assistanceRequestedFalse.setStyle({ display: "block" });
-    }
-
-    const assistanceMessage = new WFComponent("#assistanceMessage");
-    assistanceMessage.setText(order.assistance_message || "N/A");
-
-    // Set the billing information
-    const invoiceDate = new WFComponent("#invoiceDate");
-    const saleDateFormatted = new Date(sale.created_at);
-    invoiceDate.setText(
-      saleDateFormatted.toLocaleDateString([], {
-        month: "2-digit",
-        day: "2-digit",
-        year: "2-digit",
-      })
-    );
-
-    const invoiceAmount = new WFComponent("#invoiceAmount");
-    invoiceAmount.setText(`$${sale.amount_total}`);
-
-    const receiptButton = new WFComponent("#receiptButton");
-    receiptButton.getElement().setAttribute("href", sale.reciept_url);
-
-    // Initialize and render the list of tickets
-    const ticketList = new WFDynamicList<Ticket>("#ticketList", {
-      rowSelector: "#ticketItem",
+  // -- helpers to format in NYC --
+  const fmtDate = (ts: number) =>
+    new Date(ts).toLocaleDateString([], {
+      timeZone: "America/New_York",
+      month: "2-digit",
+      day: "2-digit",
+      year: "2-digit",
+    });
+  const fmtTime = (ts: number) =>
+    new Date(ts).toLocaleTimeString([], {
+      timeZone: "America/New_York",
+      hour: "2-digit",
+      minute: "2-digit",
+      hour12: true,
     });
 
-    // Sort tickets by ID
-    tickets.sort((a, b) => a.id - b.id);
+  // Order details
+  new WFComponent("#productionName").setText(
+    performance.production_details.Name
+  );
+  new WFComponent("#performanceName").setText(performance.Displayed_Name);
+  new WFComponent("#performanceLocation").setText(
+    performance.location_details.Name
+  );
 
-    // Customize the rendering of list items (Ticket Cards)
-    ticketList.rowRenderer(({ rowData, rowElement }) => {
-      const ticketCard = new WFComponent(rowElement);
+  // Date & time
+  new WFComponent("#performanceDate").setText(
+    fmtDate(performance.Date_Time)
+  );
+  new WFComponent("#performanceTime").setText(
+    fmtTime(performance.Date_Time)
+  );
 
-      // Set the QR code image
-      const qrCodeImage = new WFImage(
-        ticketCard.getChildAsComponent(".ticket_qr").getElement()
-      );
-      qrCodeImage.setImage(rowData.qr_code.url);
+  // Breadcrumb
+  document.querySelector<HTMLElement>("#ticketOrderBreadcrumb") &&
+    new WFComponent("#ticketOrderBreadcrumb").setText(
+      `${performance.Displayed_Name} - ${fmtDate(
+        performance.Date_Time
+      )} at ${fmtTime(performance.Date_Time)}`
+    );
 
-      // Set the production name
-      const ticketProductionName = ticketCard.getChildAsComponent(
-        "#ticketProductionName"
-      );
-      ticketProductionName.setText(rowData.production_name);
+  // Map embed
+  const mapComp = new WFComponent("#performanceLocationMap");
+  mapComp.getElement().innerHTML = performance.location_details.Map_embed;
 
-      // Set the performance name
-      const ticketPerformanceName = ticketCard.getChildAsComponent(
-        "#ticketPerformanceName"
-      );
-      ticketPerformanceName.setText(rowData.performance_name);
+  // Force map to fill the container
+  const mapContainer = mapComp.getElement();
+  mapContainer.style.width = "100%";
+  mapContainer.style.height = "100%";
+  const fig = mapContainer.querySelector("figure");
+  const innerDiv = mapContainer.querySelector("figure > div");
+  const ifr = mapContainer.querySelector("iframe");
+  if (fig instanceof HTMLElement) {
+    fig.style.cssText =
+      "width:100%;height:100%;max-height:none;padding:0;margin:0;";
+  }
+  if (innerDiv instanceof HTMLElement) {
+    innerDiv.style.cssText = "width:100%;height:100%;";
+  }
+  if (ifr instanceof HTMLElement) {
+    ifr.style.cssText = "width:100%;height:100%;border:0;";
+  }
 
-      // Set the performance date
-      const ticketPerformanceDate = ticketCard.getChildAsComponent(
-        "#ticketPerformanceDate"
-      );
-      const ticketDate = new Date(rowData.performance_date_time);
-      ticketPerformanceDate.setText(
-        `${ticketDate.toLocaleDateString([], {
-          month: "2-digit",
-          day: "2-digit",
-          year: "2-digit",
-        })} at ${ticketDate.toLocaleTimeString([], {
-          hour: "2-digit",
-          minute: "2-digit",
-        })}`
-      );
+  // Assistance
+  const reqComp = new WFComponent("#assistanceRequestedTrue");
+  const noReqComp = new WFComponent("#assistanceRequestedFalse");
+  if (order.assistance_required) {
+    reqComp.setStyle({ display: "block" });
+    noReqComp.setStyle({ display: "none" });
+  } else {
+    reqComp.setStyle({ display: "none" });
+    noReqComp.setStyle({ display: "block" });
+  }
+  new WFComponent("#assistanceMessage").setText(
+    order.assistance_message || "N/A"
+  );
 
-      // Set the ticket tier
-      const ticketTier = ticketCard.getChildAsComponent("#ticketTicketTier");
-      ticketTier.setText(rowData.ticket_tier_name);
+  // Short description
+  new WFComponent("#performanceShortDescription").setText(
+    performance.Short_Description || ""
+  );
 
-      // Set the seating assignment
-      const seatingAssignment = ticketCard.getChildAsComponent(
-        "#ticketSeatingAssignment"
-      );
-      seatingAssignment.setText(rowData.seating_assignment);
+  // Ticket list
+  const list = new WFDynamicList<Ticket>("#ticketList", {
+    rowSelector: "#ticketItem",
+  });
+  tickets.sort((a, b) => a.id - b.id);
+  list.rowRenderer(({ rowData, rowElement }) => {
+    const card = new WFComponent(rowElement);
 
-      return rowElement;
-    });
+    // QR code
+    new WFImage(
+      card.getChildAsComponent(".ticket_qr").getElement()
+    ).setImage(
+      `https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=${rowData.id}`
+    );
 
-    // Set the tickets data to the dynamic list
-    ticketList.setData(tickets);
+    // Production & performance
+    card.getChildAsComponent("#ticketProductionName").setText(
+      performance.production_details.Name
+    );
+    card.getChildAsComponent("#ticketPerformanceName").setText(
+      performance.Displayed_Name
+    );
 
-    // Add event listener for printing tickets
-    const printTicketsButton = new WFComponent("#printTickets");
-    printTicketsButton.on("click", () => {
-      const ticketListElement = document.querySelector(
-        "#ticketList"
-      ) as HTMLElement;
+    // Performance date & time
+    const perfTs = performance.Date_Time;
+    card.getChildAsComponent("#ticketPerformanceDate").setText(
+      `${fmtDate(perfTs)} at ${fmtTime(perfTs)}`
+    );
 
-      if (ticketListElement) {
-        // Open a new window with specified size for printing
-        const printWindow = window.open("", "_blank", "width=800,height=600");
-        if (printWindow) {
-          // Get all stylesheets from the current document
-          const styleSheets = Array.from(document.styleSheets)
-            .map((styleSheet) => {
-              try {
-                return styleSheet.href
-                  ? `<link rel="stylesheet" href="${styleSheet.href}">`
-                  : "";
-              } catch (e) {
-                console.error("Error accessing stylesheet:", e);
-                return "";
-              }
-            })
-            .join("");
+    // Ticket tier & seating
+    card.getChildAsComponent("#ticketTicketTier").setText(
+      rowData.ticket_tier[0].Displayed_Name
+    );
+    card.getChildAsComponent("#ticketSeatingAssignment").setText(
+      rowData.seating_assignment
+    );
 
-          // Extract production name, performance name, and performance date/time for hero section
-          const productionName =
-            (document.querySelector("#productionName") as HTMLElement)
-              ?.innerText || "Production Name";
-          const performanceName =
-            (document.querySelector("#performanceName") as HTMLElement)
-              ?.innerText || "Performance Name";
-          const performanceDate =
-            (document.querySelector("#performanceDate") as HTMLElement)
-              ?.innerText || "Performance Date";
-          const performanceTime =
-            (document.querySelector("#performanceTime") as HTMLElement)
-              ?.innerText || "Performance Time";
+    return rowElement;
+  });
+  list.setData(tickets);
 
-          // Create a printable HTML with styles included
-          printWindow.document.write(`
-        <html>
-          <head>
-            <title>Print Tickets</title>
-            ${styleSheets}
-            <style>
-              /* Additional print-specific styling to handle layout and formatting */
-              body {
-                background-color: var(--theme--background);
-                font-family: var(--text-main--font-family);
-                color: #121331;
-                font-size: var(--text-main--font-size);
-                line-height: var(--text-main--line-height);
-                letter-spacing: var(--text-main--letter-spacing);
-                overscroll-behavior: none;
-                font-weight: var(--text--font-weight);
-                text-transform: var(--text--text-transform);
-                padding: 1rem 3rem; 
-              }
-              
-              #ticketList {
-                display: grid; /* Set display to grid */
-                grid-template-columns: repeat(3, 1fr); /* Create 2 columns */
-                gap: 20px; /* Add some spacing between the grid items */
-                color: black; /* Set color to black for ticket list */
-              }
-
-              .ticket_wrap {
-                page-break-inside: avoid; /* Avoid breaking ticket content across pages */
-              }
-
-              * {
-                box-sizing: border-box;
-              }
-
-              .hero-section {
-                text-align: center;
-                margin-bottom: 2rem;
-              }
-
-              .hero-section h1 {
-                margin: 0;
-                font-size: 2rem;
-                font-weight: bold;
-              }
-
-              .hero-section p {
-                margin: 0.5rem 0;
-                font-size: 1.25rem;
-              }
-            </style>
-          </head>
-          <body>
-            <div class="hero-section">
-              <h1>${productionName}</h1>
-              <p><strong>${performanceName}</strong></p>
-              <p>${performanceDate} at ${performanceTime}</p>
-            </div>
-            ${ticketListElement.outerHTML}
-          </body>
-        </html>
-      `);
-
-          printWindow.document.close();
-          printWindow.print();
+  // Print tickets
+  new WFComponent("#printTickets").on("click", () => {
+    const ticketListElement = document.querySelector(
+      "#ticketList"
+    ) as HTMLElement;
+    if (!ticketListElement) return;
+    const printWindow = window.open("", "_blank", "width=800,height=600");
+    if (!printWindow) return;
+    const styles = Array.from(document.styleSheets)
+      .map((ss) => {
+        try {
+          return ss.href ? `<link rel="stylesheet" href="${ss.href}">` : "";
+        } catch {
+          return "";
         }
-      }
-    });
-  } catch (error) {
-    console.error("Error initializing ticket order page:", error);
-  }
+      })
+      .join("\n");
+    const headerHTML = `
+      <div class="hero-section">
+        <h1>${performance.production_details.Name}</h1>
+        <p>${fmtDate(performance.Date_Time)} at ${fmtTime(
+      performance.Date_Time
+    )}</p>
+      </div>
+    `;
+    const html = `<!DOCTYPE html>
+<html>
+<head>
+  <title>Print Tickets</title>
+  ${styles}
+  <style>
+    body { padding: 1rem 3rem; }
+    #ticketList { display: grid; grid-template-columns: repeat(3, 1fr); gap: 20px; }
+    .ticket_wrap { page-break-inside: avoid; }
+    h1, p { color: black !important; }
+  </style>
+</head>
+<body>
+  ${headerHTML}
+  ${ticketListElement.outerHTML}
+</body>
+</html>`;
+    printWindow.document.write(html);
+    printWindow.document.close();
+    printWindow.print();
+  });
 }
-
-const triggerSuccessEvent = (selector: string) => {
-  const successTrigger = document.querySelector(selector);
-  if (successTrigger instanceof HTMLElement) {
-    successTrigger.click();
-  }
-};

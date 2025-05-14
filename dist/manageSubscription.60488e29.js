@@ -168,6 +168,10 @@ const REG_TABLE_CONFIG = {
 async function manageSubscriptionPage() {
     // 1) Fetch & seed state
     const data = await (0, _apiConfig.apiClient).post("/subscriptions/manage-subscription").fetch();
+    if (!data || !data.id) {
+        window.location.href = "/dashboard";
+        return;
+    }
     const initialType = data.update_subscription_type || data.subscription_type;
     (0, _manageSubscriptionState.saveState)({
         apiData: data,
@@ -301,7 +305,7 @@ function handleRemove(btn) {
     document.getElementById("resetRegistrations")?.setAttribute("style", "display:block");
 }
 
-},{"@parcel/transformer-js/src/esmodule-helpers.js":"5oERU","../../api/apiConfig":"2Lx0S","@xatom/core":"j9zXV","./state/manageSubscriptionState":"1J9rJ","./components/manageRegistrationTable":"Ns5lY","./components/manageSubscriptionLineItems":"8Sqiy","./components/manageSubscriptionSummary":"fTJ1C","./components/manageDepositLineItems":"6AIdK","./components/manageAmountDue":"eDIyp","./components/managePendingStudentsAlert":"dHhsn","./components/manageTrialAlert":"lzkyv","./components/manageSubscriptionDetails":"9yQh4","./components/manageSubscriptionCancelDialog":"fcXK8"}],"1J9rJ":[function(require,module,exports) {
+},{"../../api/apiConfig":"2Lx0S","@xatom/core":"j9zXV","./state/manageSubscriptionState":"1J9rJ","./components/manageRegistrationTable":"Ns5lY","./components/manageSubscriptionLineItems":"8Sqiy","./components/manageSubscriptionSummary":"fTJ1C","./components/manageDepositLineItems":"6AIdK","./components/manageAmountDue":"eDIyp","./components/managePendingStudentsAlert":"dHhsn","./components/manageTrialAlert":"lzkyv","./components/manageSubscriptionDetails":"9yQh4","./components/manageSubscriptionCancelDialog":"fcXK8","@parcel/transformer-js/src/esmodule-helpers.js":"5oERU"}],"1J9rJ":[function(require,module,exports) {
 // src/manageSubscription/state/manageSubscriptionState.ts
 var parcelHelpers = require("@parcel/transformer-js/src/esmodule-helpers.js");
 parcelHelpers.defineInteropFlag(exports);
@@ -384,7 +388,7 @@ function initManageRegistrationTable(items, config) {
         newRow.setAttribute("data-program-id", String(item.program_id));
         newRow.setAttribute("data-workshop-id", String(item.workshop_id));
         newRow.setAttribute("data-session-id", String(item.session_id));
-        newRow.setAttribute("data-student-id", String(item.student_profile.id));
+        newRow.setAttribute("data-student-id", String(item.student_profile?.id || item.student_id));
         // Populate text fields
         const programText = newRow.querySelector("#item_program_name");
         if (programText) programText.textContent = item.program_details.name;
@@ -668,7 +672,7 @@ function updateAmountDue() {
     new (0, _core.WFComponent)("#total_amount_due_next_invoice").setText(`$${amountDue.toFixed(2)}`);
 }
 
-},{"@xatom/core":"j9zXV","@parcel/transformer-js/src/esmodule-helpers.js":"5oERU","../state/manageSubscriptionState":"1J9rJ"}],"dHhsn":[function(require,module,exports) {
+},{"@xatom/core":"j9zXV","../state/manageSubscriptionState":"1J9rJ","@parcel/transformer-js/src/esmodule-helpers.js":"5oERU"}],"dHhsn":[function(require,module,exports) {
 // src/manageSubscription/components/managePendingStudentsAlert.ts
 var parcelHelpers = require("@parcel/transformer-js/src/esmodule-helpers.js");
 parcelHelpers.defineInteropFlag(exports);

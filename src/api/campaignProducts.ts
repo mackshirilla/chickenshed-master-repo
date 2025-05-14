@@ -1,13 +1,18 @@
 import { apiClient } from "./apiConfig";
 
 export interface Product {
-  id: string;
-  fieldData: {
-    name: string;
-    productName: string;
-    description: string;
-    price: number;
-  };
+  id: number;
+  Product_name: string;
+  Product_id: string;
+  Annual_price_id: string;
+  Monthly_price_id: string;
+  Single_sale_price_id: string;
+  Displayed_annual_price: string;
+  Displayed_monthly_price: string;
+  Displayed_single_sale_price: string;
+  Annual_price_amount: number;
+  Monthly_price_amount: number;
+  Single_sale_price_amount: number;
 }
 
 export interface ProductApiResponse {

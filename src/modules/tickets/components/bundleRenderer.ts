@@ -1,21 +1,34 @@
+// src/modules/tickets/components/bundleRenderer.ts
+
 import { WFDynamicList, WFComponent } from "@xatom/core";
-import { BundleOffered } from "../../../api/ticketTiersAPI";
+import { BundleOfferedFlat } from "../../../api/ticketTiersAPI";
 import {
   saveSelectedBundle,
   removeSelectedBundle,
 } from "../state/ticketPurchaseState";
 import {
   resetTicketQuantitiesIfNeeded,
-  updateTicketTierButtons, // Correct import source
+  updateTicketTierButtons,
 } from "../state/bundleStateUpdater";
 import { revalidateTicketTierQuantities } from "./ticketTierRenderer";
 import { toggleError } from "../../../utils/formUtils";
 
-let initialBundleTemplate: HTMLElement | null = null; // Store the initial template
+// Availability info passed in from API
+export interface BundleAvailability {
+  bundle_id: number;
+  bundle_name: string;
+  max_available: number;
+}
 
+let initialBundleTemplate: HTMLElement | null = null;
+
+/**
+ * Renders bundle selection cards and enforces max purchase limits.
+ */
 export const renderBundles = (
-  bundles: BundleOffered[],
-  containerSelector: string
+  bundles: BundleOfferedFlat[],
+  containerSelector: string,
+  bundlesAvailable: BundleAvailability[] = []
 ) => {
   const container = document.querySelector(containerSelector);
   if (!container) {
@@ -23,12 +36,10 @@ export const renderBundles = (
     return;
   }
 
-  // Save the initial template state if not already saved
+  // Keep a pristine copy of the template
   if (!initialBundleTemplate) {
     initialBundleTemplate = container.cloneNode(true) as HTMLElement;
   }
-
-  // Clear the container and restore the initial template
   container.innerHTML = "";
   container.appendChild(initialBundleTemplate.cloneNode(true));
 
@@ -37,143 +48,137 @@ export const renderBundles = (
     toggleError(noTicketsError, "", false);
   };
 
-  const list = new WFDynamicList<BundleOffered>(containerSelector, {
+  const list = new WFDynamicList<BundleOfferedFlat>(containerSelector, {
     rowSelector: "#bundleCard",
     loaderSelector: "#bundleListLoading",
     emptySelector: "#bundleListEmpty",
   });
 
-  list.loaderRenderer((loaderElement) => {
-    (loaderElement.getElement() as HTMLElement).style.display = "flex";
-    return loaderElement;
+  list.loaderRenderer(loader => {
+    loader.getElement().style.display = "flex";
+    return loader;
   });
 
-  list.emptyRenderer((emptyElement) => {
-    (emptyElement.getElement() as HTMLElement).style.display = "flex";
-    return emptyElement;
+  list.emptyRenderer(empty => {
+    empty.getElement().style.display = "flex";
+    return empty;
   });
 
-  list.rowRenderer(({ rowData, rowElement, index }) => {
+  list.rowRenderer(({ rowData, rowElement }) => {
     const bundleCard = new WFComponent(rowElement);
-    const bundleName = bundleCard.getChildAsComponent("#bundleName");
     const bundlePrice = bundleCard.getChildAsComponent("#bundlePrice");
-    const bundleSoldOut = bundleCard.getChildAsComponent("#bundleSoldOut");
-    const bundleDescription =
-      bundleCard.getChildAsComponent("#bundleDescription");
-    const bundleQuantityInput = bundleCard.getChildAsComponent(
-      "#bundleQuantityInput"
-    );
-    const bundleIncrementButton = bundleCard.getChildAsComponent(
-      "#bundleQuantityIncrease"
-    );
-    const bundleDecrementButton = bundleCard.getChildAsComponent(
-      "#bundleQuantityDecrease"
-    );
+    const bundleName = bundleCard.getChildAsComponent("#bundleName");
+    const bundleDescription = bundleCard.getChildAsComponent("#bundleDescription");
+    const bundleQuantityInput = bundleCard.getChildAsComponent("#bundleQuantityInput");
+    const bundleIncrementButton = bundleCard.getChildAsComponent("#bundleQuantityIncrease");
+    const bundleDecrementButton = bundleCard.getChildAsComponent("#bundleQuantityDecrease");
     const bundleMaxAlert = bundleCard.getChildAsComponent(".maximum_alert");
-    const numberInputWrapper = bundleCard.getChildAsComponent(
-      ".number_input_wrapper"
-    );
+    const bundleSoldOut = bundleCard.getChildAsComponent("#bundleSoldOut");
+    const numberInputWrapper = bundleCard.getChildAsComponent(".number_input_wrapper");
 
     if (
-      !bundleName ||
       !bundlePrice ||
-      !bundleSoldOut ||
+      !bundleName ||
       !bundleDescription ||
       !bundleQuantityInput ||
       !bundleIncrementButton ||
       !bundleDecrementButton ||
       !bundleMaxAlert ||
+      !bundleSoldOut ||
       !numberInputWrapper
     ) {
       console.error("Bundle elements not found.");
       return;
     }
 
-    bundleName.setText(rowData.fieldData["displayed-name"]);
-    bundlePrice.setText(`${rowData.price}`);
-    bundleDescription.setText(rowData.fieldData["short-description"]);
-    bundleQuantityInput.setAttribute("max", String(rowData.quantity));
+    // Display price
+    bundlePrice.setText(rowData.product_details.Displayed_single_sale_price);
+    // Populate text
+    bundleName.setText(rowData.Displayed_Name);
+    bundleDescription.setText(rowData.Short_Description);
     bundleQuantityInput.setAttribute("value", "0");
 
-    const updateAlertVisibility = () => {
-      const currentQuantity = Number(
-        (bundleQuantityInput.getElement() as HTMLInputElement).value
-      );
-      const maxAlertElement = bundleMaxAlert.getElement() as HTMLElement;
-      if (currentQuantity >= rowData.quantity) {
-        bundleMaxAlert.setText(
-          "You have reached the maximum available quantity."
-        );
-        maxAlertElement.style.display = "block";
-      } else {
-        maxAlertElement.style.display = "none";
-      }
+    // Lookup this bundle's max availability
+const availability = bundlesAvailable.find(b => b.bundle_id === rowData.id);
+const maxQty = availability ? availability.max_available : Infinity;
+
+// If none available, show “Sold out” and disable input
+if (maxQty <= 0) {
+  bundleSoldOut.setText("Sold out");
+  bundleSoldOut.getElement().style.display = "block";
+  numberInputWrapper.addCssClass("is-disabled");
+} else {
+  bundleSoldOut.getElement().style.display = "none";
+  numberInputWrapper.removeCssClass("is-disabled");
+}
+
+// Seed the input's max for native clamping
+bundleQuantityInput.setAttribute("max", maxQty.toString());
+
+    const hideAlert = () => bundleMaxAlert.getElement().style.display = "none";
+    const showAlert = (msg: string) => {
+      bundleMaxAlert.setText(msg);
+      bundleMaxAlert.getElement().style.display = "block";
     };
 
+    // Increment logic with max guard
     bundleIncrementButton.on("click", () => {
-      const inputElement = bundleQuantityInput.getElement() as HTMLInputElement;
-      let currentQuantity = Number(inputElement.value);
-
-      if (currentQuantity < rowData.quantity) {
-        currentQuantity++;
-        inputElement.value = String(currentQuantity);
-        saveSelectedBundle(rowData.id, currentQuantity);
-        updateTicketTierButtons(); // Enable ticket tier buttons if needed
-        clearNoTicketsError(); // Clear no tickets error
+      const inputEl = bundleQuantityInput.getElement() as HTMLInputElement;
+      let current = Number(inputEl.value);
+      if (current < maxQty) {
+        current += 1;
+        inputEl.value = String(current);
+        saveSelectedBundle(rowData.id.toString(), current);
+        updateTicketTierButtons();
+        clearNoTicketsError();
+        hideAlert();
+        resetTicketQuantitiesIfNeeded();
+        revalidateTicketTierQuantities();
+      } else {
+        showAlert(`Only up to ${maxQty} bundles available.`);
       }
-
-      updateAlertVisibility();
-      revalidateTicketTierQuantities(); // Revalidate after increment
     });
 
+    // Decrement logic
     bundleDecrementButton.on("click", () => {
-      const inputElement = bundleQuantityInput.getElement() as HTMLInputElement;
-      let currentQuantity = Number(inputElement.value);
-
-      if (currentQuantity > 0) {
-        currentQuantity--;
-        inputElement.value = String(currentQuantity);
-
-        if (currentQuantity > 0) {
-          saveSelectedBundle(rowData.id, currentQuantity);
-          clearNoTicketsError(); // Clear no tickets error
+      const inputEl = bundleQuantityInput.getElement() as HTMLInputElement;
+      let current = Number(inputEl.value);
+      if (current > 0) {
+        current -= 1;
+        inputEl.value = String(current);
+        if (current > 0) {
+          saveSelectedBundle(rowData.id.toString(), current);
         } else {
-          removeSelectedBundle(rowData.id);
+          removeSelectedBundle(rowData.id.toString());
         }
-
-        updateTicketTierButtons(); // Disable ticket tier buttons if needed
+        updateTicketTierButtons();
+        clearNoTicketsError();
+        hideAlert();
+        resetTicketQuantitiesIfNeeded();
+        revalidateTicketTierQuantities();
       }
-
-      updateAlertVisibility();
-      resetTicketQuantitiesIfNeeded(); // Reset ticket quantities if bundles are insufficient
-      revalidateTicketTierQuantities(); // Revalidate after decrement
     });
 
+    // Manual input guard
     bundleQuantityInput.on("input", () => {
-      const inputElement = bundleQuantityInput.getElement() as HTMLInputElement;
-      let currentQuantity = Number(inputElement.value);
-      if (currentQuantity > rowData.quantity) {
-        inputElement.value = String(rowData.quantity);
-        updateAlertVisibility();
+      clearNoTicketsError();
+      const inputEl = bundleQuantityInput.getElement() as HTMLInputElement;
+      let val = Number(inputEl.value);
+      if (val > maxQty) {
+        inputEl.value = String(maxQty);
+        showAlert(`Only up to ${maxQty} bundles available.`);
+      } else {
+        hideAlert();
       }
-      revalidateTicketTierQuantities(); // Revalidate on manual input
-      clearNoTicketsError(); // Clear no tickets error on manual input
+      resetTicketQuantitiesIfNeeded();
+      revalidateTicketTierQuantities();
     });
 
-    if (rowData.quantity <= 0) {
-      (bundleSoldOut.getElement() as HTMLElement).style.display = "block";
-      (bundlePrice.getElement() as HTMLElement).style.display = "none";
-      numberInputWrapper.addCssClass("is-disabled");
-    } else {
-      (bundleSoldOut.getElement() as HTMLElement).style.display = "none";
-      (bundlePrice.getElement() as HTMLElement).style.display = "block";
-      numberInputWrapper.removeCssClass("is-disabled");
-    }
-
+    // Show the card
     rowElement.setStyle({ display: "flex" });
-
     return rowElement;
   });
 
+  // Render all
   list.setData(bundles);
 };

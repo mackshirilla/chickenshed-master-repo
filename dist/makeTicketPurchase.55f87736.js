@@ -295,12 +295,16 @@ const makeTicketPurchase = async ()=>{
             clearErrorOnInteraction(emailInput, emailError);
         }
         // Validate Custom Question
-        const customQuestionError = new (0, _core.WFComponent)("#customQuestionInputError");
-        const customQuestionValidation = (0, _formUtils.createValidationFunction)(customQuestionInput, (0, _validationUtils.validateNotEmpty), "This field is required.");
-        const customQuestionValidationResult = customQuestionValidation();
-        (0, _formUtils.toggleError)(customQuestionError, customQuestionValidationResult, !!customQuestionValidationResult);
-        formIsValid = formIsValid && !customQuestionValidationResult;
-        clearErrorOnInteraction(customQuestionInput, customQuestionError);
+        // Only validate the custom question if that entire section is shown
+        const customQuestionWrap = document.getElementById("customQuestionWrap");
+        if (customQuestionWrap.style.display !== "none") {
+            const customQuestionError = new (0, _core.WFComponent)("#customQuestionInputError");
+            const customQuestionValidation = (0, _formUtils.createValidationFunction)(customQuestionInput, (0, _validationUtils.validateNotEmpty), "This field is required.");
+            const customQuestionValidationResult = customQuestionValidation();
+            (0, _formUtils.toggleError)(customQuestionError, customQuestionValidationResult, !!customQuestionValidationResult);
+            formIsValid = formIsValid && !customQuestionValidationResult;
+            clearErrorOnInteraction(customQuestionInput, customQuestionError);
+        }
         // Validate that at least one bundle or ticket is selected
         const selectedBundles = (0, _ticketPurchaseState.getSelectedBundles)();
         const selectedTickets = (0, _ticketPurchaseState.getSelectedTickets)();
@@ -397,7 +401,6 @@ var _ticketPurchaseState = require("./state/ticketPurchaseState");
 let selectedProductionId = null;
 let initialTemplateState = null;
 const initializeProductionList = async (containerSelector)=>{
-    // Update return type to Promise<Production[]>
     const container = document.querySelector(containerSelector);
     if (!container) {
         console.error("Production list container not found.");
@@ -423,7 +426,9 @@ const initializeProductionList = async (containerSelector)=>{
         });
         return emptyElement;
     });
-    list.rowRenderer(({ rowData, rowElement, index })=>{
+    list.rowRenderer(({ rowData: rawData, rowElement, index })=>{
+        // Cast rawData to match API response fields
+        const rowData = rawData;
         const productionCard = new (0, _core.WFComponent)(rowElement);
         const productionTitle = productionCard.getChildAsComponent("#cardProductionTitle");
         const productionDescription = productionCard.getChildAsComponent("#cardProductionDescription");
@@ -435,51 +440,49 @@ const initializeProductionList = async (containerSelector)=>{
             console.error("Production elements not found.");
             return;
         }
-        if (rowData && rowData.fieldData) {
-            const inputId = `productionInput-${index}`;
-            productionInput.setAttribute("id", inputId);
-            productionInput.setAttribute("value", rowData.id);
-            productionLabel.setAttribute("for", inputId);
-            productionTitle.setText(rowData.fieldData.name);
-            productionDescription.setText(rowData.fieldData["short-description"]);
-            productionAges.setText(rowData.fieldData["age-description"]);
-            if (rowData.fieldData["main-image"]?.url) {
-                productionImage.setAttribute("src", rowData.fieldData["main-image"].url);
-                productionImage.setAttribute("alt", rowData.fieldData["main-image"].alt || "Production Image");
-            } else console.warn(`Production ID ${rowData.id} does not have a main image.`);
-            productionInput.on("change", ()=>{
-                selectedProductionId = productionInput.getElement().value;
-                (0, _ticketPurchaseState.saveSelectedProduction)({
-                    id: rowData.id,
-                    name: rowData.fieldData.name,
-                    description: rowData.fieldData["short-description"],
-                    imageUrl: rowData.fieldData["main-image"].url
-                });
-                console.log("Selected Production ID:", selectedProductionId);
+        const inputId = `productionInput-${index}`;
+        productionInput.setAttribute("id", inputId);
+        productionInput.setAttribute("value", rowData.id.toString());
+        productionLabel.setAttribute("for", inputId);
+        productionTitle.setText(rowData.Name);
+        productionDescription.setText(rowData.Short_Description);
+        productionAges.setText(rowData.Age_Description);
+        if (rowData.Main_Image) {
+            productionImage.setAttribute("src", rowData.Main_Image);
+            productionImage.setAttribute("alt", rowData.Name || "Production Image");
+        } else console.warn(`Production ID ${rowData.id} does not have a main image.`);
+        productionInput.on("change", ()=>{
+            selectedProductionId = productionInput.getElement().value;
+            (0, _ticketPurchaseState.saveSelectedProduction)({
+                id: Number(selectedProductionId),
+                name: rowData.Name,
+                description: rowData.Short_Description,
+                imageUrl: rowData.Main_Image
             });
-            rowElement.setStyle({
-                display: "flex"
-            });
-        } else console.error("Incomplete production data:", rowData);
+            console.log("Selected Production ID:", selectedProductionId);
+        });
+        rowElement.setStyle({
+            display: "flex"
+        });
         return rowElement;
     });
     try {
         list.changeLoadingStatus(true);
         const productions = await (0, _productions.fetchProductions)();
         console.log("Fetched productions:", productions);
-        if (productions.length > 0) list.setData(productions);
-        else list.setData([]); // Trigger the empty state
+        list.setData(productions);
         list.changeLoadingStatus(false);
-        return productions; // Return the list of productions
+        return productions;
     } catch (error) {
         console.error("Error loading productions:", error);
         list.setData([]);
         list.changeLoadingStatus(false);
-        return []; // Return an empty array in case of error
+        return [];
     }
 };
 
 },{"@xatom/core":"j9zXV","../../api/productions":"3RQpX","./state/ticketPurchaseState":"7W2vK","@parcel/transformer-js/src/esmodule-helpers.js":"5oERU"}],"3RQpX":[function(require,module,exports) {
+// src/api/productions.ts
 var parcelHelpers = require("@parcel/transformer-js/src/esmodule-helpers.js");
 parcelHelpers.defineInteropFlag(exports);
 parcelHelpers.export(exports, "fetchProductions", ()=>fetchProductions);
@@ -507,7 +510,6 @@ parcelHelpers.export(exports, "saveSelectedPerformance", ()=>saveSelectedPerform
 parcelHelpers.export(exports, "getSelectedBundles", ()=>getSelectedBundles);
 parcelHelpers.export(exports, "saveSelectedBundle", ()=>saveSelectedBundle);
 parcelHelpers.export(exports, "removeSelectedBundle", ()=>removeSelectedBundle);
-parcelHelpers.export(exports, "removeBundleRequiredTicketsIfNeeded", ()=>removeBundleRequiredTicketsIfNeeded);
 parcelHelpers.export(exports, "getSelectedTickets", ()=>getSelectedTickets);
 parcelHelpers.export(exports, "saveSelectedTicket", ()=>saveSelectedTicket);
 parcelHelpers.export(exports, "removeSelectedTicket", ()=>removeSelectedTicket);
@@ -522,30 +524,30 @@ parcelHelpers.export(exports, "clearSelectedPerformance", ()=>clearSelectedPerfo
 parcelHelpers.export(exports, "clearSelectedBundles", ()=>clearSelectedBundles);
 parcelHelpers.export(exports, "clearSelectedTickets", ()=>clearSelectedTickets);
 const TICKET_PURCHASE_STATE_KEY = "ticketPurchaseState";
-// Utility function to safely convert unknown types to number
+// Utility to convert unknown to number
 const safeNumber = (value)=>typeof value === "number" ? value : 0;
 const loadTicketPurchaseState = ()=>{
-    const savedState = localStorage.getItem(TICKET_PURCHASE_STATE_KEY);
-    return savedState ? JSON.parse(savedState) : {};
+    const saved = localStorage.getItem(TICKET_PURCHASE_STATE_KEY);
+    return saved ? JSON.parse(saved) : {};
 };
 const saveTicketPurchaseState = (state)=>{
-    const currentState = loadTicketPurchaseState();
-    const newState = {
-        ...currentState,
+    const current = loadTicketPurchaseState();
+    const merged = {
+        ...current,
         ...state
     };
-    localStorage.setItem(TICKET_PURCHASE_STATE_KEY, JSON.stringify(newState));
+    localStorage.setItem(TICKET_PURCHASE_STATE_KEY, JSON.stringify(merged));
 };
 const clearTicketPurchaseState = ()=>{
     localStorage.removeItem(TICKET_PURCHASE_STATE_KEY);
 };
 const getSelectedProduction = ()=>{
-    const state = loadTicketPurchaseState();
+    const s = loadTicketPurchaseState();
     return {
-        id: state.selectedProductionId || null,
-        name: state.selectedProductionName || null,
-        description: state.selectedProductionDescription || null,
-        imageUrl: state.selectedProductionImageUrl || null
+        id: s.selectedProductionId ?? null,
+        name: s.selectedProductionName ?? null,
+        description: s.selectedProductionDescription ?? null,
+        imageUrl: s.selectedProductionImageUrl ?? null
     };
 };
 const saveSelectedProduction = (production)=>{
@@ -557,39 +559,35 @@ const saveSelectedProduction = (production)=>{
     });
 };
 const getSelectedPerformance = ()=>{
-    const state = loadTicketPurchaseState();
+    const s = loadTicketPurchaseState();
     return {
-        id: state.selectedPerformanceId || null,
-        name: state.selectedPerformanceName || null,
-        dateTime: state.selectedPerformanceDateTime || null,
-        imageUrl: state.selectedPerformanceImageUrl || null,
-        location: state.selectedPerformanceLocation || null
+        id: s.selectedPerformanceId ?? null,
+        name: s.selectedPerformanceName ?? null,
+        dateTime: s.selectedPerformanceDateTime ?? null,
+        description: s.selectedPerformanceDescription ?? null,
+        imageUrl: s.selectedPerformanceImageUrl ?? null,
+        location: s.selectedPerformanceLocation ?? null
     };
 };
-const saveSelectedPerformance = (performance)=>{
+const saveSelectedPerformance = (perf)=>{
     saveTicketPurchaseState({
-        selectedPerformanceId: performance.id,
-        selectedPerformanceName: performance.name,
-        selectedPerformanceDateTime: performance.dateTime,
-        selectedPerformanceDescription: performance.description,
-        selectedPerformanceImageUrl: performance.imageUrl,
-        selectedPerformanceLocation: performance.location
+        selectedPerformanceId: perf.id,
+        selectedPerformanceName: perf.name,
+        selectedPerformanceDateTime: perf.dateTime,
+        selectedPerformanceDescription: perf.description,
+        selectedPerformanceImageUrl: perf.imageUrl,
+        selectedPerformanceLocation: perf.location
     });
 };
 const getSelectedBundles = ()=>{
-    const state = loadTicketPurchaseState();
-    return state.selectedBundles || [];
+    return loadTicketPurchaseState().selectedBundles || [];
 };
 const saveSelectedBundle = (bundleId, quantity)=>{
     const bundles = getSelectedBundles();
-    const existingBundle = bundles.find((b)=>b.bundle_id === bundleId);
-    if (existingBundle) {
-        if (quantity > 0) existingBundle.quantity = quantity;
-        else {
-            // Remove bundle if quantity is 0
-            const index = bundles.indexOf(existingBundle);
-            bundles.splice(index, 1);
-        }
+    const idx = bundles.findIndex((b)=>b.bundle_id === bundleId);
+    if (idx > -1) {
+        if (quantity > 0) bundles[idx].quantity = quantity;
+        else bundles.splice(idx, 1);
     } else if (quantity > 0) bundles.push({
         bundle_id: bundleId,
         quantity
@@ -599,41 +597,30 @@ const saveSelectedBundle = (bundleId, quantity)=>{
     });
 };
 const removeSelectedBundle = (bundleId)=>{
-    const bundles = getSelectedBundles();
-    const updatedBundles = bundles.filter((b)=>b.bundle_id !== bundleId);
+    const remaining = getSelectedBundles().filter((b)=>b.bundle_id !== bundleId);
     saveTicketPurchaseState({
-        selectedBundles: updatedBundles
+        selectedBundles: remaining
     });
-    // After removing a bundle, check if any bundle is selected and remove "bundle_required" tickets if none are selected
-    removeBundleRequiredTicketsIfNeeded();
-};
-const removeBundleRequiredTicketsIfNeeded = ()=>{
-    const bundles = getSelectedBundles();
-    const totalBundlesSelected = bundles.reduce((sum, bundle)=>sum + safeNumber(bundle.quantity), 0);
-    if (totalBundlesSelected <= 0) {
-        const tickets = getSelectedTickets();
-        const updatedTickets = tickets.filter((t)=>!t.bundle_required);
+    // Remove bundle_required tickets if none selected
+    const total = remaining.reduce((sum, b)=>sum + safeNumber(b.quantity), 0);
+    if (total === 0) {
+        const tickets = getSelectedTickets().filter((t)=>!t.bundle_required);
         saveTicketPurchaseState({
-            selectedTickets: updatedTickets
+            selectedTickets: tickets
         });
     }
 };
 const getSelectedTickets = ()=>{
-    const state = loadTicketPurchaseState();
-    return state.selectedTickets || [];
+    return loadTicketPurchaseState().selectedTickets || [];
 };
-const saveSelectedTicket = (ticket_tier_id, quantity, bundle_required)=>{
+const saveSelectedTicket = (tierId, quantity, bundle_required)=>{
     const tickets = getSelectedTickets();
-    const existingTicket = tickets.find((t)=>t.ticket_tier_id === ticket_tier_id);
-    if (existingTicket) {
-        if (quantity > 0) existingTicket.quantity = quantity;
-        else {
-            // Remove ticket if quantity is 0
-            const index = tickets.indexOf(existingTicket);
-            tickets.splice(index, 1);
-        }
+    const idx = tickets.findIndex((t)=>t.ticket_tier_id === tierId);
+    if (idx > -1) {
+        if (quantity > 0) tickets[idx].quantity = quantity;
+        else tickets.splice(idx, 1);
     } else if (quantity > 0) tickets.push({
-        ticket_tier_id,
+        ticket_tier_id: tierId,
         quantity,
         bundle_required
     });
@@ -641,45 +628,26 @@ const saveSelectedTicket = (ticket_tier_id, quantity, bundle_required)=>{
         selectedTickets: tickets
     });
 };
-const removeSelectedTicket = (ticket_tier_id)=>{
-    const tickets = getSelectedTickets();
-    const updatedTickets = tickets.filter((t)=>t.ticket_tier_id !== ticket_tier_id);
+const removeSelectedTicket = (tierId)=>{
+    const remaining = getSelectedTickets().filter((t)=>t.ticket_tier_id !== tierId);
     saveTicketPurchaseState({
-        selectedTickets: updatedTickets
+        selectedTickets: remaining
     });
 };
-const getCustomQuestion = ()=>{
-    const state = loadTicketPurchaseState();
-    return state.customQuestion || null;
-};
-const saveCustomQuestion = (question)=>{
-    saveTicketPurchaseState({
-        customQuestion: question
+const getCustomQuestion = ()=>loadTicketPurchaseState().customQuestion ?? null;
+const saveCustomQuestion = (q)=>saveTicketPurchaseState({
+        customQuestion: q
     });
-};
-const getAssistanceNeeded = ()=>{
-    const state = loadTicketPurchaseState();
-    return state.assistanceNeeded || false; // Default to false if not set
-};
-const saveAssistanceNeeded = (needed)=>{
-    saveTicketPurchaseState({
-        assistanceNeeded: needed
+const getAssistanceNeeded = ()=>loadTicketPurchaseState().assistanceNeeded ?? false;
+const saveAssistanceNeeded = (v)=>saveTicketPurchaseState({
+        assistanceNeeded: v
     });
-};
-const getAssistanceMessage = ()=>{
-    const state = loadTicketPurchaseState();
-    return state.assistanceMessage || ""; // Default to empty string if not set
-};
-const saveAssistanceMessage = (message)=>{
-    saveTicketPurchaseState({
-        assistanceMessage: message
+const getAssistanceMessage = ()=>loadTicketPurchaseState().assistanceMessage ?? "";
+const saveAssistanceMessage = (m)=>saveTicketPurchaseState({
+        assistanceMessage: m
     });
-};
-const saveUserDetails = (details)=>{
-    saveTicketPurchaseState(details);
-};
-const clearSelectedPerformance = ()=>{
-    saveTicketPurchaseState({
+const saveUserDetails = (d)=>saveTicketPurchaseState(d);
+const clearSelectedPerformance = ()=>saveTicketPurchaseState({
         selectedPerformanceId: undefined,
         selectedPerformanceName: undefined,
         selectedPerformanceDateTime: undefined,
@@ -687,30 +655,24 @@ const clearSelectedPerformance = ()=>{
         selectedPerformanceImageUrl: undefined,
         selectedPerformanceLocation: undefined
     });
-};
-const clearSelectedBundles = ()=>{
-    saveTicketPurchaseState({
+const clearSelectedBundles = ()=>saveTicketPurchaseState({
         selectedBundles: []
     });
-};
-const clearSelectedTickets = ()=>{
-    saveTicketPurchaseState({
+const clearSelectedTickets = ()=>saveTicketPurchaseState({
         selectedTickets: []
     });
-};
 
 },{"@parcel/transformer-js/src/esmodule-helpers.js":"5oERU"}],"dsUEJ":[function(require,module,exports) {
+// src/modules/tickets/performanceList.ts
 var parcelHelpers = require("@parcel/transformer-js/src/esmodule-helpers.js");
 parcelHelpers.defineInteropFlag(exports);
 parcelHelpers.export(exports, "initializePerformanceList", ()=>initializePerformanceList);
 var _core = require("@xatom/core");
 var _performances = require("../../api/performances");
 var _ticketPurchaseState = require("./state/ticketPurchaseState");
-var _performanceFilter = require("./components/performanceFilter"); // Import the filtering initialization
-let selectedPerformanceId = null;
+var _performanceFilter = require("./components/performanceFilter");
 let initialTemplateState = null;
 const initializePerformanceList = async (containerSelector)=>{
-    // Update return type to Promise<Performance[]>
     const container = document.querySelector(containerSelector);
     if (!container) {
         console.error("Performance list container not found.");
@@ -724,136 +686,126 @@ const initializePerformanceList = async (containerSelector)=>{
         loaderSelector: "#performanceListLoading",
         emptySelector: "#performanceListEmpty"
     });
-    list.loaderRenderer((loaderElement)=>{
-        loaderElement.setStyle({
+    list.loaderRenderer((loader)=>{
+        loader.setStyle({
             display: "flex"
         });
-        return loaderElement;
+        return loader;
     });
-    list.emptyRenderer((emptyElement)=>{
-        emptyElement.setStyle({
+    list.emptyRenderer((empty)=>{
+        empty.setStyle({
             display: "flex"
         });
-        return emptyElement;
+        return empty;
     });
     list.rowRenderer(({ rowData, rowElement, index })=>{
-        const performanceCard = new (0, _core.WFComponent)(rowElement);
-        const performanceDateWrapper = performanceCard.getChildAsComponent(".production_date_wrapper");
-        const performanceDay = performanceDateWrapper?.getChildAsComponent(".u-text-h4");
-        const performanceMonth = performanceDateWrapper?.getChildAsComponent(".production_date_month");
-        const performanceTime = performanceDateWrapper?.getChildAsComponent(".input_card_description");
-        const performanceWeekday = performanceCard.getChildAsComponent("#cardProductionTitle" // Assuming this is the correct selector for the weekday element
-        );
-        const performanceTitle = performanceCard.getChildAsComponent("#cardPerformanceTitle");
-        const performanceProductionTitle = performanceCard.getChildAsComponent("#cardPerformanceProductionTitle");
-        const performanceDescription = performanceCard.getChildAsComponent("#cardPerformanceDescription");
-        const performanceImage = performanceCard.getChildAsComponent("#cardImage");
-        const performanceInput = performanceCard.getChildAsComponent(".input_card_input");
-        const performanceLabel = performanceCard.getChildAsComponent("label");
-        const performanceLocation = performanceCard.getChildAsComponent("#cardPerformanceLocation" // Assuming this is the correct selector for location
-        );
-        if (!performanceDay || !performanceMonth || !performanceTime || !performanceWeekday || !performanceTitle || !performanceProductionTitle || !performanceDescription || !performanceInput || !performanceImage || !performanceLabel || !performanceLocation) {
+        const perf = rowData;
+        const card = new (0, _core.WFComponent)(rowElement);
+        const dateWrapper = card.getChildAsComponent(".production_date_wrapper");
+        const dayEl = dateWrapper?.getChildAsComponent(".u-text-h4");
+        const monthEl = dateWrapper?.getChildAsComponent(".production_date_month");
+        const timeEl = dateWrapper?.getChildAsComponent(".input_card_description");
+        const weekdayEl = card.getChildAsComponent("#cardPerformanceWeekday");
+        const titleEl = card.getChildAsComponent("#cardPerformanceTitle");
+        const prodTitleEl = card.getChildAsComponent("#cardPerformanceProductionTitle");
+        const descEl = card.getChildAsComponent("#cardPerformanceDescription");
+        const imageEl = card.getChildAsComponent("#cardImage");
+        const inputEl = card.getChildAsComponent(".input_card_input");
+        const labelEl = card.getChildAsComponent("label");
+        const locEl = card.getChildAsComponent("#cardPerformanceLocation");
+        if (!dayEl || !monthEl || !timeEl || !weekdayEl || !titleEl || !prodTitleEl || !descEl || !imageEl || !inputEl || !labelEl || !locEl) {
             console.error("Performance elements not found.");
             return;
         }
-        if (rowData && rowData.fieldData) {
-            const inputId = `performanceInput-${index}`;
-            performanceInput.setAttribute("id", inputId);
-            performanceInput.setAttribute("value", rowData.id);
-            performanceLabel.setAttribute("for", inputId);
-            const date = new Date(rowData.fieldData["date-time"]);
-            performanceDay.setText(date.toLocaleString("en-US", {
-                day: "numeric",
-                timeZone: "America/New_York"
-            }));
-            performanceMonth.setText(date.toLocaleString("en-US", {
-                month: "short",
-                timeZone: "America/New_York"
-            }));
-            performanceTime.setText(date.toLocaleTimeString("en-US", {
-                hour: "2-digit",
-                minute: "2-digit",
-                timeZone: "America/New_York"
-            }));
-            performanceWeekday.setText(date.toLocaleString("en-US", {
-                weekday: "long",
-                timeZone: "America/New_York"
-            }));
-            performanceTitle.setText(rowData.fieldData["displayed-name"]);
-            // Get the selected production name from the state and set it in the card
-            const selectedProduction = (0, _ticketPurchaseState.getSelectedProduction)();
-            performanceProductionTitle.setText(selectedProduction?.name || "Unknown Production");
-            performanceDescription.setText(rowData.fieldData["short-description"]);
-            if (rowData.fieldData["main-image"]?.url) {
-                performanceImage.setAttribute("src", rowData.fieldData["main-image"].url);
-                performanceImage.setAttribute("alt", rowData.fieldData["main-image"].alt || "Performance Image");
-            } else console.warn(`Performance ID ${rowData.id} does not have a main image.`);
-            performanceLocation.setText(rowData.location_name || "Unknown");
-            performanceInput.on("change", ()=>{
-                selectedPerformanceId = performanceInput.getElement().value;
-                (0, _ticketPurchaseState.saveSelectedPerformance)({
-                    id: rowData.id,
-                    name: rowData.fieldData["displayed-name"],
-                    dateTime: rowData.fieldData["date-time"],
-                    description: rowData.fieldData["short-description"],
-                    imageUrl: rowData.fieldData["main-image"].url,
-                    location: rowData.location_name
-                });
-                console.log("Selected Performance ID:", selectedPerformanceId);
+        // Wire up the radio button
+        const inputId = `performanceInput-${index}`;
+        inputEl.setAttribute("id", inputId);
+        inputEl.setAttribute("value", perf.id.toString());
+        labelEl.setAttribute("for", inputId);
+        // --- timezone‐aware formatting in New York ---
+        const ts = Number(perf.Date_Time);
+        const date = new Date(ts);
+        // Day of month
+        dayEl.setText(date.toLocaleString("en-US", {
+            day: "numeric",
+            timeZone: "America/New_York"
+        }));
+        // Month abbreviation
+        monthEl.setText(date.toLocaleString("en-US", {
+            month: "short",
+            timeZone: "America/New_York"
+        }));
+        // Weekday name
+        weekdayEl.setText(date.toLocaleString("en-US", {
+            weekday: "long",
+            timeZone: "America/New_York"
+        }));
+        // Time (H:MM AM/PM)
+        timeEl.setText(date.toLocaleTimeString("en-US", {
+            hour: "numeric",
+            minute: "2-digit",
+            hour12: true,
+            timeZone: "America/New_York"
+        }));
+        // --- end timezone‐aware block ---
+        // Fill in the rest
+        titleEl.setText(perf.Displayed_Name || perf.Name);
+        const selectedProd = (0, _ticketPurchaseState.getSelectedProduction)();
+        prodTitleEl.setText(selectedProd?.name || "Unknown Production");
+        descEl.setText(perf.Short_Description);
+        if (perf.Main_Image) {
+            imageEl.setAttribute("src", perf.Main_Image);
+            imageEl.setAttribute("alt", perf.Displayed_Name || perf.Name);
+        }
+        // Show human-readable venue name
+        locEl.setText(perf.location_details?.Name || "Unknown venue");
+        inputEl.on("change", ()=>{
+            (0, _ticketPurchaseState.saveSelectedPerformance)({
+                id: perf.id.toString(),
+                name: perf.Displayed_Name,
+                dateTime: perf.Date_Time.toString(),
+                description: perf.Short_Description,
+                imageUrl: perf.Main_Image,
+                location: perf.location_details?.Name || ""
             });
-            rowElement.setStyle({
-                display: "flex"
-            });
-        } else console.error("Incomplete performance data:", rowData);
+        });
+        rowElement.setStyle({
+            display: "flex"
+        });
         return rowElement;
     });
     try {
         list.changeLoadingStatus(true);
-        // Get the selected production ID from the state
-        const selectedProduction = (0, _ticketPurchaseState.getSelectedProduction)();
-        const selectedProductionId = selectedProduction?.id;
-        if (!selectedProductionId) {
-            console.error("No production selected, cannot fetch performances.");
-            list.changeLoadingStatus(false);
-            return [];
-        }
-        // Fetch performances based on the selected production ID
-        let performances = await (0, _performances.fetchPerformances)(selectedProductionId);
-        // Sort performances by date
-        performances = performances.sort((a, b)=>{
-            const dateA = new Date(a.fieldData["date-time"]);
-            const dateB = new Date(b.fieldData["date-time"]);
-            return dateA.getTime() - dateB.getTime();
-        });
-        console.log("Fetched and sorted performances:", performances);
-        if (performances && performances.length > 0) {
-            list.setData(performances);
-            // Initialize the performance filter after data is set
-            (0, _performanceFilter.initializePerformanceFilter)();
-        } else list.setData([]); // Trigger the empty state
+        const prod = (0, _ticketPurchaseState.getSelectedProduction)();
+        if (!prod?.id) throw new Error("No production selected");
+        const performances = await (0, _performances.fetchPerformances)(prod.id.toString());
+        performances.sort((a, b)=>a.Date_Time - b.Date_Time);
+        list.setData(performances);
+        if (performances.length) (0, _performanceFilter.initializePerformanceFilter)();
         list.changeLoadingStatus(false);
-        return performances; // Return the list of performances
-    } catch (error) {
-        console.error("Error loading performances:", error);
+        return performances;
+    } catch (err) {
+        console.error("Error loading performances:", err);
         list.setData([]);
         list.changeLoadingStatus(false);
-        return []; // Return an empty array in case of error
+        return [];
     }
 };
 
 },{"@xatom/core":"j9zXV","../../api/performances":"blMIU","./state/ticketPurchaseState":"7W2vK","./components/performanceFilter":"3V9Of","@parcel/transformer-js/src/esmodule-helpers.js":"5oERU"}],"blMIU":[function(require,module,exports) {
+// src/api/performances.ts
 var parcelHelpers = require("@parcel/transformer-js/src/esmodule-helpers.js");
 parcelHelpers.defineInteropFlag(exports);
 parcelHelpers.export(exports, "fetchPerformances", ()=>fetchPerformances);
 var _apiConfig = require("./apiConfig");
 const fetchPerformances = async (productionId)=>{
     try {
-        const response = await (0, _apiConfig.apiClient).post("/tickets/performances", {
+        const { performances } = await (0, _apiConfig.apiClient).post("/tickets/performances", {
             data: {
                 production_id: productionId
             }
         }).fetch();
-        return response.performances;
+        return performances;
     } catch (error) {
         console.error("Error fetching performances:", error);
         throw error;
@@ -902,6 +854,7 @@ const filterPerformances = (location, month)=>{
 };
 
 },{"@parcel/transformer-js/src/esmodule-helpers.js":"5oERU"}],"dhBzw":[function(require,module,exports) {
+// src/modules/tickets/ticketTiers.ts
 var parcelHelpers = require("@parcel/transformer-js/src/esmodule-helpers.js");
 parcelHelpers.defineInteropFlag(exports);
 parcelHelpers.export(exports, "initializeTicketTiers", ()=>initializeTicketTiers);
@@ -912,64 +865,61 @@ var _core = require("@xatom/core");
 var _selectedPerformanceUI = require("./components/selectedPerformanceUI");
 var _customQuestionUI = require("./components/customQuestionUI");
 var _assistanceInputUI = require("./components/assistanceInputUI");
-var _userDetailsUI = require("./components/userDetailsUI"); // Import the new component
+var _userDetailsUI = require("./components/userDetailsUI");
 const initializeTicketTiers = async (bundleContainerSelector, tierContainerSelector)=>{
     const selectedPerformance = (0, _ticketPurchaseState.getSelectedPerformance)();
-    if (!selectedPerformance || !selectedPerformance.id) {
+    if (!selectedPerformance?.id) {
         console.error("No performance selected.");
         return;
     }
     try {
-        // Fetch ticket tiers data based on the selected performance
+        // Fetch all ticket tier data for this performance
         const ticketTierData = await (0, _ticketTiersAPI.fetchTicketTiers)(selectedPerformance.id);
-        const { bundles_offered, tickets_offered, performance_details } = ticketTierData;
-        // Update the UI with the selected performance details
+        // Destructure API response shape, including bundles_available
+        const { tickets_available, performance_details, bundles_available } = ticketTierData;
+        // Flatten nested arrays
+        const bundles = performance_details.ticket_bundles_offered.flat();
+        const tickets = performance_details.ticket_tiers_offered.flat();
+        // Update selected performance UI
         (0, _selectedPerformanceUI.updateSelectedPerformanceUI)();
-        // Initialize the user details section
-        (0, _userDetailsUI.initializeUserDetails)(); // Initialize the user details component
-        // Always reset the display style before rendering
+        // Initialize user details section
+        (0, _userDetailsUI.initializeUserDetails)();
+        // Reset container visibility
         const bundleContainer = new (0, _core.WFComponent)(bundleContainerSelector);
-        if (bundleContainer) bundleContainer.setStyle({
+        bundleContainer.setStyle({
             display: "block"
-        }); // Reset to default visible style
+        });
         const tierContainer = new (0, _core.WFComponent)(tierContainerSelector);
-        if (tierContainer) tierContainer.setStyle({
+        tierContainer.setStyle({
             display: "block"
-        }); // Reset to default visible style
-        // Flag to check if there are any bundles or tickets
+        });
         let hasBundlesOrTickets = false;
-        // Render bundles if available
-        if (bundles_offered.length > 0) {
-            (0, _ticketTierListRender.renderBundles)(bundles_offered, bundleContainerSelector);
+        // Render bundle cards (pass bundles_available)
+        if (bundles.length > 0) {
+            (0, _ticketTierListRender.renderBundles)(bundles, bundleContainerSelector, bundles_available);
             hasBundlesOrTickets = true;
-        } else if (bundleContainer) bundleContainer.setStyle({
+        } else bundleContainer.setStyle({
             display: "none"
-        }); // Hide if no bundles offered
-        // Render ticket tiers if available
-        if (tickets_offered.length > 0) {
-            (0, _ticketTierListRender.renderTicketTiers)(tickets_offered, tierContainerSelector);
+        });
+        // Render ticket tier cards with availability
+        if (tickets.length > 0) {
+            (0, _ticketTierListRender.renderTicketTiers)(tickets, tickets_available, tierContainerSelector);
             hasBundlesOrTickets = true;
-        } else if (tierContainer) tierContainer.setStyle({
+        } else tierContainer.setStyle({
             display: "none"
-        }); // Hide if no tickets offered
-        // Show or hide the "no tickets available" message
-        const noTicketsAvailableElement = new (0, _core.WFComponent)("#noTicketsAvailable");
-        if (noTicketsAvailableElement) {
-            if (!hasBundlesOrTickets) noTicketsAvailableElement.setStyle({
-                display: "flex"
-            });
-            else noTicketsAvailableElement.setStyle({
-                display: "none"
-            });
-        }
-        // Extract the custom question and update the UI
-        const customQuestion = performance_details.fieldData["custom-question"];
+        });
+        // Toggle "no tickets available" message
+        const noTicketsElem = new (0, _core.WFComponent)("#noTicketsAvailable");
+        noTicketsElem.setStyle({
+            display: hasBundlesOrTickets ? "none" : "flex"
+        });
+        // Show custom question
+        const customQuestion = performance_details.Custom_Question;
         (0, _customQuestionUI.updateCustomQuestion)(customQuestion);
-        // Initialize the assistance input logic
-        (0, _assistanceInputUI.initializeAssistanceInput)(); // Initialize the assistance input component
+        // Initialize assistance input UI
+        (0, _assistanceInputUI.initializeAssistanceInput)();
     } catch (error) {
         console.error("Error fetching ticket tiers:", error);
-    // Handle any errors that occur during the ticket tiers fetching process
     }
 };
 
@@ -1001,6 +951,7 @@ var _bundleRenderer = require("./bundleRenderer");
 var _ticketTierRenderer = require("./ticketTierRenderer");
 
 },{"./bundleRenderer":"aDDUp","./ticketTierRenderer":"kHoQq","@parcel/transformer-js/src/esmodule-helpers.js":"5oERU"}],"aDDUp":[function(require,module,exports) {
+// src/modules/tickets/components/bundleRenderer.ts
 var parcelHelpers = require("@parcel/transformer-js/src/esmodule-helpers.js");
 parcelHelpers.defineInteropFlag(exports);
 parcelHelpers.export(exports, "renderBundles", ()=>renderBundles);
@@ -1009,16 +960,15 @@ var _ticketPurchaseState = require("../state/ticketPurchaseState");
 var _bundleStateUpdater = require("../state/bundleStateUpdater");
 var _ticketTierRenderer = require("./ticketTierRenderer");
 var _formUtils = require("../../../utils/formUtils");
-let initialBundleTemplate = null; // Store the initial template
-const renderBundles = (bundles, containerSelector)=>{
+let initialBundleTemplate = null;
+const renderBundles = (bundles, containerSelector, bundlesAvailable = [])=>{
     const container = document.querySelector(containerSelector);
     if (!container) {
         console.error("Bundle list container not found.");
         return;
     }
-    // Save the initial template state if not already saved
+    // Keep a pristine copy of the template
     if (!initialBundleTemplate) initialBundleTemplate = container.cloneNode(true);
-    // Clear the container and restore the initial template
     container.innerHTML = "";
     container.appendChild(initialBundleTemplate.cloneNode(true));
     const clearNoTicketsError = ()=>{
@@ -1030,95 +980,104 @@ const renderBundles = (bundles, containerSelector)=>{
         loaderSelector: "#bundleListLoading",
         emptySelector: "#bundleListEmpty"
     });
-    list.loaderRenderer((loaderElement)=>{
-        loaderElement.getElement().style.display = "flex";
-        return loaderElement;
+    list.loaderRenderer((loader)=>{
+        loader.getElement().style.display = "flex";
+        return loader;
     });
-    list.emptyRenderer((emptyElement)=>{
-        emptyElement.getElement().style.display = "flex";
-        return emptyElement;
+    list.emptyRenderer((empty)=>{
+        empty.getElement().style.display = "flex";
+        return empty;
     });
-    list.rowRenderer(({ rowData, rowElement, index })=>{
+    list.rowRenderer(({ rowData, rowElement })=>{
         const bundleCard = new (0, _core.WFComponent)(rowElement);
-        const bundleName = bundleCard.getChildAsComponent("#bundleName");
         const bundlePrice = bundleCard.getChildAsComponent("#bundlePrice");
-        const bundleSoldOut = bundleCard.getChildAsComponent("#bundleSoldOut");
+        const bundleName = bundleCard.getChildAsComponent("#bundleName");
         const bundleDescription = bundleCard.getChildAsComponent("#bundleDescription");
         const bundleQuantityInput = bundleCard.getChildAsComponent("#bundleQuantityInput");
         const bundleIncrementButton = bundleCard.getChildAsComponent("#bundleQuantityIncrease");
         const bundleDecrementButton = bundleCard.getChildAsComponent("#bundleQuantityDecrease");
         const bundleMaxAlert = bundleCard.getChildAsComponent(".maximum_alert");
+        const bundleSoldOut = bundleCard.getChildAsComponent("#bundleSoldOut");
         const numberInputWrapper = bundleCard.getChildAsComponent(".number_input_wrapper");
-        if (!bundleName || !bundlePrice || !bundleSoldOut || !bundleDescription || !bundleQuantityInput || !bundleIncrementButton || !bundleDecrementButton || !bundleMaxAlert || !numberInputWrapper) {
+        if (!bundlePrice || !bundleName || !bundleDescription || !bundleQuantityInput || !bundleIncrementButton || !bundleDecrementButton || !bundleMaxAlert || !bundleSoldOut || !numberInputWrapper) {
             console.error("Bundle elements not found.");
             return;
         }
-        bundleName.setText(rowData.fieldData["displayed-name"]);
-        bundlePrice.setText(`${rowData.price}`);
-        bundleDescription.setText(rowData.fieldData["short-description"]);
-        bundleQuantityInput.setAttribute("max", String(rowData.quantity));
+        // Display price
+        bundlePrice.setText(rowData.product_details.Displayed_single_sale_price);
+        // Populate text
+        bundleName.setText(rowData.Displayed_Name);
+        bundleDescription.setText(rowData.Short_Description);
         bundleQuantityInput.setAttribute("value", "0");
-        const updateAlertVisibility = ()=>{
-            const currentQuantity = Number(bundleQuantityInput.getElement().value);
-            const maxAlertElement = bundleMaxAlert.getElement();
-            if (currentQuantity >= rowData.quantity) {
-                bundleMaxAlert.setText("You have reached the maximum available quantity.");
-                maxAlertElement.style.display = "block";
-            } else maxAlertElement.style.display = "none";
-        };
-        bundleIncrementButton.on("click", ()=>{
-            const inputElement = bundleQuantityInput.getElement();
-            let currentQuantity = Number(inputElement.value);
-            if (currentQuantity < rowData.quantity) {
-                currentQuantity++;
-                inputElement.value = String(currentQuantity);
-                (0, _ticketPurchaseState.saveSelectedBundle)(rowData.id, currentQuantity);
-                (0, _bundleStateUpdater.updateTicketTierButtons)(); // Enable ticket tier buttons if needed
-                clearNoTicketsError(); // Clear no tickets error
-            }
-            updateAlertVisibility();
-            (0, _ticketTierRenderer.revalidateTicketTierQuantities)(); // Revalidate after increment
-        });
-        bundleDecrementButton.on("click", ()=>{
-            const inputElement = bundleQuantityInput.getElement();
-            let currentQuantity = Number(inputElement.value);
-            if (currentQuantity > 0) {
-                currentQuantity--;
-                inputElement.value = String(currentQuantity);
-                if (currentQuantity > 0) {
-                    (0, _ticketPurchaseState.saveSelectedBundle)(rowData.id, currentQuantity);
-                    clearNoTicketsError(); // Clear no tickets error
-                } else (0, _ticketPurchaseState.removeSelectedBundle)(rowData.id);
-                (0, _bundleStateUpdater.updateTicketTierButtons)(); // Disable ticket tier buttons if needed
-            }
-            updateAlertVisibility();
-            (0, _bundleStateUpdater.resetTicketQuantitiesIfNeeded)(); // Reset ticket quantities if bundles are insufficient
-            (0, _ticketTierRenderer.revalidateTicketTierQuantities)(); // Revalidate after decrement
-        });
-        bundleQuantityInput.on("input", ()=>{
-            const inputElement = bundleQuantityInput.getElement();
-            let currentQuantity = Number(inputElement.value);
-            if (currentQuantity > rowData.quantity) {
-                inputElement.value = String(rowData.quantity);
-                updateAlertVisibility();
-            }
-            (0, _ticketTierRenderer.revalidateTicketTierQuantities)(); // Revalidate on manual input
-            clearNoTicketsError(); // Clear no tickets error on manual input
-        });
-        if (rowData.quantity <= 0) {
+        // Lookup this bundle's max availability
+        const availability = bundlesAvailable.find((b)=>b.bundle_id === rowData.id);
+        const maxQty = availability ? availability.max_available : Infinity;
+        // If none available, show “Sold out” and disable input
+        if (maxQty <= 0) {
+            bundleSoldOut.setText("Sold out");
             bundleSoldOut.getElement().style.display = "block";
-            bundlePrice.getElement().style.display = "none";
             numberInputWrapper.addCssClass("is-disabled");
         } else {
             bundleSoldOut.getElement().style.display = "none";
-            bundlePrice.getElement().style.display = "block";
             numberInputWrapper.removeCssClass("is-disabled");
         }
+        // Seed the input's max for native clamping
+        bundleQuantityInput.setAttribute("max", maxQty.toString());
+        const hideAlert = ()=>bundleMaxAlert.getElement().style.display = "none";
+        const showAlert = (msg)=>{
+            bundleMaxAlert.setText(msg);
+            bundleMaxAlert.getElement().style.display = "block";
+        };
+        // Increment logic with max guard
+        bundleIncrementButton.on("click", ()=>{
+            const inputEl = bundleQuantityInput.getElement();
+            let current = Number(inputEl.value);
+            if (current < maxQty) {
+                current += 1;
+                inputEl.value = String(current);
+                (0, _ticketPurchaseState.saveSelectedBundle)(rowData.id.toString(), current);
+                (0, _bundleStateUpdater.updateTicketTierButtons)();
+                clearNoTicketsError();
+                hideAlert();
+                (0, _bundleStateUpdater.resetTicketQuantitiesIfNeeded)();
+                (0, _ticketTierRenderer.revalidateTicketTierQuantities)();
+            } else showAlert(`Only up to ${maxQty} bundles available.`);
+        });
+        // Decrement logic
+        bundleDecrementButton.on("click", ()=>{
+            const inputEl = bundleQuantityInput.getElement();
+            let current = Number(inputEl.value);
+            if (current > 0) {
+                current -= 1;
+                inputEl.value = String(current);
+                if (current > 0) (0, _ticketPurchaseState.saveSelectedBundle)(rowData.id.toString(), current);
+                else (0, _ticketPurchaseState.removeSelectedBundle)(rowData.id.toString());
+                (0, _bundleStateUpdater.updateTicketTierButtons)();
+                clearNoTicketsError();
+                hideAlert();
+                (0, _bundleStateUpdater.resetTicketQuantitiesIfNeeded)();
+                (0, _ticketTierRenderer.revalidateTicketTierQuantities)();
+            }
+        });
+        // Manual input guard
+        bundleQuantityInput.on("input", ()=>{
+            clearNoTicketsError();
+            const inputEl = bundleQuantityInput.getElement();
+            let val = Number(inputEl.value);
+            if (val > maxQty) {
+                inputEl.value = String(maxQty);
+                showAlert(`Only up to ${maxQty} bundles available.`);
+            } else hideAlert();
+            (0, _bundleStateUpdater.resetTicketQuantitiesIfNeeded)();
+            (0, _ticketTierRenderer.revalidateTicketTierQuantities)();
+        });
+        // Show the card
         rowElement.setStyle({
             display: "flex"
         });
         return rowElement;
     });
+    // Render all
     list.setData(bundles);
 };
 
@@ -1181,20 +1140,25 @@ const clearNoTicketsError = ()=>{
 };
 let initialTicketTierTemplate = null;
 const revalidateTicketTierQuantities = ()=>{
-    const ticketTierCards = document.querySelectorAll("[data-requires-bundle='true']");
-    ticketTierCards.forEach((card)=>{
-        const ticketTierMaxAlert = new (0, _core.WFComponent)(card.querySelector(".maximum_alert"));
-        const ticketTierQuantityInput = new (0, _core.WFComponent)(card.querySelector("#ticketTierQuantityInput"));
+    const cards = document.querySelectorAll("[data-requires-bundle='true']");
+    cards.forEach((card)=>{
+        const maxAlert = new (0, _core.WFComponent)(card.querySelector(".maximum_alert"));
+        const qtyInput = new (0, _core.WFComponent)(card.querySelector("#ticketTierQuantityInput"));
         const selectedBundles = (0, _ticketPurchaseState.getSelectedBundles)();
-        const totalBundlesSelected = selectedBundles.reduce((sum, bundle)=>sum + safeNumber(bundle.quantity), 0);
-        if (totalBundlesSelected <= 0) {
-            ticketTierQuantityInput.getElement().value = "0";
-            ticketTierMaxAlert.setText("This item requires a ticket bundle purchase. Please add a ticket bundle from the options above.");
-            ticketTierMaxAlert.getElement().style.display = "block";
-        } else ticketTierMaxAlert.getElement().style.display = "none";
+        const totalBundles = selectedBundles.reduce((sum, b)=>sum + safeNumber(b.quantity), 0);
+        if (totalBundles <= 0) {
+            qtyInput.getElement().value = "0";
+            maxAlert.setText("This item requires a ticket bundle purchase. Please add a ticket bundle from the options above.");
+            maxAlert.getElement().style.display = "block";
+        } else maxAlert.getElement().style.display = "none";
     });
 };
-const renderTicketTiers = (tickets, containerSelector)=>{
+const renderTicketTiers = (tickets, availabilities, containerSelector)=>{
+    // Build availability lookup
+    const availabilityMap = new Map();
+    availabilities.forEach((rec)=>{
+        availabilityMap.set(rec.Ticket_Tier, rec.Quantity_Available);
+    });
     const container = document.querySelector(containerSelector);
     if (!container) {
         console.error("Ticket tier list container not found.");
@@ -1208,101 +1172,97 @@ const renderTicketTiers = (tickets, containerSelector)=>{
         loaderSelector: "#ticketTierListLoading",
         emptySelector: "#ticketTierListEmpty"
     });
-    list.loaderRenderer((loaderElement)=>{
-        loaderElement.getElement().style.display = "flex";
-        return loaderElement;
+    list.loaderRenderer((loader)=>{
+        loader.getElement().style.display = "flex";
+        return loader;
     });
-    list.emptyRenderer((emptyElement)=>{
-        emptyElement.getElement().style.display = "flex";
-        return emptyElement;
+    list.emptyRenderer((empty)=>{
+        empty.getElement().style.display = "flex";
+        return empty;
     });
-    list.rowRenderer(({ rowData, rowElement, index })=>{
-        const ticketTierCard = new (0, _core.WFComponent)(rowElement);
-        if (rowData.fieldData["requires-bundle-purchase"] === true) rowElement.setAttribute("data-requires-bundle", "true");
-        else rowElement.setAttribute("data-requires-bundle", "false");
-        const ticketTierName = ticketTierCard.getChildAsComponent("#ticketTierName");
-        const ticketTierPrice = ticketTierCard.getChildAsComponent("#ticketTierPrice");
-        const ticketTierSoldOut = ticketTierCard.getChildAsComponent("#ticketTierSoldOut");
-        const ticketTierDescription = ticketTierCard.getChildAsComponent("#ticketTierDescription");
-        const ticketTierQuantityInput = ticketTierCard.getChildAsComponent("#ticketTierQuantityInput");
-        const ticketTierIncrementButton = ticketTierCard.getChildAsComponent("#ticketTierQuantityIncrease");
-        const ticketTierDecrementButton = ticketTierCard.getChildAsComponent("#ticketTierQuantityDecrease");
-        const ticketTierMaxAlert = ticketTierCard.getChildAsComponent(".maximum_alert");
-        const numberInputWrapper = ticketTierCard.getChildAsComponent(".number_input_wrapper");
-        if (!ticketTierName || !ticketTierPrice || !ticketTierSoldOut || !ticketTierDescription || !ticketTierQuantityInput || !ticketTierIncrementButton || !ticketTierDecrementButton || !ticketTierMaxAlert || !numberInputWrapper) {
+    list.rowRenderer(({ rowData, rowElement })=>{
+        const card = new (0, _core.WFComponent)(rowElement);
+        const requiresBundle = rowData.Requires_Bundle_Purchase;
+        rowElement.setAttribute("data-requires-bundle", requiresBundle ? "true" : "false");
+        const nameEl = card.getChildAsComponent("#ticketTierName");
+        const priceEl = card.getChildAsComponent("#ticketTierPrice");
+        const soldOutEl = card.getChildAsComponent("#ticketTierSoldOut");
+        const descEl = card.getChildAsComponent("#ticketTierDescription");
+        const qtyInput = card.getChildAsComponent("#ticketTierQuantityInput");
+        const incBtn = card.getChildAsComponent("#ticketTierQuantityIncrease");
+        const decBtn = card.getChildAsComponent("#ticketTierQuantityDecrease");
+        const maxAlert = card.getChildAsComponent(".maximum_alert");
+        const wrapper = card.getChildAsComponent(".number_input_wrapper");
+        if (!nameEl || !priceEl || !soldOutEl || !descEl || !qtyInput || !incBtn || !decBtn || !maxAlert || !wrapper) {
             console.error("Ticket tier elements not found.");
             return;
         }
-        const displayedName = rowData.fieldData["displayed-name"] || "Unknown Ticket Tier";
-        const price = rowData.price ? `${rowData.price.toString()}` : "N/A";
-        const description = rowData.fieldData["short-description"] || "";
-        ticketTierName.setText(displayedName);
-        ticketTierPrice.setText(price);
-        ticketTierDescription.setText(description);
-        ticketTierQuantityInput.setAttribute("max", String(rowData.quantity || 0));
-        ticketTierQuantityInput.setAttribute("value", "0");
+        // Availability for this tier
+        const available = availabilityMap.get(rowData.id) ?? 0;
+        // Populate UI
+        nameEl.setText(rowData.Displayed_Name);
+        // show the formatted price from product_details
+        priceEl.setText(rowData.product_details.Displayed_single_sale_price);
+        descEl.setText(rowData.Short_Description);
+        // enforce stock limit in the quantity input
+        qtyInput.setAttribute("max", String(available));
+        qtyInput.setAttribute("value", "0");
+        if (available <= 0) {
+            soldOutEl.setText("Sold out");
+            soldOutEl.getElement().style.display = "block";
+            wrapper.addCssClass("is-disabled");
+        } else {
+            soldOutEl.getElement().style.display = "none";
+            wrapper.removeCssClass("is-disabled");
+        }
         const updateAlertVisibility = (message)=>{
-            ticketTierMaxAlert.setText(message);
-            ticketTierMaxAlert.getElement().style.display = "block";
+            maxAlert.setText(message);
+            maxAlert.getElement().style.display = "block";
         };
-        ticketTierIncrementButton.on("click", ()=>{
-            const inputElement = ticketTierQuantityInput.getElement();
-            let currentQuantity = Number(inputElement.value);
-            ticketTierMaxAlert.getElement().style.display = "none";
-            if (rowData.fieldData["requires-bundle-purchase"]) {
-                const selectedBundles = (0, _ticketPurchaseState.getSelectedBundles)();
-                const totalBundlesSelected = selectedBundles.reduce((sum, bundle)=>sum + safeNumber(bundle.quantity), 0);
-                if (totalBundlesSelected <= 0) {
+        // Increment handler
+        incBtn.on("click", ()=>{
+            const inputEl = qtyInput.getElement();
+            let current = Number(inputEl.value);
+            // bundle-required guard
+            if (requiresBundle) {
+                const totalBundles = (0, _ticketPurchaseState.getSelectedBundles)().reduce((sum, b)=>sum + safeNumber(b.quantity), 0);
+                if (totalBundles <= 0) {
                     updateAlertVisibility("This item requires a ticket bundle purchase. Please add a ticket bundle from the options above.");
                     return;
                 }
             }
-            if (currentQuantity < rowData.quantity) {
-                currentQuantity++;
-                inputElement.value = String(currentQuantity);
-                (0, _ticketPurchaseState.saveSelectedTicket)(rowData.id, currentQuantity, rowData.fieldData["requires-bundle-purchase"]);
-                revalidateTicketTierQuantities();
+            if (current < available) {
+                current++;
+                inputEl.value = String(current);
+                (0, _ticketPurchaseState.saveSelectedTicket)(rowData.id.toString(), current, requiresBundle);
                 clearNoTicketsError();
+                revalidateTicketTierQuantities();
             } else updateAlertVisibility("You have reached the maximum available quantity.");
         });
-        ticketTierDecrementButton.on("click", ()=>{
-            const inputElement = ticketTierQuantityInput.getElement();
-            let currentQuantity = Number(inputElement.value);
-            if (currentQuantity > 0) {
-                currentQuantity--;
-                inputElement.value = String(currentQuantity);
-                if (currentQuantity > 0) {
-                    (0, _ticketPurchaseState.saveSelectedTicket)(rowData.id, currentQuantity, rowData.fieldData["requires-bundle-purchase"]);
-                    clearNoTicketsError();
-                } else (0, _ticketPurchaseState.removeSelectedTicket)(rowData.id);
+        // Decrement handler
+        decBtn.on("click", ()=>{
+            const inputEl = qtyInput.getElement();
+            let current = Number(inputEl.value);
+            if (current > 0) {
+                current--;
+                inputEl.value = String(current);
+                if (current > 0) (0, _ticketPurchaseState.saveSelectedTicket)(rowData.id.toString(), current, requiresBundle);
+                else (0, _ticketPurchaseState.removeSelectedTicket)(rowData.id.toString());
+                clearNoTicketsError();
                 revalidateTicketTierQuantities();
             }
         });
-        ticketTierQuantityInput.on("input", ()=>{
-            const inputElement = ticketTierQuantityInput.getElement();
-            let currentQuantity = Number(inputElement.value);
-            if (currentQuantity > rowData.quantity) {
-                inputElement.value = String(rowData.quantity);
-                updateAlertVisibility("You have reached the maximum available quantity.");
-            } else if (rowData.fieldData["requires-bundle-purchase"] && currentQuantity > 0) {
-                const selectedBundles = (0, _ticketPurchaseState.getSelectedBundles)();
-                const totalBundlesSelected = selectedBundles.reduce((sum, bundle)=>sum + safeNumber(bundle.quantity), 0);
-                if (totalBundlesSelected <= 0) {
-                    inputElement.value = "0";
-                    updateAlertVisibility("This item requires a ticket bundle purchase. Please add a ticket bundle from the options above.");
-                } else ticketTierMaxAlert.getElement().style.display = "none";
-            } else ticketTierMaxAlert.getElement().style.display = "none";
+        // Manual input handler
+        qtyInput.on("input", ()=>{
             clearNoTicketsError();
+            const inputEl = qtyInput.getElement();
+            let val = Number(inputEl.value);
+            if (val > available) {
+                inputEl.value = String(available);
+                updateAlertVisibility("You have reached the maximum available quantity.");
+            }
+            revalidateTicketTierQuantities();
         });
-        if (rowData.quantity <= 0) {
-            ticketTierSoldOut.getElement().style.display = "block";
-            ticketTierPrice.getElement().style.display = "none";
-            numberInputWrapper.addCssClass("is-disabled");
-        } else {
-            ticketTierSoldOut.getElement().style.display = "none";
-            ticketTierPrice.getElement().style.display = "block";
-            numberInputWrapper.removeCssClass("is-disabled");
-        }
         rowElement.setStyle({
             display: "flex"
         });
@@ -1631,6 +1591,7 @@ const updateSelectedPerformanceUI = ()=>{
         console.error("No performance selected.");
         return;
     }
+    // pick up your DOM nodes
     const selectedPerformanceDate = new (0, _core.WFComponent)("#selectedPerformanceDate");
     const selectedPerformanceMonth = new (0, _core.WFComponent)("#selectedPerformanceMonth");
     const selectedWeekday = new (0, _core.WFComponent)("#selectedWeekday");
@@ -1640,17 +1601,33 @@ const updateSelectedPerformanceUI = ()=>{
     const selectedPerformanceDescription = new (0, _core.WFComponent)("#selectedPerformanceDescription");
     const selectedImage = new (0, _core.WFComponent)("#selectedImage");
     const selectedPerformanceLocation = new (0, _core.WFComponent)("#selectedPerformanceLocation");
-    const date = new Date(selectedPerformance.dateTime);
-    selectedPerformanceDate.setText(date.getDate().toString());
+    // dateTime might be an ISO string or a millisecond‐timestamp string
+    const raw = selectedPerformance.dateTime;
+    let date;
+    if (/^\d+$/.test(raw)) date = new Date(Number(raw));
+    else date = new Date(raw);
+    // formatting options for New York
+    const optionsCommon = {
+        timeZone: "America/New_York"
+    };
+    // render date parts in Eastern Time
+    selectedPerformanceDate.setText(date.toLocaleString("en-US", {
+        ...optionsCommon,
+        day: "numeric"
+    }));
     selectedPerformanceMonth.setText(date.toLocaleString("en-US", {
+        ...optionsCommon,
         month: "short"
     }));
     selectedWeekday.setText(date.toLocaleString("en-US", {
+        ...optionsCommon,
         weekday: "long"
     }));
     selectedTime.setText(date.toLocaleTimeString("en-US", {
+        ...optionsCommon,
         hour: "2-digit",
-        minute: "2-digit"
+        minute: "2-digit",
+        hour12: true
     }));
     selectedPerformanceTitle.setText(selectedPerformance.name);
     selectedPerformanceProductionTitle.setText(selectedProduction.name);
@@ -1659,7 +1636,7 @@ const updateSelectedPerformanceUI = ()=>{
         selectedImage.setAttribute("src", selectedPerformance.imageUrl);
         selectedImage.setAttribute("alt", selectedPerformance.name);
     }
-    // Update the location UI element with the selected performance location
+    // now display the human-readable venue name saved in state
     if (selectedPerformance.location) selectedPerformanceLocation.setText(selectedPerformance.location);
     else selectedPerformanceLocation.setText("Location not specified");
 };
@@ -1669,17 +1646,34 @@ var parcelHelpers = require("@parcel/transformer-js/src/esmodule-helpers.js");
 parcelHelpers.defineInteropFlag(exports);
 parcelHelpers.export(exports, "updateCustomQuestion", ()=>updateCustomQuestion);
 var _core = require("@xatom/core");
-var _ticketPurchaseState = require("../state/ticketPurchaseState"); // Correct function name
+var _ticketPurchaseState = require("../state/ticketPurchaseState");
 const updateCustomQuestion = (questionText)=>{
-    const customQuestionLabel = new (0, _core.WFComponent)("label[for='customQuestionInput']");
-    const customQuestionInput = new (0, _core.WFComponent)("#customQuestionInput");
-    if (customQuestionLabel && customQuestionInput) {
-        customQuestionLabel.setText(questionText || "No custom question available.");
-        customQuestionInput.on("input", ()=>{
-            const answer = customQuestionInput.getElement().value;
-            (0, _ticketPurchaseState.saveCustomQuestion)(answer); // Use the correct function name
+    const wrapper = new (0, _core.WFComponent)("#customQuestionWrap");
+    const divider = new (0, _core.WFComponent)("#customQuestionDivider");
+    const label = new (0, _core.WFComponent)("label[for='customQuestionInput']");
+    const input = new (0, _core.WFComponent)("#customQuestionInput");
+    if (!questionText) {
+        wrapper.setStyle({
+            display: "none"
         });
+        divider.setStyle({
+            display: "none"
+        });
+        return;
     }
+    wrapper.setStyle({
+        display: ""
+    });
+    divider.setStyle({
+        display: ""
+    });
+    // Set the label text inside the wrapper
+    label.setText(questionText);
+    // Wire up input save
+    input.on("input", ()=>{
+        const answer = input.getElement().value;
+        (0, _ticketPurchaseState.saveCustomQuestion)(answer);
+    });
 };
 
 },{"@xatom/core":"j9zXV","../state/ticketPurchaseState":"7W2vK","@parcel/transformer-js/src/esmodule-helpers.js":"5oERU"}],"fpr7i":[function(require,module,exports) {
@@ -2039,6 +2033,7 @@ const validatePhoneNumberOptional = (value)=>{
 };
 
 },{"@parcel/transformer-js/src/esmodule-helpers.js":"5oERU"}],"dKoGX":[function(require,module,exports) {
+// src/modules/tickets/components/urlParamNavigator.ts
 var parcelHelpers = require("@parcel/transformer-js/src/esmodule-helpers.js");
 parcelHelpers.defineInteropFlag(exports);
 parcelHelpers.export(exports, "initializeStateFromUrlParams", ()=>initializeStateFromUrlParams);
@@ -2049,114 +2044,99 @@ var _ticketTiers = require("../ticketTiers");
 var _sidebarIndicators = require("../components/sidebarIndicators");
 var _core = require("@xatom/core");
 var _selectedPerformanceUI = require("../components/selectedPerformanceUI");
-var _apiConfig = require("../../../api/apiConfig"); // Import apiClient for API requests
-// Function to parse URL parameters
+var _apiConfig = require("../../../api/apiConfig");
+// parse URL params
 const getUrlParams = ()=>{
     const params = new URLSearchParams(window.location.search);
-    const productionId = params.get("production");
-    const performanceId = params.get("performance");
-    const cancelId = params.get("cancel"); // Extract 'cancel' parameter
     return {
-        productionId,
-        performanceId,
-        cancelId
+        productionId: params.get("production"),
+        performanceId: params.get("performance"),
+        cancelId: params.get("cancel")
     };
 };
 const initializeStateFromUrlParams = async (slider)=>{
     const { productionId, performanceId, cancelId } = getUrlParams();
-    (0, _sidebarIndicators.initializeTicketSidebarIndicators)(); // Initialize sidebar indicators
+    (0, _sidebarIndicators.initializeTicketSidebarIndicators)();
     const loadingWall = new (0, _core.WFComponent)(".loading_wall");
-    const animationDuration = 500; // Duration in milliseconds matching the CSS transition time
-    // Check if any relevant URL parameters are present
+    const animationDuration = 500;
     if (productionId || performanceId || cancelId) {
-        // Show the loading wall
         loadingWall.setStyle({
             display: "flex"
         });
         try {
-            // Handle cancellation if 'cancel' parameter is present
+            // handle cancellation
             if (cancelId) {
-                // Create the DELETE request using apiClient
-                const cancelOrderRequest = (0, _apiConfig.apiClient).delete(`/tickets/cancel_order/${cancelId}`);
-                // Set up listeners for the DELETE request
+                const req = (0, _apiConfig.apiClient).delete(`/tickets/cancel_order/${cancelId}`);
                 await new Promise((resolve, reject)=>{
-                    cancelOrderRequest.onData(()=>{
-                        console.log(`Ticket order ${cancelId} canceled successfully`);
-                        // Optional: Remove 'cancel' parameter from the URL to prevent repeated cancellations
-                        const params = new URLSearchParams(window.location.search);
-                        params.delete("cancel");
-                        const newUrl = `${window.location.pathname}${params.toString() ? `?${params.toString()}` : ""}`;
-                        window.history.replaceState({}, document.title, newUrl);
-                        resolve(); // Resolve the promise on successful cancellation
+                    req.onData(()=>{
+                        // remove cancel from URL
+                        const ps = new URLSearchParams(window.location.search);
+                        ps.delete("cancel");
+                        const base = window.location.pathname;
+                        const qs = ps.toString();
+                        window.history.replaceState({}, document.title, base + (qs ? `?${qs}` : ""));
+                        resolve();
                     });
-                    cancelOrderRequest.onError((error)=>{
-                        console.error(`Failed to cancel ticket order ${cancelId}:`, error);
-                        // Optional: Display an error message to the user here
-                        reject(error); // Reject the promise on error
-                    });
-                    // Initiate the DELETE request
-                    cancelOrderRequest.fetch();
+                    req.onError((err)=>reject(err));
+                    req.fetch();
                 });
             }
-            // Proceed with initializing production and performance based on URL parameters
+            // if we have a productionId, pick step-1 → step-2
             if (productionId) {
-                // Clear any previous ticket purchase state
                 (0, _ticketPurchaseState.clearTicketPurchaseState)();
-                // Initialize the production list
+                // load & render productions
                 const productions = await (0, _productionList.initializeProductionList)("#selectProductionList");
-                // Find and select the production based on the URL parameter
-                const selectedProduction = productions.find((production)=>production.id === productionId);
-                if (selectedProduction) {
+                // find by numeric id
+                const prod = productions.find((p)=>p.id === Number(productionId));
+                if (prod) {
                     (0, _ticketPurchaseState.saveSelectedProduction)({
-                        id: selectedProduction.id,
-                        name: selectedProduction.fieldData["displayed-name"],
-                        description: selectedProduction.fieldData["short-description"],
-                        imageUrl: selectedProduction.fieldData["main-image"].url
+                        id: prod.id,
+                        name: prod.Name,
+                        description: prod.Short_Description,
+                        imageUrl: prod.Main_Image
                     });
                     (0, _sidebarIndicators.markTicketStepAsCompleted)(1);
                     (0, _sidebarIndicators.setActiveTicketStep)(2);
-                    // Select the production in the UI
-                    const productionComponent = document.querySelector(`input[value="${productionId}"]`);
-                    if (productionComponent) {
-                        productionComponent.checked = true;
-                        productionComponent.dispatchEvent(new Event("change"));
+                    // check the radio in the UI
+                    const inp = document.querySelector(`input[value="${productionId}"]`);
+                    if (inp) {
+                        inp.checked = true;
+                        inp.dispatchEvent(new Event("change"));
                     }
-                    // Initialize the performance list for the selected production
+                    // now load performances for that production
                     const performances = await (0, _performanceList.initializePerformanceList)("#selectPerformanceList");
+                    // if URL has performanceId, pick step-2 → step-3
                     if (performanceId) {
-                        const selectedPerformance = performances.find((performance)=>performance.id === performanceId);
-                        if (selectedPerformance) {
+                        const perf = performances.find((x)=>x.id.toString() === performanceId);
+                        if (perf) {
                             (0, _ticketPurchaseState.saveSelectedPerformance)({
-                                id: selectedPerformance.id,
-                                name: selectedPerformance.fieldData["displayed-name"],
-                                dateTime: selectedPerformance.fieldData["date-time"],
-                                description: selectedPerformance.fieldData["short-description"],
-                                imageUrl: selectedPerformance.fieldData["main-image"].url,
-                                location: selectedPerformance.location_name
+                                id: perf.id.toString(),
+                                name: perf.Displayed_Name,
+                                dateTime: perf.Date_Time.toString(),
+                                description: perf.Short_Description,
+                                imageUrl: perf.Main_Image,
+                                location: perf.location_details.Name
                             });
                             (0, _sidebarIndicators.markTicketStepAsCompleted)(2);
                             (0, _sidebarIndicators.setActiveTicketStep)(3);
-                            // Update the UI with the selected performance details
                             (0, _selectedPerformanceUI.updateSelectedPerformanceUI)();
-                            // Initialize the ticket tiers (Step 3)
                             await (0, _ticketTiers.initializeTicketTiers)("#bundleList", "#ticketTierList");
-                            slider.goToIndex(2); // Navigate to the ticket selection step
+                            slider.goToIndex(2);
                         } else {
-                            console.error(`Performance with ID ${performanceId} not found`);
-                            slider.goToIndex(1); // Navigate to the performance selection step
+                            console.error(`Performance ${performanceId} not found`);
+                            slider.goToIndex(1);
                         }
-                    } else slider.goToIndex(1); // Navigate to the performance selection step
+                    } else slider.goToIndex(1);
                 } else {
-                    console.error(`Production with ID ${productionId} not found`);
-                    slider.goToIndex(0); // Navigate to the production selection step
+                    console.error(`Production ${productionId} not found`);
+                    slider.goToIndex(0);
                 }
-            } else // If no productionId, navigate to the first step
+            } else // no production param: stay on step-1
             slider.goToIndex(0);
-        } catch (error) {
-            console.error("Error initializing state from URL parameters:", error);
-            slider.goToIndex(0); // Navigate to the production selection step on error
+        } catch (err) {
+            console.error("Error initializing from URL:", err);
+            slider.goToIndex(0);
         } finally{
-            // Hide the loading wall after completing all initializations
             loadingWall.addCssClass("hidden");
             setTimeout(()=>loadingWall.setStyle({
                     display: "none"
@@ -2165,6 +2145,6 @@ const initializeStateFromUrlParams = async (slider)=>{
     }
 };
 
-},{"../state/ticketPurchaseState":"7W2vK","../productionList":"4B4yP","../performanceList":"dsUEJ","../ticketTiers":"dhBzw","../components/sidebarIndicators":"2VBNk","@xatom/core":"j9zXV","../components/selectedPerformanceUI":"2s5n0","../../../api/apiConfig":"2Lx0S","@parcel/transformer-js/src/esmodule-helpers.js":"5oERU"}]},[], null, "parcelRequired346")
+},{"../state/ticketPurchaseState":"7W2vK","../productionList":"4B4yP","../performanceList":"dsUEJ","../ticketTiers":"dhBzw","../components/sidebarIndicators":"2VBNk","@xatom/core":"j9zXV","../components/selectedPerformanceUI":"2s5n0","@parcel/transformer-js/src/esmodule-helpers.js":"5oERU","../../../api/apiConfig":"2Lx0S"}]},[], null, "parcelRequired346")
 
 //# sourceMappingURL=makeTicketPurchase.55f87736.js.map

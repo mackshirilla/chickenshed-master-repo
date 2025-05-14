@@ -2,13 +2,15 @@
 
 import { WFComponent, WFFormComponent } from "@xatom/core";
 import { initializeCampaignList } from "./campaignList";
-import { initializeDynamicProductList } from "./campaignProductList";
+import { initializeDynamicProductList, renderProductListForDonationType } from "./campaignProductList";
 import {
   getSelectedCampaign,
   getSelectedProduct,
+  getSelectedDonationType,
   clearDonationState,
   saveDonorDetails,
   loadDonationState,
+  saveSelectedDonationType,
 } from "./state/donationState";
 import { updateSelectedCampaignDisplay } from "./components/selectedCampaignDisplay";
 import { WFSlider } from "@xatom/slider";
@@ -25,11 +27,26 @@ import {
 import { initializeStateFromUrlParams } from "./components/urlParamNavigator";
 import { userAuth } from "../../auth/authConfig";
 
+const setupDonationTypeSelection = () => {
+  const radios = document.querySelectorAll<HTMLInputElement>(
+    'input[name="selectDonationType"]'
+  );
+  radios.forEach((radio) => {
+    radio.addEventListener("change", () => {
+      if (radio.checked) {
+        saveSelectedDonationType(radio.value as "one-time" | "month" | "year");
+        console.log("Donation type changed to:", radio.value);
+        renderProductListForDonationType(); // 👈 this line ensures product list updates
+      }
+    });
+  });
+};
+
 // Initialize the donation process
 export const makeDonation = async () => {
   // Clear selected campaign and product on load to ensure a fresh start
   clearDonationState();
-
+  setupDonationTypeSelection();
   initializeSidebarIndicators(); // Initialize sidebar indicators
   setActiveStep(1);
 
@@ -103,15 +120,30 @@ export const makeDonation = async () => {
 
   formStepTwo.onFormSubmit(async (formData, event) => {
     event.preventDefault();
+  
     const selectedProduct = getSelectedProduct();
-
-    if (!selectedProduct || !selectedProduct.id) {
-      console.error("No product selected.");
+    const donationType = getSelectedDonationType(); // "one-time", "month", or "year"
+    let isPriceAvailable = false;
+    
+    switch (donationType) {
+      case "one-time":
+        isPriceAvailable = !!selectedProduct.Single_sale_price_id;
+        break;
+      case "month":
+        isPriceAvailable = !!selectedProduct.Monthly_price_id;
+        break;
+      case "year":
+        isPriceAvailable = !!selectedProduct.Annual_price_id;
+        break;
+    }
+    
+    if (!isPriceAvailable) {
       const submitStepTwoError = new WFComponent("#submitStepTwoError");
-      submitStepTwoError.setText("Please select a product.");
+      submitStepTwoError.setText("The selected product is not available for this donation type.");
       submitStepTwoError.setStyle({ display: "block" });
       return;
     }
+    
 
     // Get user email from authentication state if logged in
     const user = userAuth.getUser();
@@ -266,12 +298,16 @@ export const makeDonation = async () => {
 
       // Submit the donation state to the server
       try {
-        const donationState = loadDonationState();
+        const donationState = {
+          ...loadDonationState(),
+          currentPageUrl: window.location.href, // ✅ Add this line
+        };
         const response = await apiClient
-          .post<{ checkout_url: string }>("/donate/begin_checkout", {
-            data: donationState,
-          })
-          .fetch();
+  .post<{ checkout_url: string }>("/donate/begin_checkout", {
+    data: donationState,
+  })
+  .fetch();
+
 
         // Hide loading animation
         stepTwoRequestingAnimation.setStyle({ display: "none" });

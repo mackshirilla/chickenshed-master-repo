@@ -1,18 +1,14 @@
+// src/api/productions.ts
+
 import { apiClient } from "./apiConfig";
 
 export interface Production {
-  id: string;
-  fieldData: {
-    name: string;
-    slug: string;
-    subheading: string;
-    ageDescription: string;
-    shortDescription: string;
-    mainImage: {
-      url: string;
-      alt: string | null;
-    };
-  };
+  /** now a number */
+  id: number;
+  Name: string;
+  Short_Description: string;
+  Main_Image: string;
+  Age_Description: string;
 }
 
 interface ProductionApiResponse {

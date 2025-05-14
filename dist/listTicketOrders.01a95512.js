@@ -143,108 +143,98 @@
     }
   }
 })({"6PQNU":[function(require,module,exports) {
-// src/pages/listTicketOrders.ts
+// src/modules/dashboard/listTicketOrders.ts
 var parcelHelpers = require("@parcel/transformer-js/src/esmodule-helpers.js");
 parcelHelpers.defineInteropFlag(exports);
-// Function to fetch ticket orders from the API
+// ——————————————————————————————————————————————————
+// FETCH FUNCTION
+// ——————————————————————————————————————————————————
 parcelHelpers.export(exports, "fetchTicketOrders", ()=>fetchTicketOrders);
-// Function to initialize and render the dynamic ticket order list
+// ——————————————————————————————————————————————————
+// DYNAMIC LIST INITIALIZER
+// ——————————————————————————————————————————————————
 parcelHelpers.export(exports, "initializeDynamicTicketOrderList", ()=>initializeDynamicTicketOrderList);
 var _core = require("@xatom/core");
 var _image = require("@xatom/image");
 var _apiConfig = require("../../api/apiConfig");
 async function fetchTicketOrders() {
-    try {
-        const getTicketOrders = (0, _apiConfig.apiClient).get("/dashboard/ticket_orders" // Ensure this endpoint is correct
-        );
-        const response = await getTicketOrders.fetch();
-        return response;
-    } catch (error) {
-        console.error("Error fetching ticket orders:", error);
-        throw error;
-    }
+    const req = (0, _apiConfig.apiClient).get("/dashboard/ticket_orders");
+    return await req.fetch();
 }
 async function initializeDynamicTicketOrderList(containerSelector) {
-    // Initialize a new instance of WFDynamicList for Ticket Orders
     const list = new (0, _core.WFDynamicList)(containerSelector, {
         rowSelector: "#listTicketsCard",
         loaderSelector: "#listTicketsloading",
         emptySelector: "#listTicketsEmpty"
     });
-    // Customize the rendering of the loader
-    list.loaderRenderer((loaderElement)=>{
-        loaderElement.setStyle({
+    list.loaderRenderer((loaderEl)=>{
+        loaderEl.setStyle({
             display: "flex"
         });
-        return loaderElement;
+        return loaderEl;
     });
-    // Customize the rendering of the empty state
-    list.emptyRenderer((emptyElement)=>{
-        emptyElement.setStyle({
+    list.emptyRenderer((emptyEl)=>{
+        emptyEl.setStyle({
             display: "flex"
         });
-        return emptyElement;
+        return emptyEl;
     });
-    // Customize the rendering of list items (Ticket Cards)
+    // — formatters for New York —
+    const fmtDate = (ts)=>new Date(ts).toLocaleDateString("en-US", {
+            timeZone: "America/New_York",
+            month: "2-digit",
+            day: "2-digit",
+            year: "numeric"
+        });
+    const fmtTime = (ts)=>new Date(ts).toLocaleTimeString("en-US", {
+            timeZone: "America/New_York",
+            hour: "2-digit",
+            minute: "2-digit",
+            hour12: true
+        });
     list.rowRenderer(({ rowData, rowElement })=>{
-        const ticketCard = new (0, _core.WFComponent)(rowElement);
-        // Set the performance image
-        const performanceImageComponent = ticketCard.getChildAsComponent("#cardPerformanceImage");
-        if (performanceImageComponent) {
-            const performanceImage = new (0, _image.WFImage)(performanceImageComponent.getElement());
-            if (rowData.image_url) performanceImage.setImage(rowData.image_url);
-            else performanceImage.setImage("https://cdn.prod.website-files.com/667f080f36260b9afbdc46b2/667f080f36260b9afbdc46be_placeholder.svg");
+        const card = new (0, _core.WFComponent)(rowElement);
+        // Performance image
+        const imgComp = card.getChildAsComponent("#cardPerformanceImage");
+        if (imgComp) {
+            const img = new (0, _image.WFImage)(imgComp.getElement());
+            img.setImage(rowData.performance_details.Main_Image);
         }
-        // Set the production name
-        const productionName = ticketCard.getChildAsComponent("#cardProductionName");
-        if (productionName) productionName.setText(rowData.production_name);
-        // Set the performance name
-        const performanceName = ticketCard.getChildAsComponent("#cardPerformanceName");
-        if (performanceName) performanceName.setText(rowData.performance_name);
-        // Set the performance date
-        const performanceDate = ticketCard.getChildAsComponent("#cardPerformanceDate");
-        if (performanceDate) {
-            const date = new Date(rowData.performance_date_time);
-            performanceDate.setText(date.toLocaleString());
+        // Production Name
+        const prodComp = card.getChildAsComponent("#cardProductionName");
+        prodComp?.setText(rowData.production_details.Name);
+        // Performance Name
+        const perfComp = card.getChildAsComponent("#cardPerformanceName");
+        perfComp?.setText(rowData.performance_details.Displayed_Name);
+        // Performance Date & Time in NYC
+        const dateComp = card.getChildAsComponent("#cardPerformanceDate");
+        if (dateComp) {
+            const ts = rowData.performance_details.Date_Time;
+            dateComp.setText(`${fmtDate(ts)} at ${fmtTime(ts)}`);
         }
-        // Set the ticket quantity using the quantity value from the response
-        const ticketQuantity = ticketCard.getChildAsComponent("#quantity");
-        if (ticketQuantity) ticketQuantity.setText(rowData.quantity.toString());
-        // Append the performance parameter to the existing href
-        const ticketCardElement = ticketCard.getElement();
-        const currentHref = ticketCardElement.getAttribute("href") || "#";
-        const url = new URL(currentHref, window.location.origin);
-        url.searchParams.set("performance", rowData.performance_id);
-        url.searchParams.set("order", rowData.id.toString());
-        ticketCardElement.setAttribute("href", url.toString());
-        // Show the list item
+        // Quantity = number of ticket_records
+        const qtyComp = card.getChildAsComponent("#quantity");
+        qtyComp?.setText(String(rowData.ticket_records.length));
+        // Build link with order_uuid param only
+        const anchor = card.getElement();
+        const href = anchor.getAttribute("href") || "/";
+        const url = new URL(href, window.location.origin);
+        url.searchParams.set("order", rowData.order_uuid);
+        anchor.setAttribute("href", url.toString());
         rowElement.setStyle({
             display: "block"
         });
         return rowElement;
     });
-    // Load and display ticket order data
     try {
-        // Enable the loading state
         list.changeLoadingStatus(true);
-        const ticketOrders = await fetchTicketOrders();
-        // Filter unique ticket orders by performance_id
-        const uniqueTicketOrdersMap = new Map();
-        ticketOrders.forEach((order)=>{
-            if (!uniqueTicketOrdersMap.has(order.performance_id)) uniqueTicketOrdersMap.set(order.performance_id, order);
-        });
-        const uniqueTicketOrders = Array.from(uniqueTicketOrdersMap.values());
-        // Sort ticket orders by performance date and time in ascending order
-        uniqueTicketOrders.sort((a, b)=>a.performance_date_time - b.performance_date_time);
-        // Set the data to be displayed in the dynamic list
-        list.setData(uniqueTicketOrders);
-        // Disable the loading state
-        list.changeLoadingStatus(false);
-    } catch (error) {
-        console.error("Error loading ticket orders:", error);
-        // If there's an error, set an empty array to trigger the empty state
+        const orders = await fetchTicketOrders();
+        orders.sort((a, b)=>a.performance_details.Date_Time - b.performance_details.Date_Time);
+        list.setData(orders);
+    } catch (err) {
+        console.error("Error loading ticket orders:", err);
         list.setData([]);
-        // Disable the loading state
+    } finally{
         list.changeLoadingStatus(false);
     }
 }

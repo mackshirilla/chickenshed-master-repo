@@ -13,6 +13,7 @@ export const updateSelectedPerformanceUI = () => {
     return;
   }
 
+  // pick up your DOM nodes
   const selectedPerformanceDate = new WFComponent("#selectedPerformanceDate");
   const selectedPerformanceMonth = new WFComponent("#selectedPerformanceMonth");
   const selectedWeekday = new WFComponent("#selectedWeekday");
@@ -29,15 +30,35 @@ export const updateSelectedPerformanceUI = () => {
     "#selectedPerformanceLocation"
   );
 
-  const date = new Date(selectedPerformance.dateTime);
+  // dateTime might be an ISO string or a millisecond‐timestamp string
+  const raw = selectedPerformance.dateTime;
+  let date: Date;
+  if (/^\d+$/.test(raw)) {
+    date = new Date(Number(raw));
+  } else {
+    date = new Date(raw);
+  }
 
-  selectedPerformanceDate.setText(date.getDate().toString());
-  selectedPerformanceMonth.setText(
-    date.toLocaleString("en-US", { month: "short" })
+  // formatting options for New York
+  const optionsCommon = { timeZone: "America/New_York" } as const;
+
+  // render date parts in Eastern Time
+  selectedPerformanceDate.setText(
+    date.toLocaleString("en-US", { ...optionsCommon, day: "numeric" })
   );
-  selectedWeekday.setText(date.toLocaleString("en-US", { weekday: "long" }));
+  selectedPerformanceMonth.setText(
+    date.toLocaleString("en-US", { ...optionsCommon, month: "short" })
+  );
+  selectedWeekday.setText(
+    date.toLocaleString("en-US", { ...optionsCommon, weekday: "long" })
+  );
   selectedTime.setText(
-    date.toLocaleTimeString("en-US", { hour: "2-digit", minute: "2-digit" })
+    date.toLocaleTimeString("en-US", {
+      ...optionsCommon,
+      hour: "2-digit",
+      minute: "2-digit",
+      hour12: true,
+    })
   );
 
   selectedPerformanceTitle.setText(selectedPerformance.name);
@@ -49,7 +70,7 @@ export const updateSelectedPerformanceUI = () => {
     selectedImage.setAttribute("alt", selectedPerformance.name);
   }
 
-  // Update the location UI element with the selected performance location
+  // now display the human-readable venue name saved in state
   if (selectedPerformance.location) {
     selectedPerformanceLocation.setText(selectedPerformance.location);
   } else {
