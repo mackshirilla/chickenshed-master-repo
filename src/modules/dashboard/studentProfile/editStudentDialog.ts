@@ -37,9 +37,18 @@ export const initializeEditStudentDialog = (studentId: number) => {
   }
 
   // Attempt to retrieve the edit student dialog element
-  const editStudentDialogElement = document.getElementById(
-    "editStudentDialog"
-  ) as HTMLDialogElement | null;
+const editStudentDialogElement = document.getElementById(
+  "editStudentDialog"
+) as HTMLDialogElement | null;
+
+if (editStudentDialogElement) {
+  editStudentDialogElement.addEventListener("click", (event) => {
+    // Only close if the user clicked directly on the backdrop
+    if (event.target === editStudentDialogElement) {
+      editStudentDialogElement.close();
+    }
+  });
+}
 
   // Attempt to retrieve and initialize the "Close Dialog" button
   let closeDialogButton: WFComponent | null = null;

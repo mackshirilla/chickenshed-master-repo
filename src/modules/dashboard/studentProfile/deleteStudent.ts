@@ -23,6 +23,16 @@ export function initializeDeleteStudent(studentId: number) {
   const deleteStudentDialogElement = document.getElementById(
     "deleteStudentDialog"
   ) as HTMLDialogElement | null;
+  // Allow backdrop click to close the dialog
+if (deleteStudentDialogElement) {
+  deleteStudentDialogElement.addEventListener("click", (event) => {
+    if (event.target === deleteStudentDialogElement) {
+      deleteStudentDialogElement.close();
+      if (pageMain) pageMain.setAttribute("data-brand", "2");
+      if (deleteStudentError) deleteStudentError.setStyle({ display: "none" });
+    }
+  });
+}
 
   // Attempt to retrieve and initialize the "Close Delete Dialog" button
   let closeDeleteDialogBtn: WFComponent | null = null;

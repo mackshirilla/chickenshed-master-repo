@@ -149,10 +149,12 @@ parcelHelpers.export(exports, "signupForm", ()=>signupForm);
 var _core = require("@xatom/core");
 var _formUtils = require("../../../utils/formUtils");
 var _validationUtils = require("../../../utils/validationUtils");
-var _recaptchaUtils = require("../../../utils/recaptchaUtils"); // Ensure this function is implemented for reCAPTCHA handling
-var _apiConfig = require("../../../api/apiConfig"); // Ensure you have set up this API client for server interactions
+var _recaptchaUtils = require("../../../utils/recaptchaUtils");
+var _apiConfig = require("../../../api/apiConfig");
 const signupForm = ()=>{
     const form = new (0, _core.WFFormComponent)("#createAccountForm");
+    const honeypotCompany = new (0, _core.WFComponent)("#companyInput");
+    const honeypotWebsite = new (0, _core.WFComponent)("#websiteInput");
     const fields = [
         {
             input: new (0, _core.WFComponent)("#firstNameInput"),
@@ -215,7 +217,6 @@ const signupForm = ()=>{
         const inputElement = fields[3].input.getElement();
         updatePasswordRequirements(inputElement.value);
     });
-    // Helper function to handle API responses
     const handleApiResponse = (response)=>{
         if (response.status !== "success") throw new Error(response.message || "An unknown error occurred.");
         return response;
@@ -225,9 +226,8 @@ const signupForm = ()=>{
         let isFormValid = true;
         requestAnimation.setStyle({
             display: "flex"
-        }); // Show loading animation
-        (0, _formUtils.toggleError)(requestError, "", false); // Clear previous errors
-        // Validate all fields
+        });
+        (0, _formUtils.toggleError)(requestError, "", false);
         fields.forEach(({ input, error, validationFn, message })=>{
             const errorMessage = input === termsField.input ? (0, _formUtils.createCheckboxValidationFunction)(input, message)() : (0, _formUtils.createValidationFunction)(input, validationFn, message)();
             if (errorMessage) {
@@ -242,7 +242,16 @@ const signupForm = ()=>{
             });
             return;
         }
-        // Handle reCAPTCHA
+        const companyValue = honeypotCompany.getElement().value.trim();
+        const websiteValue = honeypotWebsite.getElement().value.trim();
+        if (companyValue !== "" || websiteValue !== "") {
+            console.warn("Honeypot fields triggered. Possible bot.");
+            (0, _formUtils.toggleError)(requestError, "Spam detected. Submission blocked.", true);
+            requestAnimation.setStyle({
+                display: "none"
+            });
+            return;
+        }
         const recaptchaAction = "create_account";
         const isRecaptchaValid = await (0, _recaptchaUtils.handleRecaptcha)(recaptchaAction);
         if (!isRecaptchaValid) {
@@ -252,12 +261,10 @@ const signupForm = ()=>{
             });
             return;
         }
-        // Submit data
         try {
             const response = await (0, _apiConfig.apiClient).post("/auth/create-account", {
                 data: formData
             }).fetch();
-            // Process the response
             handleApiResponse(response);
             form.showSuccessState();
             const successTrigger = new (0, _core.WFComponent)("#onSuccessTrigger");

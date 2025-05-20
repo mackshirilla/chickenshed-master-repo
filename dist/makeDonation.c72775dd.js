@@ -186,8 +186,10 @@ const makeDonation = async ()=>{
     (0, _userContactDetails.initializeUserContactDetails)();
     // Handle form submission for campaign selection
     const formStepOne = new (0, _core.WFFormComponent)("#formStepOne");
+    const submitButtonStepOne = new (0, _core.WFComponent)("#submitStepOne");
     formStepOne.onFormSubmit(async (formData, event)=>{
         event.preventDefault();
+        submitButtonStepOne.setAttribute("disabled", "true");
         const selectedCampaign = (0, _donationState.getSelectedCampaign)();
         if (!selectedCampaign || !selectedCampaign.id) {
             console.error("No campaign selected.");
@@ -196,6 +198,7 @@ const makeDonation = async ()=>{
             submitStepOneError.setStyle({
                 display: "block"
             });
+            submitButtonStepOne.removeAttribute("disabled"); // ✅ Fix: re-enable button on early return
             return;
         }
         console.log("Campaign selected:", selectedCampaign);
@@ -228,14 +231,18 @@ const makeDonation = async ()=>{
             submitStepOneError.setStyle({
                 display: "block"
             });
+        } finally{
+            submitButtonStepOne.removeAttribute("disabled");
         }
     });
     // Handle step 2 interactions
     const formStepTwo = new (0, _core.WFFormComponent)("#formStepTwo");
+    const submitButtonStepTwo = new (0, _core.WFComponent)("#submitStepTwo");
     formStepTwo.onFormSubmit(async (formData, event)=>{
         event.preventDefault();
+        submitButtonStepTwo.setAttribute("disabled", "true"); // ✅ Disable button immediately
         const selectedProduct = (0, _donationState.getSelectedProduct)();
-        const donationType = (0, _donationState.getSelectedDonationType)(); // "one-time", "month", or "year"
+        const donationType = (0, _donationState.getSelectedDonationType)();
         let isPriceAvailable = false;
         switch(donationType){
             case "one-time":
@@ -254,16 +261,14 @@ const makeDonation = async ()=>{
             submitStepTwoError.setStyle({
                 display: "block"
             });
+            submitButtonStepTwo.removeAttribute("disabled"); // ✅ Re-enable on early return
             return;
         }
-        // Get user email from authentication state if logged in
         const user = (0, _authConfig.userAuth).getUser();
         const userEmail = user && user.email ? user.email : null;
-        // Validate user contact details if emailWrap is displayed
         const emailWrap = document.getElementById("emailWrap");
         let hasErrors = false;
         let email = userEmail;
-        // Initialize an object to hold all donor details
         let donorDetails = {
             email: "",
             firstName: "",
@@ -279,95 +284,79 @@ const makeDonation = async ()=>{
             const emailError = !(0, _validationUtils.validateEmail)(emailInput.value);
             if (firstNameError || lastNameError || emailError) {
                 hasErrors = true;
-                console.error("Invalid input in contact details.");
                 if (firstNameError) {
-                    const firstNameInputError = new (0, _core.WFComponent)("#firstNameInputError");
-                    firstNameInputError.setText("First name is required.");
-                    firstNameInputError.setStyle({
+                    const err = new (0, _core.WFComponent)("#firstNameInputError");
+                    err.setText("First name is required.");
+                    err.setStyle({
                         display: "block"
                     });
                 }
                 if (lastNameError) {
-                    const lastNameInputError = new (0, _core.WFComponent)("#lastNameInputError");
-                    lastNameInputError.setText("Last name is required.");
-                    lastNameInputError.setStyle({
+                    const err = new (0, _core.WFComponent)("#lastNameInputError");
+                    err.setText("Last name is required.");
+                    err.setStyle({
                         display: "block"
                     });
                 }
                 if (emailError) {
-                    const emailInputError = new (0, _core.WFComponent)("#emailInputError");
-                    emailInputError.setText("A valid email address is required.");
-                    emailInputError.setStyle({
+                    const err = new (0, _core.WFComponent)("#emailInputError");
+                    err.setText("A valid email address is required.");
+                    err.setStyle({
                         display: "block"
                     });
                 }
-                // Display general error message
                 const submitStepTwoError = new (0, _core.WFComponent)("#submitStepTwoError");
                 submitStepTwoError.setText("Please correct the errors above.");
                 submitStepTwoError.setStyle({
                     display: "block"
                 });
+                submitButtonStepTwo.removeAttribute("disabled"); // ✅ Re-enable on validation failure
                 return;
             }
-            // If validation passes and the user is not logged in, save contact details
             if (!userEmail) email = emailInput.value;
             const isAnonymous = document.getElementById("anonymousInput").checked;
-            // Populate donorDetails object
             donorDetails = {
-                email: email,
+                email,
                 firstName: firstNameInput.value,
                 lastName: lastNameInput.value,
-                isAnonymous: isAnonymous
+                isAnonymous
             };
         } else {
-            // Handle anonymous input and email when the user is logged in
             const isAnonymous = document.getElementById("anonymousInput").checked;
             donorDetails = {
                 email: userEmail || "",
                 firstName: user ? user.profile.first_name : "",
                 lastName: user ? user.profile.last_name : "",
-                isAnonymous: isAnonymous
+                isAnonymous
             };
         }
-        // Handle "Make this donation in someone else's name"
         const inNameOfCheckbox = document.getElementById("inNameOfBoolInput");
         const inNameOfInput = document.getElementById("inNameOfInput");
-        if (inNameOfCheckbox && inNameOfCheckbox.checked) {
+        if (inNameOfCheckbox?.checked) {
             const inNameOfValue = inNameOfInput.value.trim();
-            const inNameOfError = !(0, _validationUtils.validateNotEmpty)(inNameOfValue);
-            if (inNameOfError) {
+            if (!(0, _validationUtils.validateNotEmpty)(inNameOfValue)) {
                 hasErrors = true;
-                console.error("Name input is required when making donation in someone else's name.");
-                const inNameOfInputError = new (0, _core.WFComponent)("#inNameOfInputError");
-                inNameOfInputError.setText("Please enter the name.");
-                inNameOfInputError.setStyle({
+                const err = new (0, _core.WFComponent)("#inNameOfInputError");
+                err.setText("Please enter the name.");
+                err.setStyle({
                     display: "block"
                 });
-                // Display general error message
                 const submitStepTwoError = new (0, _core.WFComponent)("#submitStepTwoError");
                 submitStepTwoError.setText("Please correct the errors above.");
                 submitStepTwoError.setStyle({
                     display: "block"
                 });
+                submitButtonStepTwo.removeAttribute("disabled"); // ✅ Re-enable on validation failure
                 return;
-            } else // Add inNameOf to donorDetails
+            }
             donorDetails.inNameOf = inNameOfValue;
-        } else // If checkbox is not checked, ensure inNameOf is cleared
-        donorDetails.inNameOf = "";
+        } else donorDetails.inNameOf = "";
         if (!hasErrors) {
-            console.log("Donor details:", donorDetails);
-            console.log("Product selected:", selectedProduct);
-            // Save all donor details at once
             (0, _donationState.saveDonorDetails)(donorDetails);
-            // Debug: Log the entire donation state before submission
-            const currentDonationState = (0, _donationState.loadDonationState)();
-            console.log("Current Donation State:", currentDonationState);
-            // Show loading animation
             const stepTwoRequestingAnimation = new (0, _core.WFComponent)("#stepTwoRequestingAnimation");
             stepTwoRequestingAnimation.setStyle({
                 display: "block"
             });
-            // Submit the donation state to the server
             try {
                 const donationState = {
                     ...(0, _donationState.loadDonationState)(),
@@ -376,23 +365,20 @@ const makeDonation = async ()=>{
                 const response = await (0, _apiConfig.apiClient).post("/donate/begin_checkout", {
                     data: donationState
                 }).fetch();
-                // Hide loading animation
-                stepTwoRequestingAnimation.setStyle({
-                    display: "none"
-                });
-                // Navigate to the checkout URL
                 window.location.href = response.checkout_url;
             } catch (error) {
                 console.error("Error during checkout:", error);
-                // Hide loading animation
-                stepTwoRequestingAnimation.setStyle({
-                    display: "none"
-                });
                 const submitStepTwoError = new (0, _core.WFComponent)("#submitStepTwoError");
                 submitStepTwoError.setText("An error occurred during checkout. Please try again.");
                 submitStepTwoError.setStyle({
                     display: "block"
                 });
+            } finally{
+                const stepTwoRequestingAnimation = new (0, _core.WFComponent)("#stepTwoRequestingAnimation");
+                stepTwoRequestingAnimation.setStyle({
+                    display: "none"
+                });
+                submitButtonStepTwo.removeAttribute("disabled"); // ✅ Always re-enable
             }
         }
     });

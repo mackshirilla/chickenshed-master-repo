@@ -26,6 +26,14 @@ export const initializeEditEmergencyDialog = (studentId: number) => {
   const emergencyDialog = document.getElementById(
     "editEmergencyContactDialog"
   ) as HTMLDialogElement;
+  // Allow clicking outside the dialog (on the backdrop) to close it
+if (emergencyDialog) {
+  emergencyDialog.addEventListener("click", (event) => {
+    if (event.target === emergencyDialog) {
+      emergencyDialog.close();
+    }
+  });
+}
   const closeDialogButton = new WFComponent("#close-emergency-dialog-btn");
 
   // Open the dialog when the button is clicked

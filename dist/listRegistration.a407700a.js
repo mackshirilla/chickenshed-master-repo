@@ -206,7 +206,34 @@ async function initializeDynamicSubscriptionList(containerSelector) {
         url.searchParams.set("program", String(rowData.program));
         url.searchParams.set("subscription", String(rowData.id));
         anchor.setAttribute("href", url.toString());
-        // 4) Show the card
+        // 4) Status pill logic
+        const approvedPill = card.getChildAsComponent("#approvedPill");
+        const pendingPill = card.getChildAsComponent("#pendingPill");
+        const isPending = rowData.status.toLowerCase() === "deposit paid";
+        if (isPending) {
+            approvedPill.setStyle({
+                display: "none"
+            });
+            pendingPill.setStyle({
+                display: "flex"
+            });
+            // Disable pointer events on link
+            anchor.style.pointerEvents = "none";
+            anchor.style.opacity = "0.6"; // Optional: dim the card
+            anchor.style.cursor = "default";
+        } else {
+            pendingPill.setStyle({
+                display: "none"
+            });
+            approvedPill.setStyle({
+                display: "flex"
+            });
+            // Re-enable pointer events (in case of re-render)
+            anchor.style.pointerEvents = "auto";
+            anchor.style.opacity = "1";
+            anchor.style.cursor = "pointer";
+        }
+        // 5) Show the card
         rowElement.setStyle({
             display: "block"
         });

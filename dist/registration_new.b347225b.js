@@ -377,7 +377,8 @@ function populateSessionOptions(row, data, selectedProgramId, selectedWorkshopId
     if (selectedWorkshopId) filteredSessions = filteredSessions.filter((session)=>session.workshop && session.workshop.id.toString() === selectedWorkshopId);
     let optionsHTML = '<option value="">Select Session</option>';
     filteredSessions.forEach((session)=>{
-        optionsHTML += `<option value="${session.id}">${session.Name} (${session.Time_block})</option>`;
+        const label = `${session.Weekday} ${session.Time_block}`;
+        optionsHTML += `<option value="${session.id}">${label}</option>`;
     });
     sessionSelect.setHTML(optionsHTML);
 }
@@ -462,7 +463,9 @@ function attachRowEventListeners(row, data, config) {
         const workshopText = row.getChildAsComponent(config.fields.workshop.textSelector);
         workshopText.setText(workshopTextValue);
         const sessionText = row.getChildAsComponent(config.fields.session.textSelector);
-        sessionText.setText(sessionSelectEl.options[sessionSelectEl.selectedIndex].text);
+        const selectedSession = data.sessions.find((session)=>session.id.toString() === sessionSelectEl.value);
+        if (selectedSession) sessionText.setText(`${selectedSession.Weekday} ${selectedSession.Time_block}`);
+        else sessionText.setText("Unknown session");
         const studentText = row.getChildAsComponent(config.fields.student.textSelector);
         studentText.setText(studentSelectEl.options[studentSelectEl.selectedIndex].text);
         const hideSelectParent = (selectSelector)=>{

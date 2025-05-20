@@ -74,7 +74,10 @@ export function initManageRegistrationTable(
 
     // Session name
     const sessionText = newRow.querySelector("#item_session_name");
-    if (sessionText) sessionText.textContent = item.session_details.Name;
+    if (sessionText) {
+      sessionText.textContent = `${item.session_details.Weekday} ${item.session_details.Time_block}`;
+    }
+    
 
     // Student full name
     const studentText = newRow.querySelector("#item_student_name");

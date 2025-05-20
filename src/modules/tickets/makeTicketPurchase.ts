@@ -47,9 +47,11 @@ export const makeTicketPurchase = async () => {
   const formStepOne = new WFFormComponent<{ production_id: string }>(
     "#formStepOne"
   );
+  const submitButtonStepOne = new WFComponent("#submitStepOne")
 
   formStepOne.onFormSubmit(async (formData, event) => {
     event.preventDefault();
+    submitButtonStepOne.setAttribute("disabled", "true");
     const selectedProduction = getSelectedProduction();
     const stepOneRequestingAnimation = new WFComponent(
       "#stepOneRequestingAnimation"
@@ -86,6 +88,7 @@ export const makeTicketPurchase = async () => {
     } finally {
       // Hide the loading animation
       stepOneRequestingAnimation.setStyle({ display: "none" });
+      submitButtonStepOne.removeAttribute("disabled");
     }
   });
 
@@ -93,9 +96,12 @@ export const makeTicketPurchase = async () => {
   const formStepTwo = new WFFormComponent<{ performance_id: string }>(
     "#formStepTwo"
   );
+  const submitButtonStepTwo = new WFComponent("#submitStepTwo")
+
 
   formStepTwo.onFormSubmit(async (formData, event) => {
     event.preventDefault();
+    submitButtonStepTwo.setAttribute("disabled", "true");
     const selectedPerformance = getSelectedPerformance();
     const stepTwoRequestingAnimation = new WFComponent(
       "#stepTwoRequestingAnimation"
@@ -132,6 +138,7 @@ export const makeTicketPurchase = async () => {
     } finally {
       // Hide the loading animation
       stepTwoRequestingAnimation.setStyle({ display: "none" });
+      submitButtonStepTwo.removeAttribute("disabled");
     }
   });
 
@@ -144,6 +151,7 @@ export const makeTicketPurchase = async () => {
   const customQuestionInput = new WFComponent("#customQuestionInput");
   const submitStepThreeError = new WFComponent("#submitStepThreeError");
   const noTicketsError = new WFComponent("#noTicketsError");
+  const submitButtonStepThree = new WFComponent("#submitStepThree")
 
   // Function to clear errors on interaction
   const clearErrorOnInteraction = (
@@ -159,7 +167,7 @@ export const makeTicketPurchase = async () => {
   formStepThree.onFormSubmit(async (formData, event) => {
     event.preventDefault();
     let formIsValid = true;
-
+    submitButtonStepThree.setAttribute("disabled", "true");
     // clear any existing submit errors
     submitStepThreeError.setStyle({ display: "none" });
 
@@ -319,6 +327,7 @@ if (customQuestionWrap.style.display !== "none") {
       submitStepThreeError.setStyle({ display: "block" });
     } finally {
       stepThreeRequestingAnimation.setStyle({ display: "none" });
+      submitButtonStepThree.removeAttribute("disabled");
     }
   });
 

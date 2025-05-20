@@ -10,6 +10,7 @@ interface Student {
   last_name: string;
   email: string;
   phone: string;
+  Status: string; // ← add this
   profile_pic: {
     url: string;
   } | null;
@@ -95,7 +96,7 @@ export async function initializeDynamicStudentList(containerSelector: string) {
       studentImage.setImage(rowData.profile_pic.url);
     } else {
       studentImage.setImage(
-        "https://cdn.prod.website-files.com/66102236c16b61185de61fe3/66102236c16b61185de6204e_placeholder.svg"
+        "https://cdn.prod.website-files.com/667f080f36260b9afbdc46b2/682bd6f6403a5cb7582db055_Profile_avatar_placeholder_large.png"
       );
     }
     studentName.setText(`${rowData.first_name} ${rowData.last_name}`);
@@ -104,6 +105,19 @@ export async function initializeDynamicStudentList(containerSelector: string) {
     rowElement.setStyle({
       display: "block",
     });
+    // Show status pills based on student approval status
+const approvedPill = studentCard.getChildAsComponent("#studentApprovedPill");
+const pendingPill = studentCard.getChildAsComponent("#studentPendingPill");
+
+const status = rowData.Status?.toUpperCase() || ""; // Note capital 'S'
+
+if (status === "APPROVED") {
+  approvedPill.setStyle({ display: "block" });
+  pendingPill.setStyle({ display: "none" });
+} else {
+  approvedPill.setStyle({ display: "none" });
+  pendingPill.setStyle({ display: "block" });
+}
 
     return rowElement;
   });

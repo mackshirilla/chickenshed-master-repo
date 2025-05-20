@@ -186,49 +186,66 @@ export async function initializeTicketOrderNoLoginPage() {
   new WFComponent("#printTickets").on("click", () => {
     const container = document.querySelector("#ticketList") as HTMLElement;
     if (!container) return;
+  
     const w = window.open("", "_blank", "width=800,height=600");
     if (!w) return;
-
+  
     const styles = Array.from(document.styleSheets)
       .map((ss) => (ss.href ? `<link rel="stylesheet" href="${ss.href}">` : ""))
       .join("\n");
-
+  
     const headerHTML = `
       <div class="hero-section">
         <h1>${performance.production_details.Name}</h1>
-        <p>${fmtDate(performance.Date_Time)} at ${fmtTime(
-      performance.Date_Time
-    )}</p>
+        <p>${fmtDate(performance.Date_Time)} at ${fmtTime(performance.Date_Time)}</p>
       </div>`;
-
-    w.document.write(`
+  
+    const html = `
       <!DOCTYPE html>
       <html>
         <head>
           <title>Print Tickets</title>
           ${styles}
-        <style>
-          /* Force all text black */
-          body, #ticketList, .ticket_wrap, .hero-section, h1, p {
-            color: black !important;
-          }
-
-          /* existing layout rules */
-          body { padding:1rem 3rem; }
-          #ticketList { display:grid; grid-template-columns:repeat(3,1fr); gap:20px; }
-          .ticket_wrap { page-break-inside:avoid; }
-          .hero-section { text-align:center; margin-bottom:2rem; }
-          .hero-section h1 { margin:0; font-size:2rem; }
-          .hero-section p { margin:.5rem 0; font-size:1.25rem; }
-        </style>
+          <style>
+            body, #ticketList, .ticket_wrap, .hero-section, h1, p {
+              color: black !important;
+            }
+            body { padding:1rem 3rem; }
+            #ticketList { display:grid; grid-template-columns:repeat(3,1fr); gap:20px; }
+            .ticket_wrap { page-break-inside:avoid; }
+            .hero-section { text-align:center; margin-bottom:2rem; }
+            .hero-section h1 { margin:0; font-size:2rem; }
+            .hero-section p { margin:.5rem 0; font-size:1.25rem; }
+          </style>
         </head>
         <body>
           ${headerHTML}
           ${container.outerHTML}
         </body>
-      </html>
-    `);
+      </html>`;
+  
+    w.document.write(html);
     w.document.close();
-    w.print();
+  
+    w.onload = () => {
+      const images = w.document.images;
+      let loaded = 0;
+      const total = images.length;
+  
+      if (total === 0) {
+        w.print();
+        return;
+      }
+  
+      Array.from(images).forEach((img) => {
+        img.onload = img.onerror = () => {
+          loaded++;
+          if (loaded === total) {
+            w.print();
+          }
+        };
+      });
+    };
   });
+  
 }

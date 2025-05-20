@@ -238,7 +238,7 @@ function initializeStudentList(students) {
     list.rowRenderer(({ rowData, rowElement })=>{
         const comp = new (0, _core.WFComponent)(rowElement);
         new (0, _core.WFComponent)(comp.getChildAsComponent("#studentName").getElement()).setText(rowData.full_name);
-        comp.getChildAsComponent("img#listStudentCardImage")?.setAttribute("src", rowData.profile_pic || "https://cdn.prod.website-files.com/placeholder.svg");
+        comp.getChildAsComponent("img#listStudentCardImage")?.setAttribute("src", rowData.profile_pic || "https://cdn.prod.website-files.com/667f080f36260b9afbdc46b2/682bd6f6403a5cb7582db055_Profile_avatar_placeholder_large.png");
         const linkComp = comp.getChildAsComponent("#studentLink");
         if (linkComp) {
             const href = linkComp.getAttribute("href") || "#";

@@ -124,10 +124,11 @@ export const initializeStepEight = (slider: WFSlider, getFormData: () => any) =>
   const submitStepEight = new WFComponent("#submitStepEight");
   const stepEightRequestingAnimation = new WFComponent("#stepEightRequestingAnimation");
   const submitStepEightError = new WFComponent("#submitStepEightError");
-
+  const submitButtonStepEight = new WFComponent("#submitStepEight")
   submitStepEight.on("click", async (event) => {
     event.preventDefault(); // Prevent normal form submission
     stepEightRequestingAnimation.setStyle({ display: "block" }); // Show loading animation
+    submitButtonStepEight.setAttribute("disabled", "true");
 
     // Handle reCAPTCHA verification
     const recaptchaAction = "complete_student";
@@ -139,7 +140,8 @@ export const initializeStepEight = (slider: WFSlider, getFormData: () => any) =>
         "reCAPTCHA verification failed. Please try again.",
         true
       );
-      stepEightRequestingAnimation.setStyle({ display: "none" }); // Hide loading animation
+      stepEightRequestingAnimation.setStyle({ display: "none" });
+      submitButtonStepEight.removeAttribute("disabled");
       return;
     }
 
@@ -203,7 +205,8 @@ export const initializeStepEight = (slider: WFSlider, getFormData: () => any) =>
         true
       );
       stepEightRequestingAnimation.setStyle({ display: "none" });
-    }
+      submitButtonStepEight.removeAttribute("disabled");
+    } 
   });
 
   // Handle back button for Step 8

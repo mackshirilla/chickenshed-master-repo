@@ -130,9 +130,12 @@ export const initializeStepOne = (slider: WFSlider) => {
     );
   });
 
+
+  const submitButtonStepOne = new WFComponent("#submitStepOne");
   // Handle form submission for Step 1
   formStepOne.onFormSubmit(async (formData, event) => {
     event.preventDefault();
+    submitButtonStepOne.setAttribute("disabled", "true");
     console.log("Form submission initiated.");
     const stepOneRequestingAnimation = new WFComponent("#stepOneRequestingAnimation");
     stepOneRequestingAnimation.setStyle({ display: "block" });
@@ -151,6 +154,7 @@ export const initializeStepOne = (slider: WFSlider) => {
     if (!isFormValid) {
       toggleError(new WFComponent("#submitStepOneError"), "Please correct all errors above.", true);
       stepOneRequestingAnimation.setStyle({ display: "none" });
+      submitButtonStepOne.removeAttribute("disabled");
       return;
     }
 
@@ -163,6 +167,7 @@ export const initializeStepOne = (slider: WFSlider) => {
         if (formMatchesExisting) {
           slider.goNext();
           stepOneRequestingAnimation.setStyle({ display: "none" });
+          submitButtonStepOne.removeAttribute("disabled");
           return;
         } else {
           const updatedProfile = await updateStudentProfile(student.id, formData);
@@ -175,6 +180,7 @@ export const initializeStepOne = (slider: WFSlider) => {
         toggleError(new WFComponent("#submitStepOneError"), errorMessage, true);
       } finally {
         stepOneRequestingAnimation.setStyle({ display: "none" });
+        submitButtonStepOne.removeAttribute("disabled");
       }
       return;
     }
@@ -188,6 +194,7 @@ export const initializeStepOne = (slider: WFSlider) => {
         true
       );
       stepOneRequestingAnimation.setStyle({ display: "none" });
+      submitButtonStepOne.removeAttribute("disabled");
       return;
     }
 
@@ -210,6 +217,7 @@ export const initializeStepOne = (slider: WFSlider) => {
       toggleError(new WFComponent("#submitStepOneError"), errorMessage, true);
     } finally {
       stepOneRequestingAnimation.setStyle({ display: "none" });
+      submitButtonStepOne.removeAttribute("disabled");
     }
   });
 };

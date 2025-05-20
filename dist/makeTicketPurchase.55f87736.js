@@ -167,8 +167,10 @@ const makeTicketPurchase = async ()=>{
     await (0, _productionList.initializeProductionList)("#selectProductionList");
     // Handle form submission for production selection
     const formStepOne = new (0, _core.WFFormComponent)("#formStepOne");
+    const submitButtonStepOne = new (0, _core.WFComponent)("#submitStepOne");
     formStepOne.onFormSubmit(async (formData, event)=>{
         event.preventDefault();
+        submitButtonStepOne.setAttribute("disabled", "true");
         const selectedProduction = (0, _ticketPurchaseState.getSelectedProduction)();
         const stepOneRequestingAnimation = new (0, _core.WFComponent)("#stepOneRequestingAnimation");
         if (!selectedProduction || !selectedProduction.id) {
@@ -204,12 +206,15 @@ const makeTicketPurchase = async ()=>{
             stepOneRequestingAnimation.setStyle({
                 display: "none"
             });
+            submitButtonStepOne.removeAttribute("disabled");
         }
     });
     // Step 2: Handle form submission for performance selection
     const formStepTwo = new (0, _core.WFFormComponent)("#formStepTwo");
+    const submitButtonStepTwo = new (0, _core.WFComponent)("#submitStepTwo");
     formStepTwo.onFormSubmit(async (formData, event)=>{
         event.preventDefault();
+        submitButtonStepTwo.setAttribute("disabled", "true");
         const selectedPerformance = (0, _ticketPurchaseState.getSelectedPerformance)();
         const stepTwoRequestingAnimation = new (0, _core.WFComponent)("#stepTwoRequestingAnimation");
         if (!selectedPerformance || !selectedPerformance.id) {
@@ -245,6 +250,7 @@ const makeTicketPurchase = async ()=>{
             stepTwoRequestingAnimation.setStyle({
                 display: "none"
             });
+            submitButtonStepTwo.removeAttribute("disabled");
         }
     });
     // Step 3: Handle form submission for final checkout
@@ -256,6 +262,7 @@ const makeTicketPurchase = async ()=>{
     const customQuestionInput = new (0, _core.WFComponent)("#customQuestionInput");
     const submitStepThreeError = new (0, _core.WFComponent)("#submitStepThreeError");
     const noTicketsError = new (0, _core.WFComponent)("#noTicketsError");
+    const submitButtonStepThree = new (0, _core.WFComponent)("#submitStepThree");
     // Function to clear errors on interaction
     const clearErrorOnInteraction = (inputComponent, errorComponent)=>{
         const clearError = ()=>(0, _formUtils.toggleError)(errorComponent, "", false);
@@ -266,6 +273,7 @@ const makeTicketPurchase = async ()=>{
     formStepThree.onFormSubmit(async (formData, event)=>{
         event.preventDefault();
         let formIsValid = true;
+        submitButtonStepThree.setAttribute("disabled", "true");
         // clear any existing submit errors
         submitStepThreeError.setStyle({
             display: "none"
@@ -366,6 +374,7 @@ const makeTicketPurchase = async ()=>{
             stepThreeRequestingAnimation.setStyle({
                 display: "none"
             });
+            submitButtonStepThree.removeAttribute("disabled");
         }
     });
     // Handle "Go Back" button for Step 3
@@ -2145,6 +2154,6 @@ const initializeStateFromUrlParams = async (slider)=>{
     }
 };
 
-},{"../state/ticketPurchaseState":"7W2vK","../productionList":"4B4yP","../performanceList":"dsUEJ","../ticketTiers":"dhBzw","../components/sidebarIndicators":"2VBNk","@xatom/core":"j9zXV","../components/selectedPerformanceUI":"2s5n0","@parcel/transformer-js/src/esmodule-helpers.js":"5oERU","../../../api/apiConfig":"2Lx0S"}]},[], null, "parcelRequired346")
+},{"../state/ticketPurchaseState":"7W2vK","../productionList":"4B4yP","../performanceList":"dsUEJ","../ticketTiers":"dhBzw","../components/sidebarIndicators":"2VBNk","@xatom/core":"j9zXV","../components/selectedPerformanceUI":"2s5n0","../../../api/apiConfig":"2Lx0S","@parcel/transformer-js/src/esmodule-helpers.js":"5oERU"}]},[], null, "parcelRequired346")
 
 //# sourceMappingURL=makeTicketPurchase.55f87736.js.map

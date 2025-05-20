@@ -570,9 +570,11 @@ const initializeStepOne = (slider)=>{
         });
         (0, _formUtils.setupValidation)(input, error, (0, _formUtils.createValidationFunction)(input, validationFn, message), new (0, _core.WFComponent)("#submitStepOneError"));
     });
+    const submitButtonStepOne = new (0, _core.WFComponent)("#submitStepOne");
     // Handle form submission for Step 1
     formStepOne.onFormSubmit(async (formData, event)=>{
         event.preventDefault();
+        submitButtonStepOne.setAttribute("disabled", "true");
         console.log("Form submission initiated.");
         const stepOneRequestingAnimation = new (0, _core.WFComponent)("#stepOneRequestingAnimation");
         stepOneRequestingAnimation.setStyle({
@@ -591,6 +593,7 @@ const initializeStepOne = (slider)=>{
             stepOneRequestingAnimation.setStyle({
                 display: "none"
             });
+            submitButtonStepOne.removeAttribute("disabled");
             return;
         }
         const existingStudentNow = localStorage.getItem("current_student");
@@ -603,6 +606,7 @@ const initializeStepOne = (slider)=>{
                     stepOneRequestingAnimation.setStyle({
                         display: "none"
                     });
+                    submitButtonStepOne.removeAttribute("disabled");
                     return;
                 } else {
                     const updatedProfile = await updateStudentProfile(student.id, formData);
@@ -616,6 +620,7 @@ const initializeStepOne = (slider)=>{
                 stepOneRequestingAnimation.setStyle({
                     display: "none"
                 });
+                submitButtonStepOne.removeAttribute("disabled");
             }
             return;
         }
@@ -626,6 +631,7 @@ const initializeStepOne = (slider)=>{
             stepOneRequestingAnimation.setStyle({
                 display: "none"
             });
+            submitButtonStepOne.removeAttribute("disabled");
             return;
         }
         try {
@@ -643,6 +649,7 @@ const initializeStepOne = (slider)=>{
             stepOneRequestingAnimation.setStyle({
                 display: "none"
             });
+            submitButtonStepOne.removeAttribute("disabled");
         }
     });
 };
@@ -1686,11 +1693,13 @@ const initializeStepEight = (slider, getFormData)=>{
     const submitStepEight = new (0, _core.WFComponent)("#submitStepEight");
     const stepEightRequestingAnimation = new (0, _core.WFComponent)("#stepEightRequestingAnimation");
     const submitStepEightError = new (0, _core.WFComponent)("#submitStepEightError");
+    const submitButtonStepEight = new (0, _core.WFComponent)("#submitStepEight");
     submitStepEight.on("click", async (event)=>{
         event.preventDefault(); // Prevent normal form submission
         stepEightRequestingAnimation.setStyle({
             display: "block"
         }); // Show loading animation
+        submitButtonStepEight.setAttribute("disabled", "true");
         // Handle reCAPTCHA verification
         const recaptchaAction = "complete_student";
         const isRecaptchaValid = await (0, _recaptchaUtils.handleRecaptcha)(recaptchaAction);
@@ -1698,7 +1707,8 @@ const initializeStepEight = (slider, getFormData)=>{
             (0, _formUtils.toggleError)(submitStepEightError, "reCAPTCHA verification failed. Please try again.", true);
             stepEightRequestingAnimation.setStyle({
                 display: "none"
-            }); // Hide loading animation
+            });
+            submitButtonStepEight.removeAttribute("disabled");
             return;
         }
         const formData = getFormData();
@@ -1746,6 +1756,7 @@ const initializeStepEight = (slider, getFormData)=>{
             stepEightRequestingAnimation.setStyle({
                 display: "none"
             });
+            submitButtonStepEight.removeAttribute("disabled");
         }
     });
     // Handle back button for Step 8

@@ -10,8 +10,8 @@ import {
   validateEmail,
   validatePasswordRequirements,
 } from "../../../utils/validationUtils";
-import { handleRecaptcha } from "../../../utils/recaptchaUtils"; // Ensure this function is implemented for reCAPTCHA handling
-import { apiClient } from "../../../api/apiConfig"; // Ensure you have set up this API client for server interactions
+import { handleRecaptcha } from "../../../utils/recaptchaUtils";
+import { apiClient } from "../../../api/apiConfig";
 
 type CreateAccountResponse = {
   status: string;
@@ -25,7 +25,12 @@ export const signupForm = () => {
     email: string;
     password: string;
     terms_of_service: boolean;
+    company?: string;
+    website?: string;
   }>("#createAccountForm");
+
+  const honeypotCompany = new WFComponent("#companyInput");
+  const honeypotWebsite = new WFComponent("#websiteInput");
 
   const fields = [
     {
@@ -112,7 +117,6 @@ export const signupForm = () => {
       updatePasswordRequirements(inputElement.value);
     });
 
-  // Helper function to handle API responses
   const handleApiResponse = (response: CreateAccountResponse) => {
     if (response.status !== "success") {
       throw new Error(response.message || "An unknown error occurred.");
@@ -124,10 +128,9 @@ export const signupForm = () => {
     event.preventDefault();
     let isFormValid = true;
 
-    requestAnimation.setStyle({ display: "flex" }); // Show loading animation
-    toggleError(requestError, "", false); // Clear previous errors
+    requestAnimation.setStyle({ display: "flex" });
+    toggleError(requestError, "", false);
 
-    // Validate all fields
     fields.forEach(({ input, error, validationFn, message }) => {
       const errorMessage =
         input === termsField.input
@@ -148,7 +151,16 @@ export const signupForm = () => {
       return;
     }
 
-    // Handle reCAPTCHA
+    const companyValue = (honeypotCompany.getElement() as HTMLInputElement).value.trim();
+    const websiteValue = (honeypotWebsite.getElement() as HTMLInputElement).value.trim();
+
+    if (companyValue !== "" || websiteValue !== "") {
+      console.warn("Honeypot fields triggered. Possible bot.");
+      toggleError(requestError, "Spam detected. Submission blocked.", true);
+      requestAnimation.setStyle({ display: "none" });
+      return;
+    }
+
     const recaptchaAction = "create_account";
     const isRecaptchaValid = await handleRecaptcha(recaptchaAction);
 
@@ -158,15 +170,12 @@ export const signupForm = () => {
       return;
     }
 
-    // Submit data
     try {
       const response = await apiClient
         .post<CreateAccountResponse>("/auth/create-account", { data: formData })
         .fetch();
 
-      // Process the response
       handleApiResponse(response);
-
       form.showSuccessState();
       const successTrigger = new WFComponent("#onSuccessTrigger");
       successTrigger.getElement()?.click();

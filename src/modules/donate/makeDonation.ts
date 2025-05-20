@@ -65,66 +65,76 @@ export const makeDonation = async () => {
     "#formStepOne"
   );
 
+  const submitButtonStepOne = new WFComponent("#submitStepOne")
+
   formStepOne.onFormSubmit(async (formData, event) => {
     event.preventDefault();
+    submitButtonStepOne.setAttribute("disabled", "true");
     const selectedCampaign = getSelectedCampaign();
-
+  
     if (!selectedCampaign || !selectedCampaign.id) {
       console.error("No campaign selected.");
       const submitStepOneError = new WFComponent("#submitStepOneError");
       submitStepOneError.setText("Please select a campaign.");
       submitStepOneError.setStyle({ display: "block" });
+      submitButtonStepOne.removeAttribute("disabled"); // ✅ Fix: re-enable button on early return
       return;
     }
-
+  
     console.log("Campaign selected:", selectedCampaign);
-
+  
     // Show loading animation
     const stepOneRequestingAnimation = new WFComponent(
       "#stepOneRequestingAnimation"
     );
     stepOneRequestingAnimation.setStyle({ display: "block" });
-
+  
     try {
       // Initialize product list based on the selected campaign
       await initializeDynamicProductList(
         "#selectProductList",
         selectedCampaign.id
       );
-
+  
       // Update selected campaign display
       updateSelectedCampaignDisplay();
-
+  
       // Hide loading animation
       stepOneRequestingAnimation.setStyle({ display: "none" });
-
+  
       // Mark step one as completed and proceed to the next step
       markStepAsCompleted(1);
       setActiveStep(2);
       slider.goNext();
     } catch (error) {
       console.error("Error loading products:", error);
-
+  
       // Hide loading animation and show error message
       stepOneRequestingAnimation.setStyle({ display: "none" });
       const submitStepOneError = new WFComponent("#submitStepOneError");
       submitStepOneError.setText("Error loading products. Please try again.");
       submitStepOneError.setStyle({ display: "block" });
+    } finally {
+      submitButtonStepOne.removeAttribute("disabled");
     }
   });
+  
 
   // Handle step 2 interactions
   const formStepTwo = new WFFormComponent<{ product_id: string }>(
     "#formStepTwo"
   );
 
+  const submitButtonStepTwo = new WFComponent("#submitStepTwo");
+
   formStepTwo.onFormSubmit(async (formData, event) => {
     event.preventDefault();
+    submitButtonStepTwo.setAttribute("disabled", "true"); // ✅ Disable button immediately
   
     const selectedProduct = getSelectedProduct();
-    const donationType = getSelectedDonationType(); // "one-time", "month", or "year"
+    const donationType = getSelectedDonationType();
     let isPriceAvailable = false;
-    
+  
     switch (donationType) {
       case "one-time":
         isPriceAvailable = !!selectedProduct.Single_sale_price_id;
@@ -136,198 +146,147 @@ export const makeDonation = async () => {
         isPriceAvailable = !!selectedProduct.Annual_price_id;
         break;
     }
-    
+  
     if (!isPriceAvailable) {
       const submitStepTwoError = new WFComponent("#submitStepTwoError");
       submitStepTwoError.setText("The selected product is not available for this donation type.");
       submitStepTwoError.setStyle({ display: "block" });
+      submitButtonStepTwo.removeAttribute("disabled"); // ✅ Re-enable on early return
       return;
     }
-    
-
-    // Get user email from authentication state if logged in
+  
     const user = userAuth.getUser();
     const userEmail = user && user.email ? user.email : null;
-
-    // Validate user contact details if emailWrap is displayed
+  
     const emailWrap = document.getElementById("emailWrap");
     let hasErrors = false;
     let email = userEmail;
-
-    // Initialize an object to hold all donor details
-    let donorDetails: {
+  
+    let donorDetails = {
+      email: "",
+      firstName: "",
+      lastName: "",
+      isAnonymous: false,
+    } as {
       email: string;
       firstName: string;
       lastName: string;
       isAnonymous: boolean;
       inNameOf?: string;
-    } = {
-      email: "",
-      firstName: "",
-      lastName: "",
-      isAnonymous: false,
     };
-
+  
     if (emailWrap && emailWrap.style.display !== "none") {
-      const firstNameInput = document.getElementById(
-        "firstNameInput"
-      ) as HTMLInputElement;
-      const lastNameInput = document.getElementById(
-        "lastNameInput"
-      ) as HTMLInputElement;
-      const emailInput = document.getElementById(
-        "emailInput"
-      ) as HTMLInputElement;
-
+      const firstNameInput = document.getElementById("firstNameInput") as HTMLInputElement;
+      const lastNameInput = document.getElementById("lastNameInput") as HTMLInputElement;
+      const emailInput = document.getElementById("emailInput") as HTMLInputElement;
+  
       const firstNameError = !validateNotEmpty(firstNameInput.value);
       const lastNameError = !validateNotEmpty(lastNameInput.value);
       const emailError = !validateEmail(emailInput.value);
-
+  
       if (firstNameError || lastNameError || emailError) {
         hasErrors = true;
-        console.error("Invalid input in contact details.");
-
+  
         if (firstNameError) {
-          const firstNameInputError = new WFComponent("#firstNameInputError");
-          firstNameInputError.setText("First name is required.");
-          firstNameInputError.setStyle({ display: "block" });
+          const err = new WFComponent("#firstNameInputError");
+          err.setText("First name is required.");
+          err.setStyle({ display: "block" });
         }
-
+  
         if (lastNameError) {
-          const lastNameInputError = new WFComponent("#lastNameInputError");
-          lastNameInputError.setText("Last name is required.");
-          lastNameInputError.setStyle({ display: "block" });
+          const err = new WFComponent("#lastNameInputError");
+          err.setText("Last name is required.");
+          err.setStyle({ display: "block" });
         }
-
+  
         if (emailError) {
-          const emailInputError = new WFComponent("#emailInputError");
-          emailInputError.setText("A valid email address is required.");
-          emailInputError.setStyle({ display: "block" });
+          const err = new WFComponent("#emailInputError");
+          err.setText("A valid email address is required.");
+          err.setStyle({ display: "block" });
         }
-
-        // Display general error message
+  
         const submitStepTwoError = new WFComponent("#submitStepTwoError");
         submitStepTwoError.setText("Please correct the errors above.");
         submitStepTwoError.setStyle({ display: "block" });
-
+        submitButtonStepTwo.removeAttribute("disabled"); // ✅ Re-enable on validation failure
         return;
       }
-
-      // If validation passes and the user is not logged in, save contact details
+  
       if (!userEmail) {
         email = emailInput.value;
       }
-
-      const isAnonymous = (
-        document.getElementById("anonymousInput") as HTMLInputElement
-      ).checked;
-
-      // Populate donorDetails object
+  
+      const isAnonymous = (document.getElementById("anonymousInput") as HTMLInputElement).checked;
       donorDetails = {
-        email: email,
+        email,
         firstName: firstNameInput.value,
         lastName: lastNameInput.value,
-        isAnonymous: isAnonymous,
+        isAnonymous,
       };
     } else {
-      // Handle anonymous input and email when the user is logged in
-      const isAnonymous = (
-        document.getElementById("anonymousInput") as HTMLInputElement
-      ).checked;
+      const isAnonymous = (document.getElementById("anonymousInput") as HTMLInputElement).checked;
       donorDetails = {
         email: userEmail || "",
         firstName: user ? user.profile.first_name : "",
         lastName: user ? user.profile.last_name : "",
-        isAnonymous: isAnonymous,
+        isAnonymous,
       };
     }
-
-    // Handle "Make this donation in someone else's name"
-    const inNameOfCheckbox = document.getElementById(
-      "inNameOfBoolInput"
-    ) as HTMLInputElement;
-    const inNameOfInput = document.getElementById(
-      "inNameOfInput"
-    ) as HTMLInputElement;
-
-    if (inNameOfCheckbox && inNameOfCheckbox.checked) {
+  
+    const inNameOfCheckbox = document.getElementById("inNameOfBoolInput") as HTMLInputElement;
+    const inNameOfInput = document.getElementById("inNameOfInput") as HTMLInputElement;
+  
+    if (inNameOfCheckbox?.checked) {
       const inNameOfValue = inNameOfInput.value.trim();
-      const inNameOfError = !validateNotEmpty(inNameOfValue);
-
-      if (inNameOfError) {
+      if (!validateNotEmpty(inNameOfValue)) {
         hasErrors = true;
-        console.error(
-          "Name input is required when making donation in someone else's name."
-        );
-
-        const inNameOfInputError = new WFComponent("#inNameOfInputError");
-        inNameOfInputError.setText("Please enter the name.");
-        inNameOfInputError.setStyle({ display: "block" });
-
-        // Display general error message
+        const err = new WFComponent("#inNameOfInputError");
+        err.setText("Please enter the name.");
+        err.setStyle({ display: "block" });
+  
         const submitStepTwoError = new WFComponent("#submitStepTwoError");
         submitStepTwoError.setText("Please correct the errors above.");
         submitStepTwoError.setStyle({ display: "block" });
-
+        submitButtonStepTwo.removeAttribute("disabled"); // ✅ Re-enable on validation failure
         return;
-      } else {
-        // Add inNameOf to donorDetails
-        donorDetails.inNameOf = inNameOfValue;
       }
+      donorDetails.inNameOf = inNameOfValue;
     } else {
-      // If checkbox is not checked, ensure inNameOf is cleared
       donorDetails.inNameOf = "";
     }
-
+  
     if (!hasErrors) {
-      console.log("Donor details:", donorDetails);
-      console.log("Product selected:", selectedProduct);
-
-      // Save all donor details at once
       saveDonorDetails(donorDetails);
-
-      // Debug: Log the entire donation state before submission
-      const currentDonationState = loadDonationState();
-      console.log("Current Donation State:", currentDonationState);
-
-      // Show loading animation
-      const stepTwoRequestingAnimation = new WFComponent(
-        "#stepTwoRequestingAnimation"
-      );
+  
+      const stepTwoRequestingAnimation = new WFComponent("#stepTwoRequestingAnimation");
       stepTwoRequestingAnimation.setStyle({ display: "block" });
-
-      // Submit the donation state to the server
+  
       try {
         const donationState = {
           ...loadDonationState(),
-          currentPageUrl: window.location.href, // ✅ Add this line
+          currentPageUrl: window.location.href,
         };
+  
         const response = await apiClient
-  .post<{ checkout_url: string }>("/donate/begin_checkout", {
-    data: donationState,
-  })
-  .fetch();
-
-
-        // Hide loading animation
-        stepTwoRequestingAnimation.setStyle({ display: "none" });
-
-        // Navigate to the checkout URL
+          .post<{ checkout_url: string }>("/donate/begin_checkout", {
+            data: donationState,
+          })
+          .fetch();
+  
         window.location.href = response.checkout_url;
       } catch (error) {
         console.error("Error during checkout:", error);
-
-        // Hide loading animation
-        stepTwoRequestingAnimation.setStyle({ display: "none" });
-
         const submitStepTwoError = new WFComponent("#submitStepTwoError");
-        submitStepTwoError.setText(
-          "An error occurred during checkout. Please try again."
-        );
+        submitStepTwoError.setText("An error occurred during checkout. Please try again.");
         submitStepTwoError.setStyle({ display: "block" });
+      } finally {
+        const stepTwoRequestingAnimation = new WFComponent("#stepTwoRequestingAnimation");
+        stepTwoRequestingAnimation.setStyle({ display: "none" });
+        submitButtonStepTwo.removeAttribute("disabled"); // ✅ Always re-enable
       }
     }
   });
+  
 
   // Initialize components for UI interactions
   const backStepTwoButton = new WFComponent("#backStepTwo");

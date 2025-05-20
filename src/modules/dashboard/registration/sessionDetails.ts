@@ -227,7 +227,7 @@ function initializeStudentList(students: Student[]) {
       .getChildAsComponent("img#listStudentCardImage")
       ?.setAttribute(
         "src",
-        rowData.profile_pic || "https://cdn.prod.website-files.com/placeholder.svg"
+        rowData.profile_pic || "https://cdn.prod.website-files.com/667f080f36260b9afbdc46b2/682bd6f6403a5cb7582db055_Profile_avatar_placeholder_large.png"
       );
 
     const linkComp = comp.getChildAsComponent<HTMLAnchorElement>("#studentLink");

@@ -247,8 +247,28 @@ export async function initializeTicketOrderPage() {
   ${ticketListElement.outerHTML}
 </body>
 </html>`;
-    printWindow.document.write(html);
-    printWindow.document.close();
+printWindow.document.write(html);
+printWindow.document.close();
+
+// Wait for all images (like QR codes) to finish loading
+printWindow.onload = () => {
+  const images = printWindow.document.images;
+  let loadedCount = 0;
+  const total = images.length;
+
+  if (total === 0) {
     printWindow.print();
+    return;
+  }
+
+  Array.from(images).forEach((img) => {
+    img.onload = img.onerror = () => {
+      loadedCount++;
+      if (loadedCount === total) {
+        printWindow.print();
+      }
+    };
+  });
+};
   });
 }

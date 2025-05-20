@@ -252,7 +252,7 @@ async function initializeDonationDetailsPage() {
     }
 }
 
-},{"@xatom/core":"j9zXV","@xatom/image":"ly8Ay","../../../api/apiConfig":"2Lx0S","@parcel/transformer-js/src/esmodule-helpers.js":"5oERU","./components/CancelDonationSubscriptionDialog":"ajqiW"}],"ly8Ay":[function(require,module,exports) {
+},{"@xatom/core":"j9zXV","@xatom/image":"ly8Ay","../../../api/apiConfig":"2Lx0S","./components/CancelDonationSubscriptionDialog":"ajqiW","@parcel/transformer-js/src/esmodule-helpers.js":"5oERU"}],"ly8Ay":[function(require,module,exports) {
 var t = require("d023971cccd819e3");
 var e, r, s, i, o, n, u = {};
 e = u, r = "WFImage", s = ()=>c, Object.defineProperty(e, r, {

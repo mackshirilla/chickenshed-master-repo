@@ -215,10 +215,7 @@ const getStudentDetails = async (studentId)=>{
             // Set profile picture
             const studentProfilePicture = new (0, _image.WFImage)("#studentProfilePicture");
             if (student.profile_pic && student.profile_pic.url) studentProfilePicture.setImage(student.profile_pic.url);
-            else {
-                console.log("No profile picture available");
-                studentProfilePicture.setImage("https://cdn.prod.website-files.com/667f080f36260b9afbdc46b2/667f080f36260b9afbdc46be_placeholder.svg");
-            }
+            else studentProfilePicture.setImage("https://cdn.prod.website-files.com/667f080f36260b9afbdc46b2/682bd6f6403a5cb7582db055_Profile_avatar_placeholder_large.png");
             // Set email
             const studentEmail = new (0, _core.WFComponent)("#studentEmail");
             studentEmail.setText(student.email || "N/A");
@@ -424,6 +421,10 @@ const initializeEditStudentDialog = (studentId)=>{
     }
     // Attempt to retrieve the edit student dialog element
     const editStudentDialogElement = document.getElementById("editStudentDialog");
+    if (editStudentDialogElement) editStudentDialogElement.addEventListener("click", (event)=>{
+        // Only close if the user clicked directly on the backdrop
+        if (event.target === editStudentDialogElement) editStudentDialogElement.close();
+    });
     // Attempt to retrieve and initialize the "Close Dialog" button
     let closeDialogButton = null;
     try {
@@ -1012,6 +1013,10 @@ var _getStudentDetails = require("./getStudentDetails");
 const initializeEditEmergencyDialog = (studentId)=>{
     const openDialogButton = new (0, _core.WFComponent)("#openEmergencyContactDialog");
     const emergencyDialog = document.getElementById("editEmergencyContactDialog");
+    // Allow clicking outside the dialog (on the backdrop) to close it
+    if (emergencyDialog) emergencyDialog.addEventListener("click", (event)=>{
+        if (event.target === emergencyDialog) emergencyDialog.close();
+    });
     const closeDialogButton = new (0, _core.WFComponent)("#close-emergency-dialog-btn");
     // Open the dialog when the button is clicked
     openDialogButton.on("click", async ()=>{
@@ -1250,6 +1255,16 @@ function initializeDeleteStudent(studentId) {
     }
     // Attempt to retrieve the delete student dialog element
     const deleteStudentDialogElement = document.getElementById("deleteStudentDialog");
+    // Allow backdrop click to close the dialog
+    if (deleteStudentDialogElement) deleteStudentDialogElement.addEventListener("click", (event)=>{
+        if (event.target === deleteStudentDialogElement) {
+            deleteStudentDialogElement.close();
+            if (pageMain) pageMain.setAttribute("data-brand", "2");
+            if (deleteStudentError) deleteStudentError.setStyle({
+                display: "none"
+            });
+        }
+    });
     // Attempt to retrieve and initialize the "Close Delete Dialog" button
     let closeDeleteDialogBtn = null;
     try {
