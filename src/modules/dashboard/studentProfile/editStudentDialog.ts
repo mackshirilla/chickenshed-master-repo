@@ -12,7 +12,7 @@ import {
 import {
   validateNotEmpty,
   validateEmailOptional,
-  validatePhoneNumber,
+  validatePhoneNumberOptional,
   validateSelectField,
 } from "../../../utils/validationUtils";
 import { getStudentDetails } from "./getStudentDetails";
@@ -35,6 +35,7 @@ export const initializeEditStudentDialog = (studentId: number) => {
       "Element #openEditStudentDialog not found. Skipping initialization of edit dialog opener."
     );
   }
+  
 
   // Attempt to retrieve the edit student dialog element
 const editStudentDialogElement = document.getElementById(
@@ -135,7 +136,7 @@ if (editStudentDialogElement) {
         {
           input: new WFComponent("#phoneNumberInput"),
           error: new WFComponent("#phoneNumberInputError"),
-          validationFn: validatePhoneNumber,
+          validationFn: validatePhoneNumberOptional,
           message: "Phone number must be in the format (xxx) xxx-xxxx",
         },
         {

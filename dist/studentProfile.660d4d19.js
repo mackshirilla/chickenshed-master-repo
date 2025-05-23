@@ -478,7 +478,7 @@ const initializeEditStudentDialog = (studentId)=>{
         {
             input: new (0, _core.WFComponent)("#phoneNumberInput"),
             error: new (0, _core.WFComponent)("#phoneNumberInputError"),
-            validationFn: (0, _validationUtils.validatePhoneNumber),
+            validationFn: (0, _validationUtils.validatePhoneNumberOptional),
             message: "Phone number must be in the format (xxx) xxx-xxxx"
         },
         {

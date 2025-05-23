@@ -109,31 +109,47 @@ function populateWorkshopOptions(
   const filteredSessions = data.sessions.filter(session =>
     session.program.id.toString() === selectedProgramId && session.workshop
   );
+
   if (filteredSessions.length > 0) {
     (workshopSelect.getElement() as HTMLSelectElement).disabled = false;
+
     let optionsHTML = '<option value="">Select Workshop</option>';
+
+    // Build a map of unique workshops
     const workshopsMap = new Map<number, string>();
     filteredSessions.forEach(session => {
       if (session.workshop) {
         workshopsMap.set(session.workshop.id, session.workshop.Name);
       }
     });
-    workshopsMap.forEach((name, id) => {
+
+    // Sort workshops by name
+    const sortedWorkshops = Array.from(workshopsMap.entries()).sort((a, b) =>
+      a[1].localeCompare(b[1])
+    );
+
+    // Append options in sorted order
+    sortedWorkshops.forEach(([id, name]) => {
       optionsHTML += `<option value="${id}">${name}</option>`;
     });
+
     workshopSelect.setHTML(optionsHTML);
     (workshopSelect.getElement() as HTMLElement).style.display = "block";
     const workshopText = row.getChildAsComponent(config.fields.workshop.textSelector);
     workshopText.getElement().style.display = "none";
   } else {
+    // No workshops available — disable and display " - "
     (workshopSelect.getElement() as HTMLSelectElement).disabled = true;
     (workshopSelect.getElement() as HTMLElement).style.display = "none";
     const workshopText = row.getChildAsComponent(config.fields.workshop.textSelector);
     workshopText.setText(" - ");
     workshopText.getElement().style.display = "block";
+
+    // Go directly to session select
     populateSessionOptions(row, data, selectedProgramId, null, config);
   }
 }
+
 
 function populateSessionOptions(
   row: WFComponent,

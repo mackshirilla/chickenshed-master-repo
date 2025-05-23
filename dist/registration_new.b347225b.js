@@ -350,11 +350,15 @@ function populateWorkshopOptions(row, data, selectedProgramId, config) {
     if (filteredSessions.length > 0) {
         workshopSelect.getElement().disabled = false;
         let optionsHTML = '<option value="">Select Workshop</option>';
+        // Build a map of unique workshops
         const workshopsMap = new Map();
         filteredSessions.forEach((session)=>{
             if (session.workshop) workshopsMap.set(session.workshop.id, session.workshop.Name);
         });
-        workshopsMap.forEach((name, id)=>{
+        // Sort workshops by name
+        const sortedWorkshops = Array.from(workshopsMap.entries()).sort((a, b)=>a[1].localeCompare(b[1]));
+        // Append options in sorted order
+        sortedWorkshops.forEach(([id, name])=>{
             optionsHTML += `<option value="${id}">${name}</option>`;
         });
         workshopSelect.setHTML(optionsHTML);
@@ -362,11 +366,13 @@ function populateWorkshopOptions(row, data, selectedProgramId, config) {
         const workshopText = row.getChildAsComponent(config.fields.workshop.textSelector);
         workshopText.getElement().style.display = "none";
     } else {
+        // No workshops available — disable and display " - "
         workshopSelect.getElement().disabled = true;
         workshopSelect.getElement().style.display = "none";
         const workshopText = row.getChildAsComponent(config.fields.workshop.textSelector);
         workshopText.setText(" - ");
         workshopText.getElement().style.display = "block";
+        // Go directly to session select
         populateSessionOptions(row, data, selectedProgramId, null, config);
     }
 }

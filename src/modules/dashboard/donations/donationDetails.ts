@@ -27,16 +27,16 @@ interface Donation {
   keep_anonymous: boolean;
   in_name_of: string;
   campaign_name: string;
-  support_campaign: SupportCampaign;
+  support_campaign?: SupportCampaign | null;
   donation_subscription?: DonationSubscription;
 }
 
 export async function initializeDonationDetailsPage() {
-  // Hide breadcrumbs if on donation-details path
   if (window.location.pathname === "/donation-details") {
     const breadcrumbs = new WFComponent(".breadcrumbs_container");
     breadcrumbs.setStyle({ display: "none" });
   }
+
   const urlParams = new URLSearchParams(window.location.search);
   const donationUuid = urlParams.get("donation");
   if (!donationUuid) {
@@ -50,27 +50,42 @@ export async function initializeDonationDetailsPage() {
     const { donation } = response;
 
     const campaign = donation.support_campaign;
-
     const campaignImage = new WFImage("#campaignImage");
-    campaignImage.setImage(campaign.Main_Image);
-    campaignImage.getElement().setAttribute("alt", `${campaign.Name} - Campaign Image`);
+
+    const fallbackImageUrl = "https://cdn.prod.website-files.com/667f080f36260b9afbdc46b2/667f080f36260b9afbdc46be_placeholder.svg";
+
+if (campaign && campaign.Main_Image) {
+  campaignImage.setImage(campaign.Main_Image);
+  campaignImage.getElement().setAttribute("alt", `${campaign.Name} - Campaign Image`);
+} else {
+  campaignImage.setImage(fallbackImageUrl);
+  campaignImage.getElement().setAttribute("alt", "Default campaign image");
+}
+
+campaignImage.setStyle({ display: "block" }); // Always show it
 
     const campaignName = new WFComponent("#campaignName");
-    campaignName.setText(campaign.Name);
-
     const campaignSubheading = new WFComponent("#campaignSubheading");
-    campaignSubheading.setText(campaign.Subheading);
-
     const campaignBreadcrumb = new WFComponent("#campaignBreadcrumb");
+    const campaignShortDescription = new WFComponent("#campaignShortDescription");
+
     const donationDate = new Date(donation.created_at).toLocaleDateString([], {
       month: "2-digit",
       day: "2-digit",
       year: "2-digit",
     });
-    campaignBreadcrumb.setText(`${campaign.Name} - ${donationDate}`);
 
-    const campaignShortDescription = new WFComponent("#campaignShortDescription");
-    campaignShortDescription.setText(campaign.Short_Description);
+    if (campaign) {
+      campaignName.setText(campaign.Name);
+      campaignSubheading.setText(campaign.Subheading);
+      campaignShortDescription.setText(campaign.Short_Description);
+      campaignBreadcrumb.setText(`${campaign.Name} - ${donationDate}`);
+    } else {
+      campaignName.setText(donation.campaign_name || "Support Campaign");
+      campaignSubheading.setStyle({ display: "none" });
+      campaignShortDescription.setStyle({ display: "none" });
+      campaignBreadcrumb.setText(`${donation.campaign_name || "Donation"} - ${donationDate}`);
+    }
 
     const anonymousTrue = new WFComponent("#anonymousTrue");
     const anonymousFalse = new WFComponent("#anonymousFalse");
@@ -133,4 +148,3 @@ export async function initializeDonationDetailsPage() {
     console.error("Failed to initialize donation details page:", error);
   }
 }
-

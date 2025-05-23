@@ -38,6 +38,7 @@ export interface Performance {
   Displayed_Name: string;
   Main_Image: string;
   Short_Description: string;
+  Sold_Out: boolean;
   /**
    * Unix‐millisecond timestamp
    */

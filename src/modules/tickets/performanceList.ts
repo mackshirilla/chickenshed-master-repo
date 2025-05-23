@@ -60,6 +60,25 @@ export const initializePerformanceList = async (
     const inputEl = card.getChildAsComponent(".input_card_input");
     const labelEl = card.getChildAsComponent("label");
     const locEl = card.getChildAsComponent("#cardPerformanceLocation");
+    const soldOutEl = card.getChildAsComponent("#performanceSoldOut");
+
+if (perf.Sold_Out) {
+  // Show the sold-out banner/label
+  soldOutEl?.setStyle({ display: "flex" });
+
+  // Disable interaction on the row
+  rowElement.setStyle({
+    pointerEvents: "none",
+    opacity: "0.6", // optional: to give visual feedback
+  });
+
+  // Optionally, also disable the radio input
+  inputEl.setAttribute("disabled", "true");
+} else {
+  // Ensure it's hidden if not sold out
+  soldOutEl?.setStyle({ display: "none" });
+}
+
 
     if (
       !dayEl ||
@@ -72,7 +91,8 @@ export const initializePerformanceList = async (
       !imageEl ||
       !inputEl ||
       !labelEl ||
-      !locEl
+      !locEl ||
+      !soldOutEl 
     ) {
       console.error("Performance elements not found.");
       return;
