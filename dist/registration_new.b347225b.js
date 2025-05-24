@@ -327,8 +327,6 @@ function resetRow(row, config) {
         selectEl.getElement().style.display = "block";
         selectEl.getElement().disabled = !item.enable;
     });
-    const confirmButton = row.getChildAsComponent(".add_registration_button");
-    confirmButton.getElement().style.display = "block";
     row.removeCssClass("confirmed");
 }
 function populateProgramOptions(row, data, config) {
@@ -438,64 +436,58 @@ function attachRowEventListeners(row, data, config) {
     });
     const studentSelect = row.getChildAsComponent(config.fields.student.selectSelector);
     studentSelect.on("change", ()=>{
-        const selectEl = studentSelect.getElement();
-        row.getElement().setAttribute("data-student-id", selectEl.value);
-    });
-    const confirmButton = row.getChildAsComponent(".add_registration_button");
-    confirmButton.on("click", ()=>{
-        const programSelectEl = row.getChildAsComponent(config.fields.program.selectSelector).getElement();
-        const sessionSelectEl = row.getChildAsComponent(config.fields.session.selectSelector).getElement();
-        const studentSelectEl = row.getChildAsComponent(config.fields.student.selectSelector).getElement();
-        if (!programSelectEl.value || !sessionSelectEl.value || !studentSelectEl.value) {
-            console.warn("Please select a Program, Session, and Student.");
-            return;
-        }
+        const programEl = row.getChildAsComponent(config.fields.program.selectSelector).getElement();
+        const workshopEl = row.getChildAsComponent(config.fields.workshop.selectSelector).getElement();
+        const sessionEl = row.getChildAsComponent(config.fields.session.selectSelector).getElement();
+        const studentEl = row.getChildAsComponent(config.fields.student.selectSelector).getElement();
+        const programId = programEl.value;
+        const workshopId = workshopEl.disabled ? null : workshopEl.value;
+        const sessionId = sessionEl.value;
+        const studentId = studentEl.value;
+        if (!programId || !sessionId || !studentId) return;
+        const rowEl = row.getElement();
+        rowEl.setAttribute("data-program-id", programId);
+        rowEl.setAttribute("data-session-id", sessionId);
+        rowEl.setAttribute("data-student-id", studentId);
+        if (workshopId) rowEl.setAttribute("data-workshop-id", workshopId);
+        // Prevent duplicates
         const tableBodyEl = document.querySelector(config.tableBodySelector);
-        const currentSessionId = row.getElement().getAttribute("data-session-id");
-        if (tableBodyEl && currentSessionId) {
-            const duplicate = Array.from(tableBodyEl.querySelectorAll("tr.confirmed")).some((tr)=>{
-                return tr.getAttribute("data-session-id") === currentSessionId && tr.getAttribute("data-student-id") === studentSelectEl.value;
-            });
+        if (tableBodyEl) {
+            const duplicate = Array.from(tableBodyEl.querySelectorAll("tr.confirmed")).some((tr)=>tr.getAttribute("data-session-id") === sessionId && tr.getAttribute("data-student-id") === studentId);
             if (duplicate) {
                 console.warn("This student is already registered for the selected session.");
                 return;
             }
         }
-        row.getElement().setAttribute("data-student-id", studentSelectEl.value);
+        // Convert selects to display mode
         const programText = row.getChildAsComponent(config.fields.program.textSelector);
-        programText.setText(programSelectEl.options[programSelectEl.selectedIndex].text);
-        const workshopSelectEl = row.getChildAsComponent(config.fields.workshop.selectSelector).getElement();
-        let workshopTextValue = workshopSelectEl.disabled ? " - " : workshopSelectEl.options[workshopSelectEl.selectedIndex].text;
+        programText.setText(programEl.options[programEl.selectedIndex].text);
         const workshopText = row.getChildAsComponent(config.fields.workshop.textSelector);
-        workshopText.setText(workshopTextValue);
+        workshopText.setText(workshopEl.disabled ? " - " : workshopEl.options[workshopEl.selectedIndex].text);
         const sessionText = row.getChildAsComponent(config.fields.session.textSelector);
-        const selectedSession = data.sessions.find((session)=>session.id.toString() === sessionSelectEl.value);
-        if (selectedSession) sessionText.setText(`${selectedSession.Weekday} ${selectedSession.Time_block}`);
-        else sessionText.setText("Unknown session");
+        const selectedSession = data.sessions.find((session)=>session.id.toString() === sessionId);
+        sessionText.setText(selectedSession ? `${selectedSession.Weekday} ${selectedSession.Time_block}` : "Unknown session");
         const studentText = row.getChildAsComponent(config.fields.student.textSelector);
-        studentText.setText(studentSelectEl.options[studentSelectEl.selectedIndex].text);
-        const hideSelectParent = (selectSelector)=>{
-            const comp = row.getChildAsComponent(selectSelector);
-            const parent = comp.getElement().parentElement;
-            if (parent) parent.style.display = "none";
-        };
-        hideSelectParent(config.fields.program.selectSelector);
-        hideSelectParent(config.fields.workshop.selectSelector);
-        hideSelectParent(config.fields.session.selectSelector);
-        hideSelectParent(config.fields.student.selectSelector);
-        confirmButton.getElement().style.display = "none";
-        programText.getElement().style.display = "block";
-        workshopText.getElement().style.display = "block";
-        sessionText.getElement().style.display = "block";
-        studentText.getElement().style.display = "block";
+        studentText.setText(studentEl.options[studentEl.selectedIndex].text);
+        // Hide selects and show text
+        [
+            config.fields.program,
+            config.fields.workshop,
+            config.fields.session,
+            config.fields.student
+        ].forEach((field)=>{
+            const selectParent = row.getChildAsComponent(field.selectSelector).getElement().parentElement;
+            if (selectParent) selectParent.style.display = "none";
+            row.getChildAsComponent(field.textSelector).getElement().style.display = "block";
+        });
         row.addCssClass("confirmed");
-        // Update state: add this row's data to registrationItems.
+        // Save to state
         const currentItems = (0, _registrationState.loadState)().registrationItems || [];
         const newItem = {
-            program_id: row.getAttribute("data-program-id"),
-            session_id: row.getAttribute("data-session-id"),
-            student_id: row.getAttribute("data-student-id"),
-            program_name: programSelectEl.options[programSelectEl.selectedIndex].text,
+            program_id: programId,
+            session_id: sessionId,
+            student_id: studentId,
+            program_name: programText.getElement().textContent || "",
             workshop_name: workshopText.getElement().textContent || "",
             session_name: sessionText.getElement().textContent || "",
             student_name: studentText.getElement().textContent || ""
