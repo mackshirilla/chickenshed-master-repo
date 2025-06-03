@@ -6,7 +6,7 @@ import { loadState } from "../state/manageSubscriptionState";
 /**
  * Recalculates and updates the subscription summary:
  * - Aggregates current subscription line-item totals
- * - Applies any discount (financial aid)
+ * - Applies any discount (financial aid or coupon)
  * - Updates the UI elements for the subscription total and original amount, appending the billing period suffix
  */
 export function updateSubscriptionSummary(): void {
@@ -19,18 +19,27 @@ export function updateSubscriptionSummary(): void {
   });
   const subtotal = lineTotals.reduce((sum, amt) => sum + amt, 0);
 
-  // 2) Get discount percentage and billing period from state
+  // 2) Get data from state
   const state = loadState();
-  const discountPercent = state.apiData?.financial_aid?.selected_discount || 0;
-  const periodType = state.updateSubscriptionType || state.apiData?.subscription_type || "month";
+  const subscription = state.apiData!;
+  const discountPercentFromAid = subscription.financial_aid?.selected_discount ?? 0;
+  const totalDiscount = subscription.subscription_amount_discount || 0;
+
+  const actualDiscountPercent = subtotal > 0
+    ? (totalDiscount / subtotal) * 100
+    : 0;
+
+  const isAid = discountPercentFromAid > 0;
+  const label = `${actualDiscountPercent.toFixed(0)}% ${isAid ? "Financial Aid" : "Discount"}`;
+
+  const periodType = state.updateSubscriptionType || subscription.subscription_type || "month";
   const suffix =
     periodType === "year" ? "/year"
     : periodType === "semester" ? "/semester"
     : "/month";
 
-  // 3) Compute discounted total
-  const discountAmount = subtotal * (discountPercent / 100);
-  const totalAfterDiscount = subtotal - discountAmount;
+  // 3) Compute total after discount
+  const totalAfterDiscount = subtotal - totalDiscount;
 
   // 4) Update UI elements
   const totalEl = new WFComponent("#subscription_total");
@@ -38,8 +47,8 @@ export function updateSubscriptionSummary(): void {
   const pillEl = new WFComponent("#subscription_discount_pill");
   const appliedEl = new WFComponent("#subscription_discount_applied");
 
-  if (discountPercent > 0) {
-    appliedEl.setText(`${discountPercent}%`);
+  if (totalDiscount > 0) {
+    appliedEl.setText(label);
     pillEl.getElement().style.display = "block";
     origEl.setText(`was $${subtotal.toFixed(2)} ${suffix}`);
     origEl.getElement().style.display = "block";
@@ -48,6 +57,5 @@ export function updateSubscriptionSummary(): void {
     origEl.getElement().style.display = "none";
   }
 
-  // Always update the subscription total display with suffix
   totalEl.setText(`$${totalAfterDiscount.toFixed(2)} ${suffix}`);
 }
