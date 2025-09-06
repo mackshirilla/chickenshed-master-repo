@@ -170,12 +170,20 @@ new WFRoute("/dashboard").execute(async () => {
   new WFRoute("/dashboard/registrations").execute(async () => {
     try {
       const isValidUser = await validateUser();
-
+  
       if (isValidUser) {
-        import("../modules/dashboard/listRegistration").then(
-          ({ initializeDynamicSubscriptionList }) =>
-            initializeDynamicSubscriptionList("#listRegistration")
-        );
+        // Import both modules in parallel
+        const [
+          { initializeDynamicSubscriptionList },
+          { initializeDynamicAddOnRegistrationList }
+        ] = await Promise.all([
+          import("../modules/dashboard/listRegistration"),
+          import("../modules/dashboard/listAddOnRegistrations")
+        ]);
+  
+        // Initialize both lists
+        initializeDynamicSubscriptionList("#listRegistration");
+        initializeDynamicAddOnRegistrationList("#listAddOnRegistration");
       } else {
         navigate("/login");
       }
@@ -183,7 +191,7 @@ new WFRoute("/dashboard").execute(async () => {
       console.error("Error validating user:", error);
     }
   });
-
+  
   new WFRoute("/dashboard/ticket-orders").execute(async () => {
     try {
       const isValidUser = await validateUser();
@@ -326,6 +334,22 @@ new WFRoute("/dashboard").execute(async () => {
       console.error("Error validating user:", error);
     }
   });
+
+  new WFRoute("/lab-registration").execute(async () => {
+    try {
+      const isValidUser = await validateUser();
+
+      if (isValidUser) {
+        import("../modules/registration_labs/index").then(
+          ({ newProgramRegistration }) => newProgramRegistration()
+        );
+      } else {
+        navigate("/login");
+      }
+    } catch (error) {
+      console.error("Error validating user:", error);
+    }
+  });
   
 
   // Ticket Purchase Routes
@@ -365,6 +389,12 @@ new WFRoute("/dashboard/donations/donation").execute(async () => {
 new WFRoute("/checkout-success/registration").execute(() => {
   import("../modules/success_page/registration_success").then(({ handleRegistrationSuccessIndex }) =>
     handleRegistrationSuccessIndex()
+  );
+});
+
+new WFRoute("/checkout-success/lab-registration").execute(() => {
+  import("../modules/success_page/lab_registration_success").then(({ handleLabRegistrationSuccess }) =>
+    handleLabRegistrationSuccess()
   );
 });
 

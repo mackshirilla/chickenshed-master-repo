@@ -11,24 +11,33 @@ import { initializeDynamicFileList } from "./listFiles";
 import { WFComponent } from "@xatom/core";
 import { userAuth } from "../../auth/authConfig";
 
+// ⬇️ NEW: add-on registrations
+import { initializeDynamicAddOnRegistrationList } from "./listAddOnRegistrations";
+
 export const dashboard = async () => {
   const firstNameText = new WFComponent("#firstNameText");
   firstNameText.setText(userAuth.getUser().profile.first_name);
 
   try {
     await initializeDynamicStudentList("#listStudentProfiles");
-    await initializeDynamicAdditionalStudentList(
-      "#listAdditionalStudentProfiles"
-    );
-    await initializeDynamicFileList("#filesList"); // Corrected selector here
+    await initializeDynamicAdditionalStudentList("#listAdditionalStudentProfiles");
+    await initializeDynamicFileList("#filesList");
     await initializeDynamicCaregiverList("#caregiversList");
+
+    // Subscriptions (existing)
     initializeDynamicSubscriptionList("#listRegistration");
+
+    // ⬇️ Add-on session registrations (new)
+    initializeDynamicAddOnRegistrationList("#listAddOnRegistration");
+
     await initializeDynamicTicketOrderList("#listTickets");
     await initializeDynamicDonationList("#listDonations");
     initializeCaregiverNotifications("caregiverNotificationList");
+
     triggerSuccessEvent(".success_trigger");
   } catch (error) {
     // Handle error if needed
+    console.error("Dashboard init error:", error);
   }
 };
 

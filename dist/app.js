@@ -1865,8 +1865,16 @@ const app = ()=>{
     new (0, _core.WFRoute)("/dashboard/registrations").execute(async ()=>{
         try {
             const isValidUser = await (0, _authServices.validateUser)();
-            if (isValidUser) require("99743dba8367c446").then(({ initializeDynamicSubscriptionList })=>initializeDynamicSubscriptionList("#listRegistration"));
-            else (0, _core.navigate)("/login");
+            if (isValidUser) {
+                // Import both modules in parallel
+                const [{ initializeDynamicSubscriptionList }, { initializeDynamicAddOnRegistrationList }] = await Promise.all([
+                    require("99743dba8367c446"),
+                    require("5bcf38107a5189c3")
+                ]);
+                // Initialize both lists
+                initializeDynamicSubscriptionList("#listRegistration");
+                initializeDynamicAddOnRegistrationList("#listAddOnRegistration");
+            } else (0, _core.navigate)("/login");
         } catch (error) {
             console.error("Error validating user:", error);
         }
@@ -1950,6 +1958,15 @@ const app = ()=>{
             console.error("Error validating user:", error);
         }
     });
+    new (0, _core.WFRoute)("/lab-registration").execute(async ()=>{
+        try {
+            const isValidUser = await (0, _authServices.validateUser)();
+            if (isValidUser) require("a507b3f360f56039").then(({ newProgramRegistration })=>newProgramRegistration());
+            else (0, _core.navigate)("/login");
+        } catch (error) {
+            console.error("Error validating user:", error);
+        }
+    });
     // Ticket Purchase Routes
     new (0, _core.WFRoute)("/purchase-tickets").execute(()=>{
         require("569383165c482279").then(({ makeTicketPurchase })=>makeTicketPurchase());
@@ -1973,6 +1990,9 @@ new (0, _core.WFRoute)("/dashboard/donations/donation").execute(async ()=>{
 // Success Pages
 new (0, _core.WFRoute)("/checkout-success/registration").execute(()=>{
     require("a9f52696b5e87412").then(({ handleRegistrationSuccessIndex })=>handleRegistrationSuccessIndex());
+});
+new (0, _core.WFRoute)("/checkout-success/lab-registration").execute(()=>{
+    require("d96b0f021394525f").then(({ handleLabRegistrationSuccess })=>handleLabRegistrationSuccess());
 });
 new (0, _core.WFRoute)("/checkout-success/tickets").execute(()=>{
     require("1af690ebb7860580").then(({ populateTicketSuccess })=>populateTicketSuccess());
@@ -2026,7 +2046,7 @@ new (0, _core.WFRoute)("/donation-details").execute(()=>{
     });
 });
 
-},{"@xatom/core":"j9zXV","../auth/authServices":"6eR0A","9a2335a27cbf65a3":"bTOce","7194166fd8337774":"fhq5Z","e2ab45e640045078":"jVnxb","e8cdc03cffab5ce1":"ihXVo","75247311a1c12717":"67ypL","6668530cc5fc2a48":"828Hh","c963ab9512585f1e":"aRAsf","19e90e38cb67fd3b":"flPQg","a246b5f935105baf":"bsYvG","c9200bc08376cf63":"eAkhM","2619017f25f3bc5b":"gTleJ","99743dba8367c446":"gEJmS","c0af3facc5236bf2":"lKs9L","5ce3a1e7e087ca21":"28jLL","a34e417cd1356cda":"PI9rK","54b7e49ce1bac6b":"joeNl","3c4b9c1bf9fd381c":"7N7c8","10b04f5428dd1b86":"eLvwz","88cf820c3b6f3182":"1iuEx","5047533e3f8ea99c":"ebC5Y","569383165c482279":"drA5e","f148efd480f281f5":"b9mA5","a30a014fa3a8661a":"8gDqx","a9f52696b5e87412":"9Rjhx","1af690ebb7860580":"aj92u","c1474da513b6696a":"hInRe","830f078bb4324f8a":"kXlVa","52697a161e4fe734":"1C39B","@parcel/transformer-js/src/esmodule-helpers.js":"5oERU"}],"6eR0A":[function(require,module,exports) {
+},{"@xatom/core":"j9zXV","../auth/authServices":"6eR0A","9a2335a27cbf65a3":"bTOce","7194166fd8337774":"fhq5Z","e2ab45e640045078":"jVnxb","e8cdc03cffab5ce1":"ihXVo","75247311a1c12717":"67ypL","6668530cc5fc2a48":"828Hh","c963ab9512585f1e":"aRAsf","19e90e38cb67fd3b":"flPQg","a246b5f935105baf":"bsYvG","c9200bc08376cf63":"5B9TA","2619017f25f3bc5b":"gTleJ","99743dba8367c446":"gEJmS","c0af3facc5236bf2":"lKs9L","5ce3a1e7e087ca21":"28jLL","a34e417cd1356cda":"PI9rK","54b7e49ce1bac6b":"joeNl","3c4b9c1bf9fd381c":"7N7c8","10b04f5428dd1b86":"eLvwz","88cf820c3b6f3182":"1iuEx","5047533e3f8ea99c":"ebC5Y","a507b3f360f56039":"37cIk","569383165c482279":"drA5e","f148efd480f281f5":"b9mA5","a30a014fa3a8661a":"8gDqx","a9f52696b5e87412":"9Rjhx","1af690ebb7860580":"aj92u","c1474da513b6696a":"hInRe","830f078bb4324f8a":"kXlVa","52697a161e4fe734":"1C39B","@parcel/transformer-js/src/esmodule-helpers.js":"5oERU","d96b0f021394525f":"crSl3","5bcf38107a5189c3":"980MM"}],"6eR0A":[function(require,module,exports) {
 var parcelHelpers = require("@parcel/transformer-js/src/esmodule-helpers.js");
 parcelHelpers.defineInteropFlag(exports);
 // Function to validate user with /auth/me endpoint
@@ -6921,31 +6941,35 @@ module.exports = require("696565e858182697")(require("9a7f55c1b6a1a96f").getBund
     throw err;
 }).then(()=>module.bundle.root("3NLuz"));
 
-},{"696565e858182697":"3dDkg","9a7f55c1b6a1a96f":"jkqJ4"}],"eAkhM":[function(require,module,exports) {
+},{"696565e858182697":"3dDkg","9a7f55c1b6a1a96f":"jkqJ4"}],"5B9TA":[function(require,module,exports) {
 module.exports = Promise.all([
-    require("d11698dc536b5c1d")(require("f21cc9f0f6c7117a").getBundleURL("1Q55w") + "dashboard.d8fc3e73.js").catch((err)=>{
+    require("7f65f887c385910b")(require("9afcc2686964be27").getBundleURL("1Q55w") + "dashboard.d8fc3e73.js").catch((err)=>{
         delete module.bundle.cache[module.id];
         throw err;
     }),
-    require("d11698dc536b5c1d")(require("f21cc9f0f6c7117a").getBundleURL("1Q55w") + "listDonations.d068a80f.js").catch((err)=>{
+    require("7f65f887c385910b")(require("9afcc2686964be27").getBundleURL("1Q55w") + "listAddOnRegistrations.c525e777.js").catch((err)=>{
         delete module.bundle.cache[module.id];
         throw err;
     }),
-    require("d11698dc536b5c1d")(require("f21cc9f0f6c7117a").getBundleURL("1Q55w") + "listTicketOrders.01a95512.js").catch((err)=>{
+    require("7f65f887c385910b")(require("9afcc2686964be27").getBundleURL("1Q55w") + "listDonations.d068a80f.js").catch((err)=>{
         delete module.bundle.cache[module.id];
         throw err;
     }),
-    require("d11698dc536b5c1d")(require("f21cc9f0f6c7117a").getBundleURL("1Q55w") + "listRegistration.a407700a.js").catch((err)=>{
+    require("7f65f887c385910b")(require("9afcc2686964be27").getBundleURL("1Q55w") + "listTicketOrders.01a95512.js").catch((err)=>{
         delete module.bundle.cache[module.id];
         throw err;
     }),
-    require("d11698dc536b5c1d")(require("f21cc9f0f6c7117a").getBundleURL("1Q55w") + "dashboard.e3771d7a.js").catch((err)=>{
+    require("7f65f887c385910b")(require("9afcc2686964be27").getBundleURL("1Q55w") + "listRegistration.a407700a.js").catch((err)=>{
+        delete module.bundle.cache[module.id];
+        throw err;
+    }),
+    require("7f65f887c385910b")(require("9afcc2686964be27").getBundleURL("1Q55w") + "dashboard.e3771d7a.js").catch((err)=>{
         delete module.bundle.cache[module.id];
         throw err;
     })
 ]).then(()=>module.bundle.root("N1Kyc"));
 
-},{"d11698dc536b5c1d":"3dDkg","f21cc9f0f6c7117a":"jkqJ4"}],"gTleJ":[function(require,module,exports) {
+},{"7f65f887c385910b":"3dDkg","9afcc2686964be27":"jkqJ4"}],"gTleJ":[function(require,module,exports) {
 module.exports = Promise.all([
     require("d82617e220ec90c9")(require("d5f2505a2ffba95c").getBundleURL("1Q55w") + "dashboard.d8fc3e73.js").catch((err)=>{
         delete module.bundle.cache[module.id];
@@ -7011,7 +7035,13 @@ module.exports = require("108f94e09a9b5a91")(require("d2572be8fde0fbc1").getBund
     throw err;
 }).then(()=>module.bundle.root("efC2o"));
 
-},{"108f94e09a9b5a91":"3dDkg","d2572be8fde0fbc1":"jkqJ4"}],"drA5e":[function(require,module,exports) {
+},{"108f94e09a9b5a91":"3dDkg","d2572be8fde0fbc1":"jkqJ4"}],"37cIk":[function(require,module,exports) {
+module.exports = require("a7852846c5715f2b")(require("d17e87cb50a7936").getBundleURL("1Q55w") + "registration_labs.0a975232.js").catch((err)=>{
+    delete module.bundle.cache[module.id];
+    throw err;
+}).then(()=>module.bundle.root("5JjZb"));
+
+},{"a7852846c5715f2b":"3dDkg","d17e87cb50a7936":"jkqJ4"}],"drA5e":[function(require,module,exports) {
 module.exports = require("cead0503aeefb91e")(require("58f1fa8a2d02d8f").getBundleURL("1Q55w") + "makeTicketPurchase.55f87736.js").catch((err)=>{
     delete module.bundle.cache[module.id];
     throw err;
@@ -7059,6 +7089,18 @@ module.exports = require("87efef9125f23c95")(require("f98da38929aced78").getBund
     throw err;
 }).then(()=>module.bundle.root("25rOv"));
 
-},{"87efef9125f23c95":"3dDkg","f98da38929aced78":"jkqJ4"}]},["jeTtx"], "jeTtx", "parcelRequired346")
+},{"87efef9125f23c95":"3dDkg","f98da38929aced78":"jkqJ4"}],"crSl3":[function(require,module,exports) {
+module.exports = require("e1f6034010621a34")(require("803e95310947ca1d").getBundleURL("1Q55w") + "lab_registration_success.e0d7b9f8.js").catch((err)=>{
+    delete module.bundle.cache[module.id];
+    throw err;
+}).then(()=>module.bundle.root("jQ15w"));
+
+},{"e1f6034010621a34":"3dDkg","803e95310947ca1d":"jkqJ4"}],"980MM":[function(require,module,exports) {
+module.exports = require("11052ab9a03d5e05")(require("1df5d89c39582375").getBundleURL("1Q55w") + "listAddOnRegistrations.c525e777.js").catch((err)=>{
+    delete module.bundle.cache[module.id];
+    throw err;
+}).then(()=>module.bundle.root("2mcuP"));
+
+},{"11052ab9a03d5e05":"3dDkg","1df5d89c39582375":"jkqJ4"}]},["jeTtx"], "jeTtx", "parcelRequired346")
 
 //# sourceMappingURL=app.js.map

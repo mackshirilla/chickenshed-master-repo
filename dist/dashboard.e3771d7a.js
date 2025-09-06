@@ -157,21 +157,27 @@ var _listCaregiverNotifications = require("./listCaregiverNotifications");
 var _listFiles = require("./listFiles");
 var _core = require("@xatom/core");
 var _authConfig = require("../../auth/authConfig");
+// ⬇️ NEW: add-on registrations
+var _listAddOnRegistrations = require("./listAddOnRegistrations");
 const dashboard = async ()=>{
     const firstNameText = new (0, _core.WFComponent)("#firstNameText");
     firstNameText.setText((0, _authConfig.userAuth).getUser().profile.first_name);
     try {
         await (0, _listStudents.initializeDynamicStudentList)("#listStudentProfiles");
         await (0, _listAdditionalStudents.initializeDynamicAdditionalStudentList)("#listAdditionalStudentProfiles");
-        await (0, _listFiles.initializeDynamicFileList)("#filesList"); // Corrected selector here
+        await (0, _listFiles.initializeDynamicFileList)("#filesList");
         await (0, _listCaregivers.initializeDynamicCaregiverList)("#caregiversList");
+        // Subscriptions (existing)
         (0, _listRegistration.initializeDynamicSubscriptionList)("#listRegistration");
+        // ⬇️ Add-on session registrations (new)
+        (0, _listAddOnRegistrations.initializeDynamicAddOnRegistrationList)("#listAddOnRegistration");
         await (0, _listTicketOrders.initializeDynamicTicketOrderList)("#listTickets");
         await (0, _listDonations.initializeDynamicDonationList)("#listDonations");
         (0, _listCaregiverNotifications.initializeCaregiverNotifications)("caregiverNotificationList");
         triggerSuccessEvent(".success_trigger");
     } catch (error) {
-    // Handle error if needed
+        // Handle error if needed
+        console.error("Dashboard init error:", error);
     }
 };
 const triggerSuccessEvent = (selector)=>{
@@ -179,7 +185,7 @@ const triggerSuccessEvent = (selector)=>{
     if (successTrigger instanceof HTMLElement) successTrigger.click();
 };
 
-},{"./listStudents":"4NIcD","./listAdditionalStudents":"f8tcP","./listCaregivers":"18rDE","./listRegistration":"19ZcK","./listTicketOrders":"6PQNU","./listDonations":"3zTq7","./listCaregiverNotifications":"2fKLd","./listFiles":"1n749","@xatom/core":"j9zXV","../../auth/authConfig":"gkGgf","@parcel/transformer-js/src/esmodule-helpers.js":"5oERU"}],"2fKLd":[function(require,module,exports) {
+},{"./listStudents":"4NIcD","./listAdditionalStudents":"f8tcP","./listCaregivers":"18rDE","./listRegistration":"19ZcK","./listTicketOrders":"6PQNU","./listDonations":"3zTq7","./listCaregiverNotifications":"2fKLd","./listFiles":"1n749","@xatom/core":"j9zXV","../../auth/authConfig":"gkGgf","@parcel/transformer-js/src/esmodule-helpers.js":"5oERU","./listAddOnRegistrations":"2mcuP"}],"2fKLd":[function(require,module,exports) {
 // src/modules/dashboard/listCaregiverNotifications.ts
 var parcelHelpers = require("@parcel/transformer-js/src/esmodule-helpers.js");
 parcelHelpers.defineInteropFlag(exports);
