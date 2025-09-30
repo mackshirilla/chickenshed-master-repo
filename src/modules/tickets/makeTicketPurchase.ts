@@ -62,6 +62,7 @@ export const makeTicketPurchase = async () => {
       const submitStepOneError = new WFComponent("#submitStepOneError");
       submitStepOneError.setText("Please select a production.");
       submitStepOneError.setStyle({ display: "block" });
+      submitButtonStepOne.removeAttribute("disabled");
       return;
     }
 
@@ -112,6 +113,7 @@ export const makeTicketPurchase = async () => {
       const submitStepTwoError = new WFComponent("#submitStepTwoError");
       submitStepTwoError.setText("Please select a performance.");
       submitStepTwoError.setStyle({ display: "block" });
+      submitButtonStepTwo.removeAttribute("disabled");
       return;
     }
 
@@ -258,6 +260,7 @@ if (customQuestionWrap.style.display !== "none") {
       console.error("Form validation failed.");
       submitStepThreeError.setText("Please correct the highlighted errors.");
       submitStepThreeError.setStyle({ display: "block" });
+      submitButtonStepThree.removeAttribute("disabled");
       return;
     }
 

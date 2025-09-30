@@ -180,6 +180,7 @@ const makeTicketPurchase = async ()=>{
             submitStepOneError.setStyle({
                 display: "block"
             });
+            submitButtonStepOne.removeAttribute("disabled");
             return;
         }
         console.log("Production selected:", selectedProduction);
@@ -224,6 +225,7 @@ const makeTicketPurchase = async ()=>{
             submitStepTwoError.setStyle({
                 display: "block"
             });
+            submitButtonStepTwo.removeAttribute("disabled");
             return;
         }
         console.log("Performance selected:", selectedPerformance);
@@ -326,6 +328,7 @@ const makeTicketPurchase = async ()=>{
             submitStepThreeError.setStyle({
                 display: "block"
             });
+            submitButtonStepThree.removeAttribute("disabled");
             return;
         }
         console.log("Final form is valid, proceeding with submission...");

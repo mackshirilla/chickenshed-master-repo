@@ -185,7 +185,7 @@ const triggerSuccessEvent = (selector)=>{
     if (successTrigger instanceof HTMLElement) successTrigger.click();
 };
 
-},{"./listStudents":"4NIcD","./listAdditionalStudents":"f8tcP","./listCaregivers":"18rDE","./listRegistration":"19ZcK","./listTicketOrders":"6PQNU","./listDonations":"3zTq7","./listCaregiverNotifications":"2fKLd","./listFiles":"1n749","@xatom/core":"j9zXV","../../auth/authConfig":"gkGgf","@parcel/transformer-js/src/esmodule-helpers.js":"5oERU","./listAddOnRegistrations":"2mcuP"}],"2fKLd":[function(require,module,exports) {
+},{"./listStudents":"4NIcD","./listAdditionalStudents":"f8tcP","./listCaregivers":"18rDE","./listRegistration":"19ZcK","./listTicketOrders":"6PQNU","./listDonations":"3zTq7","./listCaregiverNotifications":"2fKLd","./listFiles":"1n749","@xatom/core":"j9zXV","../../auth/authConfig":"gkGgf","./listAddOnRegistrations":"2mcuP","@parcel/transformer-js/src/esmodule-helpers.js":"5oERU"}],"2fKLd":[function(require,module,exports) {
 // src/modules/dashboard/listCaregiverNotifications.ts
 var parcelHelpers = require("@parcel/transformer-js/src/esmodule-helpers.js");
 parcelHelpers.defineInteropFlag(exports);

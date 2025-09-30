@@ -254,7 +254,22 @@ async function newProgramRegistration() {
     (0, _financialAid.initializeFinancialAid)();
 }
 
-},{"./components/dynamicRegistrationTable":"liXrL","./components/checkoutLineItems":"03l9a","./components/financialAid":"1aSWa","./state/registrationState":"4GHSz","./components/pendingStudentsAlert":"6u422","./components/checkoutSubmission":"b2gDq","@xatom/core":"j9zXV","./components/actionRequiredDialog":"hDaLO","@parcel/transformer-js/src/esmodule-helpers.js":"5oERU","../../api/startLabRegistration":"5tLFx","./components/loadRegistrationUI":"hKmrn","./components/deleteOrderURLParam":"2sIxM"}],"liXrL":[function(require,module,exports) {
+},{"../../api/startLabRegistration":"5tLFx","./components/dynamicRegistrationTable":"liXrL","./components/checkoutLineItems":"03l9a","./components/financialAid":"1aSWa","./state/registrationState":"4GHSz","./components/pendingStudentsAlert":"6u422","./components/checkoutSubmission":"b2gDq","./components/loadRegistrationUI":"hKmrn","@xatom/core":"j9zXV","./components/actionRequiredDialog":"hDaLO","./components/deleteOrderURLParam":"2sIxM","@parcel/transformer-js/src/esmodule-helpers.js":"5oERU"}],"5tLFx":[function(require,module,exports) {
+var parcelHelpers = require("@parcel/transformer-js/src/esmodule-helpers.js");
+parcelHelpers.defineInteropFlag(exports);
+parcelHelpers.export(exports, "startRegistration", ()=>startRegistration);
+var _apiConfig = require("./apiConfig");
+async function startRegistration(payload) {
+    try {
+        const response = await (0, _apiConfig.apiClient).post("/registration/start_lab_registration", payload).fetch();
+        return response;
+    } catch (error) {
+        console.error("Error starting registration:", error);
+        throw error;
+    }
+}
+
+},{"./apiConfig":"2Lx0S","@parcel/transformer-js/src/esmodule-helpers.js":"5oERU"}],"liXrL":[function(require,module,exports) {
 var parcelHelpers = require("@parcel/transformer-js/src/esmodule-helpers.js");
 parcelHelpers.defineInteropFlag(exports);
 parcelHelpers.export(exports, "initDynamicRegistrationTable", ()=>initDynamicRegistrationTable);
@@ -1401,43 +1416,7 @@ async function submitCheckout() {
     (0, _formUtils.toggleError)(errorComp, "", false);
 }
 
-},{"@xatom/core":"j9zXV","../state/registrationState":"4GHSz","../../../utils/formUtils":"hvg7i","../../../api/apiConfig":"2Lx0S","@parcel/transformer-js/src/esmodule-helpers.js":"5oERU"}],"hDaLO":[function(require,module,exports) {
-var parcelHelpers = require("@parcel/transformer-js/src/esmodule-helpers.js");
-parcelHelpers.defineInteropFlag(exports);
-/**
- * Checks if the API data has any student profiles.
- * If not, displays the Action Required dialog and clicks the trigger element.
- */ parcelHelpers.export(exports, "showActionRequiredDialogIfNoStudentProfiles", ()=>showActionRequiredDialogIfNoStudentProfiles);
-var _core = require("@xatom/core");
-function showActionRequiredDialogIfNoStudentProfiles(apiData) {
-    // Check if student_profiles is missing or empty.
-    if (!apiData.student_profiles || apiData.student_profiles.length === 0) {
-        const dialogComp = new (0, _core.WFComponent)("#actionRequiredDialog");
-        const dialogEl = dialogComp.getElement();
-        if (dialogEl instanceof HTMLDialogElement) dialogEl.showModal();
-        else dialogEl.style.display = "block";
-        // Also trigger the animation click.
-        const trigger = document.getElementById("alertDialogAnimationTrigger");
-        if (trigger) trigger.click();
-    }
-}
-
-},{"@xatom/core":"j9zXV","@parcel/transformer-js/src/esmodule-helpers.js":"5oERU"}],"5tLFx":[function(require,module,exports) {
-var parcelHelpers = require("@parcel/transformer-js/src/esmodule-helpers.js");
-parcelHelpers.defineInteropFlag(exports);
-parcelHelpers.export(exports, "startRegistration", ()=>startRegistration);
-var _apiConfig = require("./apiConfig");
-async function startRegistration(payload) {
-    try {
-        const response = await (0, _apiConfig.apiClient).post("/registration/start_lab_registration", payload).fetch();
-        return response;
-    } catch (error) {
-        console.error("Error starting registration:", error);
-        throw error;
-    }
-}
-
-},{"./apiConfig":"2Lx0S","@parcel/transformer-js/src/esmodule-helpers.js":"5oERU"}],"hKmrn":[function(require,module,exports) {
+},{"@xatom/core":"j9zXV","../state/registrationState":"4GHSz","../../../utils/formUtils":"hvg7i","../../../api/apiConfig":"2Lx0S","@parcel/transformer-js/src/esmodule-helpers.js":"5oERU"}],"hKmrn":[function(require,module,exports) {
 var parcelHelpers = require("@parcel/transformer-js/src/esmodule-helpers.js");
 parcelHelpers.defineInteropFlag(exports);
 parcelHelpers.export(exports, "loadRegistrationUI", ()=>loadRegistrationUI);
@@ -1530,7 +1509,28 @@ function loadRegistrationUI() {
     console.log("[DEBUG] loadRegistrationUI: UI reloaded from state.");
 }
 
-},{"../state/registrationState":"4GHSz","@parcel/transformer-js/src/esmodule-helpers.js":"5oERU"}],"2sIxM":[function(require,module,exports) {
+},{"../state/registrationState":"4GHSz","@parcel/transformer-js/src/esmodule-helpers.js":"5oERU"}],"hDaLO":[function(require,module,exports) {
+var parcelHelpers = require("@parcel/transformer-js/src/esmodule-helpers.js");
+parcelHelpers.defineInteropFlag(exports);
+/**
+ * Checks if the API data has any student profiles.
+ * If not, displays the Action Required dialog and clicks the trigger element.
+ */ parcelHelpers.export(exports, "showActionRequiredDialogIfNoStudentProfiles", ()=>showActionRequiredDialogIfNoStudentProfiles);
+var _core = require("@xatom/core");
+function showActionRequiredDialogIfNoStudentProfiles(apiData) {
+    // Check if student_profiles is missing or empty.
+    if (!apiData.student_profiles || apiData.student_profiles.length === 0) {
+        const dialogComp = new (0, _core.WFComponent)("#actionRequiredDialog");
+        const dialogEl = dialogComp.getElement();
+        if (dialogEl instanceof HTMLDialogElement) dialogEl.showModal();
+        else dialogEl.style.display = "block";
+        // Also trigger the animation click.
+        const trigger = document.getElementById("alertDialogAnimationTrigger");
+        if (trigger) trigger.click();
+    }
+}
+
+},{"@xatom/core":"j9zXV","@parcel/transformer-js/src/esmodule-helpers.js":"5oERU"}],"2sIxM":[function(require,module,exports) {
 // src/modules/labs/components/deleteOrderURLParam.ts
 var parcelHelpers = require("@parcel/transformer-js/src/esmodule-helpers.js");
 parcelHelpers.defineInteropFlag(exports);
