@@ -10,37 +10,52 @@ let initialTemplateState: HTMLElement | null = null;
 let productCache: Product[] = [];
 let productListRef: WFDynamicList<Product> | null = null;
 
+type SafeProductRow = {
+  id: number | string | null;
+  Product_name?: string | null;
+
+  Single_sale_price_id?: string | null;
+  Monthly_price_id?: string | null;
+  Annual_price_id?: string | null;
+
+  Single_sale_price_amount?: number | null;
+  Monthly_price_amount?: number | null;
+  Annual_price_amount?: number | null;
+};
+
+// Helpers for safe numeric comparisons/sorts
+const n = (v: unknown): number => (typeof v === "number" && Number.isFinite(v) ? v : 0);
+
 // Filter + sort products based on current donation type
 const filterProductsByDonationType = (products: Product[]): Product[] => {
   const donationType = getSelectedDonationType();
 
-  const filtered = products.filter((product) => {
+  const filtered = products.filter((product: any) => {
     switch (donationType) {
       case "one-time":
-        return !!product.Single_sale_price_id;
+        return Boolean(product?.Single_sale_price_id);
       case "month":
-        return !!product.Monthly_price_id;
+        return Boolean(product?.Monthly_price_id);
       case "year":
-        return !!product.Annual_price_id;
+        return Boolean(product?.Annual_price_id);
       default:
         return false;
     }
   });
 
-  return filtered.sort((a, b) => {
+  return filtered.sort((a: any, b: any) => {
     switch (donationType) {
       case "one-time":
-        return a.Single_sale_price_amount - b.Single_sale_price_amount;
+        return n(a?.Single_sale_price_amount) - n(b?.Single_sale_price_amount);
       case "month":
-        return a.Monthly_price_amount - b.Monthly_price_amount;
+        return n(a?.Monthly_price_amount) - n(b?.Monthly_price_amount);
       case "year":
-        return a.Annual_price_amount - b.Annual_price_amount;
+        return n(a?.Annual_price_amount) - n(b?.Annual_price_amount);
       default:
         return 0;
     }
   });
 };
-
 
 // Re-render product list based on new donation type
 export const renderProductListForDonationType = () => {
@@ -60,10 +75,12 @@ export const initializeDynamicProductList = async (
     return;
   }
 
+  // Cache pristine template state
   if (!initialTemplateState) {
     initialTemplateState = container.cloneNode(true) as HTMLElement;
   }
 
+  // Reset container to clean template
   container.innerHTML = "";
   container.appendChild(initialTemplateState.cloneNode(true));
 
@@ -84,25 +101,39 @@ export const initializeDynamicProductList = async (
   });
 
   list.rowRenderer(({ rowData, rowElement, index }) => {
+    const row = rowData as unknown as SafeProductRow;
+
+    // Normalize strings (no undefined/null into setters)
+    const safeName = row.Product_name ?? "";
+
+    // ID must exist (or we can't select it)
+    const idNum = Number(row.id);
+    const hasValidId = Number.isFinite(idNum) && idNum > 0;
+
     const productCard = new WFComponent(rowElement);
     const productTitle = productCard.getChildAsComponent("#cardProductTitle");
     const productInput = productCard.getChildAsComponent(".input_card_input");
+    const label = productCard.getChildAsComponent("label");
 
+    // Required DOM only
     if (!productTitle || !productInput) {
-      console.error("One or more elements not found in the product card");
+      console.error("Required elements not found in the product card");
+      return;
+    }
+
+    // If id is invalid/null, hide the row (prevents crashes)
+    if (!hasValidId) {
+      console.warn("[ProductList] Skipping row with invalid id:", row);
+      rowElement.setStyle({ display: "none" });
       return;
     }
 
     const inputId = `productInput-${index}`;
     productInput.setAttribute("id", inputId);
-    productInput.setAttribute("value", rowData.id.toString());
+    productInput.setAttribute("value", String(idNum));
+    label?.setAttribute("for", inputId);
 
-    const label = productCard.getChildAsComponent("label");
-    if (label) {
-      label.setAttribute("for", inputId);
-    }
-
-    productTitle.setText(rowData.Product_name);
+    productTitle.setText(safeName);
 
     productInput.on("change", () => {
       const donationType = getSelectedDonationType();
@@ -110,47 +141,59 @@ export const initializeDynamicProductList = async (
       let valid = false;
       let amount = 0;
 
+      // Safely compute validity + amount for the *current donationType*
       switch (donationType) {
         case "one-time":
-          valid = !!rowData.Single_sale_price_id;
-          amount = rowData.Single_sale_price_amount;
+          valid = Boolean(row.Single_sale_price_id);
+          amount = n(row.Single_sale_price_amount);
           break;
         case "month":
-          valid = !!rowData.Monthly_price_id;
-          amount = rowData.Monthly_price_amount;
+          valid = Boolean(row.Monthly_price_id);
+          amount = n(row.Monthly_price_amount);
           break;
         case "year":
-          valid = !!rowData.Annual_price_id;
-          amount = rowData.Annual_price_amount;
+          valid = Boolean(row.Annual_price_id);
+          amount = n(row.Annual_price_amount);
           break;
+        default:
+          valid = false;
+          amount = 0;
       }
 
       if (!valid) {
         console.warn("Selected product is not valid for this donation type.");
-        (productInput.getElement() as HTMLInputElement).checked = false;
+        try {
+          (productInput.getElement() as HTMLInputElement).checked = false;
+        } catch {
+          // no-op
+        }
         return;
       }
 
-      selectedProductId = rowData.id.toString();
+      selectedProductId = String(idNum);
+
       saveSelectedProduct({
-        id: rowData.id.toString(),
-        name: rowData.Product_name,
-        amount: rowData.Single_sale_price_amount,
-        Single_sale_price_id: rowData.Single_sale_price_id,
-        Monthly_price_id: rowData.Monthly_price_id,
-        Annual_price_id: rowData.Annual_price_id,
+        id: String(idNum),
+        name: safeName,
+
+        // IMPORTANT: this should reflect the current donation type amount
+        amount,
+
+        Single_sale_price_id: row.Single_sale_price_id ?? "",
+        Monthly_price_id: row.Monthly_price_id ?? "",
+        Annual_price_id: row.Annual_price_id ?? "",
       });
 
       console.log("Selected Product ID:", selectedProductId);
     });
 
     rowElement.setStyle({ display: "flex" });
-
     return rowElement;
   });
 
   try {
     list.changeLoadingStatus(true);
+
     productCache = await fetchProducts(campaignId);
     const filtered = filterProductsByDonationType(productCache);
 

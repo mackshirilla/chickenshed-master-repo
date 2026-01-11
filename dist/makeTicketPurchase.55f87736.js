@@ -418,7 +418,9 @@ const initializeProductionList = async (containerSelector)=>{
         console.error("Production list container not found.");
         return [];
     }
+    // Cache pristine template state
     if (!initialTemplateState) initialTemplateState = container.cloneNode(true);
+    // Reset container to clean template
     container.innerHTML = "";
     container.appendChild(initialTemplateState.cloneNode(true));
     const list = new (0, _core.WFDynamicList)(containerSelector, {
@@ -439,8 +441,20 @@ const initializeProductionList = async (containerSelector)=>{
         return emptyElement;
     });
     list.rowRenderer(({ rowData: rawData, rowElement, index })=>{
-        // Cast rawData to match API response fields
+        // -------------------------------------------------
+        // 1) Normalize API data (NO undefined/null into setters)
+        // -------------------------------------------------
         const rowData = rawData;
+        const safeName = rowData.Name ?? "";
+        const safeDesc = rowData.Short_Description ?? "";
+        const safeAges = rowData.Age_Description ?? "";
+        const safeImg = rowData.Main_Image ?? "";
+        // ID must exist (or row should not be selectable)
+        const idNum = Number(rowData.id);
+        const hasValidId = Number.isFinite(idNum) && idNum > 0;
+        // -------------------------------------------------
+        // 2) Grab DOM components
+        // -------------------------------------------------
         const productionCard = new (0, _core.WFComponent)(rowElement);
         const productionTitle = productionCard.getChildAsComponent("#cardProductionTitle");
         const productionDescription = productionCard.getChildAsComponent("#cardProductionDescription");
@@ -448,28 +462,61 @@ const initializeProductionList = async (containerSelector)=>{
         const productionImage = productionCard.getChildAsComponent("#cardProductionImage");
         const productionInput = productionCard.getChildAsComponent(".input_card_input");
         const productionLabel = productionCard.getChildAsComponent("label");
-        if (!productionTitle || !productionDescription || !productionAges || !productionInput || !productionImage || !productionLabel) {
-            console.error("Production elements not found.");
+        // -------------------------------------------------
+        // 3) Required structure only
+        // -------------------------------------------------
+        if (!productionTitle || !productionInput || !productionLabel) {
+            console.error("Required production elements not found.");
             return;
         }
+        // If id is invalid/null, hide the row (prevents crashes + bad selections)
+        if (!hasValidId) {
+            console.warn("[ProductionList] Skipping row with invalid id:", rowData);
+            rowElement.setStyle({
+                display: "none"
+            });
+            return;
+        }
+        // -------------------------------------------------
+        // 4) Input wiring (no .toString() on nullable values)
+        // -------------------------------------------------
         const inputId = `productionInput-${index}`;
         productionInput.setAttribute("id", inputId);
-        productionInput.setAttribute("value", rowData.id.toString());
+        productionInput.setAttribute("value", String(idNum));
         productionLabel.setAttribute("for", inputId);
-        productionTitle.setText(rowData.Name);
-        productionDescription.setText(rowData.Short_Description);
-        productionAges.setText(rowData.Age_Description);
-        if (rowData.Main_Image) {
-            productionImage.setAttribute("src", rowData.Main_Image);
-            productionImage.setAttribute("alt", rowData.Name || "Production Image");
-        } else console.warn(`Production ID ${rowData.id} does not have a main image.`);
+        // -------------------------------------------------
+        // 5) Text fields (safe defaults)
+        // -------------------------------------------------
+        productionTitle.setText(safeName);
+        productionDescription?.setText(safeDesc);
+        productionAges?.setText(safeAges);
+        // -------------------------------------------------
+        // 6) Image (optional)
+        // -------------------------------------------------
+        if (productionImage) {
+            if (safeImg) {
+                productionImage.setAttribute("src", safeImg);
+                productionImage.setAttribute("alt", safeName || "Production Image");
+                productionImage.setStyle({
+                    display: ""
+                });
+            } else {
+                productionImage.setAttribute("src", "");
+                productionImage.setStyle({
+                    display: "none"
+                });
+            }
+        }
+        // -------------------------------------------------
+        // 7) Selection handling
+        // -------------------------------------------------
         productionInput.on("change", ()=>{
             selectedProductionId = productionInput.getElement().value;
             (0, _ticketPurchaseState.saveSelectedProduction)({
-                id: Number(selectedProductionId),
-                name: rowData.Name,
-                description: rowData.Short_Description,
-                imageUrl: rowData.Main_Image
+                id: idNum,
+                name: safeName,
+                description: safeDesc,
+                imageUrl: safeImg
             });
             console.log("Selected Production ID:", selectedProductionId);
         });
@@ -478,10 +525,15 @@ const initializeProductionList = async (containerSelector)=>{
         });
         return rowElement;
     });
+    // -------------------------------------------------
+    // 8) Data load
+    // -------------------------------------------------
     try {
         list.changeLoadingStatus(true);
         const productions = await (0, _productions.fetchProductions)();
         console.log("Fetched productions:", productions);
+        // Helpful debug: quickly spot null ids
+        // console.table((productions as any[]).map(p => ({ id: p?.id, Name: p?.Name })));
         list.setData(productions);
         list.changeLoadingStatus(false);
         return productions;
@@ -690,7 +742,9 @@ const initializePerformanceList = async (containerSelector)=>{
         console.error("Performance list container not found.");
         return [];
     }
+    // Cache pristine template state
     if (!initialTemplateState) initialTemplateState = container.cloneNode(true);
+    // Reset container to clean template
     container.innerHTML = "";
     container.appendChild(initialTemplateState.cloneNode(true));
     const list = new (0, _core.WFDynamicList)(containerSelector, {
@@ -711,7 +765,22 @@ const initializePerformanceList = async (containerSelector)=>{
         return empty;
     });
     list.rowRenderer(({ rowData, rowElement, index })=>{
+        // -------------------------------------------------
+        // 1) Normalize API data (no .toString() on nullable)
+        // -------------------------------------------------
         const perf = rowData;
+        const safeName = perf.Name ?? "";
+        const safeDisplayed = perf.Displayed_Name ?? "";
+        const safeTitle = safeDisplayed || safeName || "";
+        const safeDesc = perf.Short_Description ?? "";
+        const safeImg = perf.Main_Image ?? "";
+        const safeVenue = perf.location_details?.Name ?? "";
+        const soldOut = Boolean(perf.Sold_Out);
+        const idNum = Number(perf.id);
+        const hasValidId = Number.isFinite(idNum) && idNum > 0;
+        // -------------------------------------------------
+        // 2) Grab DOM components
+        // -------------------------------------------------
         const card = new (0, _core.WFComponent)(rowElement);
         const dateWrapper = card.getChildAsComponent(".production_date_wrapper");
         const dayEl = dateWrapper?.getChildAsComponent(".u-text-h4");
@@ -726,76 +795,109 @@ const initializePerformanceList = async (containerSelector)=>{
         const labelEl = card.getChildAsComponent("label");
         const locEl = card.getChildAsComponent("#cardPerformanceLocation");
         const soldOutEl = card.getChildAsComponent("#performanceSoldOut");
-        if (perf.Sold_Out) {
-            // Show the sold-out banner/label
+        // -------------------------------------------------
+        // 3) Required structure only
+        // -------------------------------------------------
+        if (!inputEl || !labelEl || !titleEl) {
+            console.error("Required performance elements not found.");
+            return;
+        }
+        // If id is invalid/null, hide the row (prevents crashes)
+        if (!hasValidId) {
+            console.warn("[PerformanceList] Skipping row with invalid id:", perf);
+            rowElement.setStyle({
+                display: "none"
+            });
+            return;
+        }
+        // -------------------------------------------------
+        // 4) Wire up the radio button (safe)
+        // -------------------------------------------------
+        const inputId = `performanceInput-${index}`;
+        inputEl.setAttribute("id", inputId);
+        inputEl.setAttribute("value", String(idNum));
+        labelEl.setAttribute("for", inputId);
+        // -------------------------------------------------
+        // 5) Sold-out handling (safe ordering)
+        // -------------------------------------------------
+        if (soldOut) {
             soldOutEl?.setStyle({
                 display: "flex"
             });
-            // Disable interaction on the row
             rowElement.setStyle({
                 pointerEvents: "none",
                 opacity: "0.6"
             });
-            // Optionally, also disable the radio input
             inputEl.setAttribute("disabled", "true");
-        } else // Ensure it's hidden if not sold out
-        soldOutEl?.setStyle({
-            display: "none"
-        });
-        if (!dayEl || !monthEl || !timeEl || !weekdayEl || !titleEl || !prodTitleEl || !descEl || !imageEl || !inputEl || !labelEl || !locEl || !soldOutEl) {
-            console.error("Performance elements not found.");
-            return;
+        } else {
+            soldOutEl?.setStyle({
+                display: "none"
+            });
+            // Attempt to ensure enabled when not sold out
+            // WFComponent doesn't expose removeAttribute, so do it safely via DOM:
+            try {
+                inputEl.getElement().disabled = false;
+                inputEl.getElement().removeAttribute("disabled");
+            } catch  {
+            // no-op
+            }
         }
-        // Wire up the radio button
-        const inputId = `performanceInput-${index}`;
-        inputEl.setAttribute("id", inputId);
-        inputEl.setAttribute("value", perf.id.toString());
-        labelEl.setAttribute("for", inputId);
-        // --- timezone‐aware formatting in New York ---
+        // -------------------------------------------------
+        // 6) Timezone-aware formatting in New York (guarded)
+        // -------------------------------------------------
         const ts = Number(perf.Date_Time);
-        const date = new Date(ts);
-        // Day of month
-        dayEl.setText(date.toLocaleString("en-US", {
+        const date = Number.isFinite(ts) ? new Date(ts) : null;
+        dayEl?.setText(date ? date.toLocaleString("en-US", {
             day: "numeric",
             timeZone: "America/New_York"
-        }));
-        // Month abbreviation
-        monthEl.setText(date.toLocaleString("en-US", {
+        }) : "");
+        monthEl?.setText(date ? date.toLocaleString("en-US", {
             month: "short",
             timeZone: "America/New_York"
-        }));
-        // Weekday name
-        weekdayEl.setText(date.toLocaleString("en-US", {
+        }) : "");
+        weekdayEl?.setText(date ? date.toLocaleString("en-US", {
             weekday: "long",
             timeZone: "America/New_York"
-        }));
-        // Time (H:MM AM/PM)
-        timeEl.setText(date.toLocaleTimeString("en-US", {
+        }) : "");
+        timeEl?.setText(date ? date.toLocaleTimeString("en-US", {
             hour: "numeric",
             minute: "2-digit",
             hour12: true,
             timeZone: "America/New_York"
-        }));
-        // --- end timezone‐aware block ---
-        // Fill in the rest
-        titleEl.setText(perf.Displayed_Name || perf.Name);
+        }) : "");
+        // -------------------------------------------------
+        // 7) Fill in the rest (safe defaults)
+        // -------------------------------------------------
+        titleEl.setText(safeTitle);
         const selectedProd = (0, _ticketPurchaseState.getSelectedProduction)();
-        prodTitleEl.setText(selectedProd?.name || "Unknown Production");
-        descEl.setText(perf.Short_Description);
-        if (perf.Main_Image) {
-            imageEl.setAttribute("src", perf.Main_Image);
-            imageEl.setAttribute("alt", perf.Displayed_Name || perf.Name);
+        prodTitleEl?.setText(selectedProd?.name || "Unknown Production");
+        descEl?.setText(safeDesc);
+        if (imageEl) {
+            if (safeImg) {
+                imageEl.setAttribute("src", safeImg);
+                imageEl.setAttribute("alt", safeTitle || "Performance Image");
+                imageEl.setStyle({
+                    display: ""
+                });
+            } else {
+                imageEl.setAttribute("src", "");
+                imageEl.setStyle({
+                    display: "none"
+                });
+            }
         }
-        // Show human-readable venue name
-        locEl.setText(perf.location_details?.Name || "Unknown venue");
+        locEl?.setText(safeVenue || "Unknown venue");
+        // -------------------------------------------------
+        // 8) Selection handler (safe strings)
+        // -------------------------------------------------
         inputEl.on("change", ()=>{
             (0, _ticketPurchaseState.saveSelectedPerformance)({
-                id: perf.id.toString(),
-                name: perf.Displayed_Name,
-                dateTime: perf.Date_Time.toString(),
-                description: perf.Short_Description,
-                imageUrl: perf.Main_Image,
-                location: perf.location_details?.Name || ""
+                id: String(idNum),
+                name: safeTitle,
+                dateTime: String(perf.Date_Time ?? ""),
+                description: safeDesc,
+                imageUrl: safeImg,
+                location: safeVenue || ""
             });
         });
         rowElement.setStyle({
@@ -803,12 +905,23 @@ const initializePerformanceList = async (containerSelector)=>{
         });
         return rowElement;
     });
+    // -------------------------------------------------
+    // 9) Data load
+    // -------------------------------------------------
     try {
         list.changeLoadingStatus(true);
         const prod = (0, _ticketPurchaseState.getSelectedProduction)();
         if (!prod?.id) throw new Error("No production selected");
         const performances = await (0, _performances.fetchPerformances)(prod.id.toString());
-        performances.sort((a, b)=>a.Date_Time - b.Date_Time);
+        // Guard sort if Date_Time isn't strictly numeric
+        performances.sort((a, b)=>{
+            const aTs = Number(a?.Date_Time);
+            const bTs = Number(b?.Date_Time);
+            if (!Number.isFinite(aTs) && !Number.isFinite(bTs)) return 0;
+            if (!Number.isFinite(aTs)) return 1;
+            if (!Number.isFinite(bTs)) return -1;
+            return aTs - bTs;
+        });
         list.setData(performances);
         if (performances.length) (0, _performanceFilter.initializePerformanceFilter)();
         list.changeLoadingStatus(false);
@@ -904,11 +1017,14 @@ const initializeTicketTiers = async (bundleContainerSelector, tierContainerSelec
     try {
         // Fetch all ticket tier data for this performance
         const ticketTierData = await (0, _ticketTiersAPI.fetchTicketTiers)(selectedPerformance.id);
-        // Destructure API response shape, including bundles_available
-        const { tickets_available, performance_details, bundles_available } = ticketTierData;
-        // Flatten nested arrays
-        const bundles = performance_details.ticket_bundles_offered.flat();
-        const tickets = performance_details.ticket_tiers_offered.flat();
+        // Safely destructure API response shape (defaults prevent crashes)
+        const { tickets_available = null, performance_details = null, bundles_available = null } = ticketTierData ?? {};
+        // Guard: avoid `.flat()` on undefined/null
+        const rawBundlesOffered = performance_details?.ticket_bundles_offered ?? [];
+        const rawTiersOffered = performance_details?.ticket_tiers_offered ?? [];
+        // Flatten safely (supports nested arrays, non-nested arrays, or missing)
+        const bundles = Array.isArray(rawBundlesOffered) ? rawBundlesOffered.flat?.() ?? rawBundlesOffered : [];
+        const tickets = Array.isArray(rawTiersOffered) ? rawTiersOffered.flat?.() ?? rawTiersOffered : [];
         // Update selected performance UI
         (0, _selectedPerformanceUI.updateSelectedPerformanceUI)();
         // Initialize user details section
@@ -942,13 +1058,31 @@ const initializeTicketTiers = async (bundleContainerSelector, tierContainerSelec
         noTicketsElem.setStyle({
             display: hasBundlesOrTickets ? "none" : "flex"
         });
-        // Show custom question
-        const customQuestion = performance_details.Custom_Question;
+        // Show custom question (blank string fallback)
+        const customQuestion = performance_details?.Custom_Question ?? "";
         (0, _customQuestionUI.updateCustomQuestion)(customQuestion);
         // Initialize assistance input UI
         (0, _assistanceInputUI.initializeAssistanceInput)();
     } catch (error) {
         console.error("Error fetching ticket tiers:", error);
+        // Optional: fail-safe empty-state UI so user isn't stuck
+        try {
+            const bundleContainer = new (0, _core.WFComponent)(bundleContainerSelector);
+            bundleContainer.setStyle({
+                display: "none"
+            });
+            const tierContainer = new (0, _core.WFComponent)(tierContainerSelector);
+            tierContainer.setStyle({
+                display: "none"
+            });
+            const noTicketsElem = new (0, _core.WFComponent)("#noTicketsAvailable");
+            noTicketsElem.setStyle({
+                display: "flex"
+            });
+            (0, _customQuestionUI.updateCustomQuestion)("");
+        } catch  {
+        // no-op (avoid masking original error)
+        }
     }
 };
 

@@ -485,6 +485,15 @@ const initializeCampaignList = async (containerSelector)=>{
     });
     let campaigns = [];
     list.rowRenderer(({ rowData, rowElement, index })=>{
+        const row = rowData;
+        // Normalize strings (no undefined/null into setters)
+        const safeName = row.Name ?? "";
+        const safeSubheading = row.Subheading ?? "";
+        const safeDesc = row.Short_Description ?? "";
+        const safeImg = row.Main_Image ?? "";
+        // ID must exist (or we can't select it)
+        const idNum = Number(row.id);
+        const hasValidId = Number.isFinite(idNum) && idNum > 0;
         const campaignCard = new (0, _core.WFComponent)(rowElement);
         const campaignTitle = campaignCard.getChildAsComponent("#cardCampaignTitle");
         const campaignSubheading = campaignCard.getChildAsComponent("#cardCampaignSubheading");
@@ -492,27 +501,51 @@ const initializeCampaignList = async (containerSelector)=>{
         const campaignImage = campaignCard.getChildAsComponent("#cardCampaignImage");
         const campaignInput = campaignCard.getChildAsComponent(".input_card_input");
         const campaignLabel = campaignCard.getChildAsComponent("label");
-        if (!campaignTitle || !campaignSubheading || !campaignDescription || !campaignInput || !campaignImage || !campaignLabel) {
-            console.error("Campaign elements not found.");
+        // Required DOM only
+        if (!campaignTitle || !campaignInput || !campaignLabel) {
+            console.error("Required campaign elements not found.");
+            return;
+        }
+        // If optional elements are missing, that's OK (we'll just skip setting them)
+        // But if ID is invalid/null, hide the row to avoid crashes / bad selections
+        if (!hasValidId) {
+            console.warn("[CampaignList] Skipping row with invalid id:", row);
+            rowElement.setStyle({
+                display: "none"
+            });
             return;
         }
         const inputId = `campaignInput-${index}`;
         campaignInput.setAttribute("id", inputId);
-        campaignInput.setAttribute("value", rowData.id.toString());
+        campaignInput.setAttribute("value", String(idNum));
         campaignLabel.setAttribute("for", inputId);
-        campaignTitle.setText(rowData.Name);
-        campaignSubheading.setText(rowData.Subheading);
-        campaignDescription.setText(rowData.Short_Description);
-        if (rowData.Main_Image) campaignImage.setAttribute("src", rowData.Main_Image);
-        else console.warn(`Campaign ID ${rowData.id} does not have a main image.`);
+        campaignTitle.setText(safeName);
+        campaignSubheading?.setText(safeSubheading);
+        campaignDescription?.setText(safeDesc);
+        if (campaignImage) {
+            if (safeImg) {
+                campaignImage.setAttribute("src", safeImg);
+                campaignImage.setAttribute("alt", safeName || "Campaign Image");
+                campaignImage.setStyle({
+                    display: ""
+                });
+            } else {
+                // Hide image if missing
+                campaignImage.setAttribute("src", "");
+                campaignImage.setStyle({
+                    display: "none"
+                });
+                console.warn(`Campaign ID ${idNum} does not have a main image.`);
+            }
+        }
         campaignInput.on("change", ()=>{
-            selectedCampaignId = rowData.id.toString();
+            selectedCampaignId = String(idNum);
             (0, _donationState.saveSelectedCampaign)({
-                id: rowData.id.toString(),
-                name: rowData.Name,
-                imageUrl: rowData.Main_Image,
-                description: rowData.Short_Description,
-                subheading: rowData.Subheading
+                id: String(idNum),
+                name: safeName,
+                imageUrl: safeImg,
+                description: safeDesc,
+                subheading: safeSubheading
             });
             logState();
             console.log("Selected Campaign ID:", selectedCampaignId);
@@ -520,20 +553,22 @@ const initializeCampaignList = async (containerSelector)=>{
         rowElement.setStyle({
             display: "flex"
         });
-        campaigns.push(rowData);
+        // NOTE: pushing here duplicates data across renders; keep it if you *need*
+        // it for debugging, otherwise it can grow unexpectedly on re-init.
+        // campaigns.push(rowData);
         return rowElement;
     });
     try {
         list.changeLoadingStatus(true);
         campaigns = await (0, _campaigns.fetchCampaigns)();
         console.log("Fetched campaigns:", campaigns);
-        if (campaigns.length > 0) list.setData(campaigns);
-        else list.setData([]);
+        list.setData(Array.isArray(campaigns) ? campaigns : []);
         list.changeLoadingStatus(false);
     } catch (error) {
         console.error("Error loading campaigns:", error);
         list.setData([]);
         list.changeLoadingStatus(false);
+        campaigns = [];
     }
     return campaigns;
 };
@@ -664,17 +699,19 @@ let selectedProductId = null;
 let initialTemplateState = null;
 let productCache = [];
 let productListRef = null;
+// Helpers for safe numeric comparisons/sorts
+const n = (v)=>typeof v === "number" && Number.isFinite(v) ? v : 0;
 // Filter + sort products based on current donation type
 const filterProductsByDonationType = (products)=>{
     const donationType = (0, _donationState.getSelectedDonationType)();
     const filtered = products.filter((product)=>{
         switch(donationType){
             case "one-time":
-                return !!product.Single_sale_price_id;
+                return Boolean(product?.Single_sale_price_id);
             case "month":
-                return !!product.Monthly_price_id;
+                return Boolean(product?.Monthly_price_id);
             case "year":
-                return !!product.Annual_price_id;
+                return Boolean(product?.Annual_price_id);
             default:
                 return false;
         }
@@ -682,11 +719,11 @@ const filterProductsByDonationType = (products)=>{
     return filtered.sort((a, b)=>{
         switch(donationType){
             case "one-time":
-                return a.Single_sale_price_amount - b.Single_sale_price_amount;
+                return n(a?.Single_sale_price_amount) - n(b?.Single_sale_price_amount);
             case "month":
-                return a.Monthly_price_amount - b.Monthly_price_amount;
+                return n(a?.Monthly_price_amount) - n(b?.Monthly_price_amount);
             case "year":
-                return a.Annual_price_amount - b.Annual_price_amount;
+                return n(a?.Annual_price_amount) - n(b?.Annual_price_amount);
             default:
                 return 0;
         }
@@ -706,7 +743,9 @@ const initializeDynamicProductList = async (containerSelector, campaignId)=>{
         console.error("Product list container not found.");
         return;
     }
+    // Cache pristine template state
     if (!initialTemplateState) initialTemplateState = container.cloneNode(true);
+    // Reset container to clean template
     container.innerHTML = "";
     container.appendChild(initialTemplateState.cloneNode(true));
     const list = new (0, _core.WFDynamicList)(containerSelector, {
@@ -726,50 +765,74 @@ const initializeDynamicProductList = async (containerSelector, campaignId)=>{
         return emptyElement;
     });
     list.rowRenderer(({ rowData, rowElement, index })=>{
+        const row = rowData;
+        // Normalize strings (no undefined/null into setters)
+        const safeName = row.Product_name ?? "";
+        // ID must exist (or we can't select it)
+        const idNum = Number(row.id);
+        const hasValidId = Number.isFinite(idNum) && idNum > 0;
         const productCard = new (0, _core.WFComponent)(rowElement);
         const productTitle = productCard.getChildAsComponent("#cardProductTitle");
         const productInput = productCard.getChildAsComponent(".input_card_input");
+        const label = productCard.getChildAsComponent("label");
+        // Required DOM only
         if (!productTitle || !productInput) {
-            console.error("One or more elements not found in the product card");
+            console.error("Required elements not found in the product card");
+            return;
+        }
+        // If id is invalid/null, hide the row (prevents crashes)
+        if (!hasValidId) {
+            console.warn("[ProductList] Skipping row with invalid id:", row);
+            rowElement.setStyle({
+                display: "none"
+            });
             return;
         }
         const inputId = `productInput-${index}`;
         productInput.setAttribute("id", inputId);
-        productInput.setAttribute("value", rowData.id.toString());
-        const label = productCard.getChildAsComponent("label");
-        if (label) label.setAttribute("for", inputId);
-        productTitle.setText(rowData.Product_name);
+        productInput.setAttribute("value", String(idNum));
+        label?.setAttribute("for", inputId);
+        productTitle.setText(safeName);
         productInput.on("change", ()=>{
             const donationType = (0, _donationState.getSelectedDonationType)();
             let valid = false;
             let amount = 0;
+            // Safely compute validity + amount for the *current donationType*
             switch(donationType){
                 case "one-time":
-                    valid = !!rowData.Single_sale_price_id;
-                    amount = rowData.Single_sale_price_amount;
+                    valid = Boolean(row.Single_sale_price_id);
+                    amount = n(row.Single_sale_price_amount);
                     break;
                 case "month":
-                    valid = !!rowData.Monthly_price_id;
-                    amount = rowData.Monthly_price_amount;
+                    valid = Boolean(row.Monthly_price_id);
+                    amount = n(row.Monthly_price_amount);
                     break;
                 case "year":
-                    valid = !!rowData.Annual_price_id;
-                    amount = rowData.Annual_price_amount;
+                    valid = Boolean(row.Annual_price_id);
+                    amount = n(row.Annual_price_amount);
                     break;
+                default:
+                    valid = false;
+                    amount = 0;
             }
             if (!valid) {
                 console.warn("Selected product is not valid for this donation type.");
-                productInput.getElement().checked = false;
+                try {
+                    productInput.getElement().checked = false;
+                } catch  {
+                // no-op
+                }
                 return;
             }
-            selectedProductId = rowData.id.toString();
+            selectedProductId = String(idNum);
             (0, _donationState.saveSelectedProduct)({
-                id: rowData.id.toString(),
-                name: rowData.Product_name,
-                amount: rowData.Single_sale_price_amount,
-                Single_sale_price_id: rowData.Single_sale_price_id,
-                Monthly_price_id: rowData.Monthly_price_id,
-                Annual_price_id: rowData.Annual_price_id
+                id: String(idNum),
+                name: safeName,
+                // IMPORTANT: this should reflect the current donation type amount
+                amount,
+                Single_sale_price_id: row.Single_sale_price_id ?? "",
+                Monthly_price_id: row.Monthly_price_id ?? "",
+                Annual_price_id: row.Annual_price_id ?? ""
             });
             console.log("Selected Product ID:", selectedProductId);
         });

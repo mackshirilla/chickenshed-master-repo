@@ -10,6 +10,17 @@ import { initializePerformanceFilter } from "./components/performanceFilter";
 
 let initialTemplateState: HTMLElement | null = null;
 
+type SafePerformanceRow = {
+  id: number | string | null;
+  Name?: string | null;
+  Displayed_Name?: string | null;
+  Short_Description?: string | null;
+  Main_Image?: string | null;
+  Date_Time?: number | string | null;
+  Sold_Out?: boolean | null;
+  location_details?: { Name?: string | null } | null;
+};
+
 export const initializePerformanceList = async (
   containerSelector: string
 ): Promise<Performance[]> => {
@@ -19,10 +30,12 @@ export const initializePerformanceList = async (
     return [];
   }
 
+  // Cache pristine template state
   if (!initialTemplateState) {
     initialTemplateState = container.cloneNode(true) as HTMLElement;
   }
 
+  // Reset container to clean template
   container.innerHTML = "";
   container.appendChild(initialTemplateState.cloneNode(true));
 
@@ -36,13 +49,32 @@ export const initializePerformanceList = async (
     loader.setStyle({ display: "flex" });
     return loader;
   });
+
   list.emptyRenderer((empty) => {
     empty.setStyle({ display: "flex" });
     return empty;
   });
 
   list.rowRenderer(({ rowData, rowElement, index }) => {
-    const perf = rowData as Performance;
+    // -------------------------------------------------
+    // 1) Normalize API data (no .toString() on nullable)
+    // -------------------------------------------------
+    const perf = rowData as unknown as SafePerformanceRow;
+
+    const safeName = perf.Name ?? "";
+    const safeDisplayed = perf.Displayed_Name ?? "";
+    const safeTitle = safeDisplayed || safeName || "";
+    const safeDesc = perf.Short_Description ?? "";
+    const safeImg = perf.Main_Image ?? "";
+    const safeVenue = perf.location_details?.Name ?? "";
+    const soldOut = Boolean(perf.Sold_Out);
+
+    const idNum = Number(perf.id);
+    const hasValidId = Number.isFinite(idNum) && idNum > 0;
+
+    // -------------------------------------------------
+    // 2) Grab DOM components
+    // -------------------------------------------------
     const card = new WFComponent(rowElement);
 
     const dateWrapper = card.getChildAsComponent(".production_date_wrapper");
@@ -62,106 +94,132 @@ export const initializePerformanceList = async (
     const locEl = card.getChildAsComponent("#cardPerformanceLocation");
     const soldOutEl = card.getChildAsComponent("#performanceSoldOut");
 
-if (perf.Sold_Out) {
-  // Show the sold-out banner/label
-  soldOutEl?.setStyle({ display: "flex" });
-
-  // Disable interaction on the row
-  rowElement.setStyle({
-    pointerEvents: "none",
-    opacity: "0.6", // optional: to give visual feedback
-  });
-
-  // Optionally, also disable the radio input
-  inputEl.setAttribute("disabled", "true");
-} else {
-  // Ensure it's hidden if not sold out
-  soldOutEl?.setStyle({ display: "none" });
-}
-
-
-    if (
-      !dayEl ||
-      !monthEl ||
-      !timeEl ||
-      !weekdayEl ||
-      !titleEl ||
-      !prodTitleEl ||
-      !descEl ||
-      !imageEl ||
-      !inputEl ||
-      !labelEl ||
-      !locEl ||
-      !soldOutEl 
-    ) {
-      console.error("Performance elements not found.");
+    // -------------------------------------------------
+    // 3) Required structure only
+    // -------------------------------------------------
+    if (!inputEl || !labelEl || !titleEl) {
+      console.error("Required performance elements not found.");
       return;
     }
 
-    // Wire up the radio button
-    const inputId = `performanceInput-${index}`;
-    inputEl.setAttribute("id", inputId);
-    inputEl.setAttribute("value", perf.id.toString());
-    labelEl.setAttribute("for", inputId);
-
-    // --- timezone‐aware formatting in New York ---
-    const ts = Number(perf.Date_Time);
-    const date = new Date(ts);
-
-    // Day of month
-    dayEl.setText(
-      date.toLocaleString("en-US", {
-        day: "numeric",
-        timeZone: "America/New_York",
-      })
-    );
-    // Month abbreviation
-    monthEl.setText(
-      date.toLocaleString("en-US", {
-        month: "short",
-        timeZone: "America/New_York",
-      })
-    );
-    // Weekday name
-    weekdayEl.setText(
-      date.toLocaleString("en-US", {
-        weekday: "long",
-        timeZone: "America/New_York",
-      })
-    );
-    // Time (H:MM AM/PM)
-    timeEl.setText(
-      date.toLocaleTimeString("en-US", {
-        hour: "numeric",
-        minute: "2-digit",
-        hour12: true,
-        timeZone: "America/New_York",
-      })
-    );
-    // --- end timezone‐aware block ---
-
-    // Fill in the rest
-    titleEl.setText(perf.Displayed_Name || perf.Name);
-    const selectedProd = getSelectedProduction();
-    prodTitleEl.setText(selectedProd?.name || "Unknown Production");
-    descEl.setText(perf.Short_Description);
-
-    if (perf.Main_Image) {
-      imageEl.setAttribute("src", perf.Main_Image);
-      imageEl.setAttribute("alt", perf.Displayed_Name || perf.Name);
+    // If id is invalid/null, hide the row (prevents crashes)
+    if (!hasValidId) {
+      console.warn("[PerformanceList] Skipping row with invalid id:", perf);
+      rowElement.setStyle({ display: "none" });
+      return;
     }
 
-    // Show human-readable venue name
-    locEl.setText(perf.location_details?.Name || "Unknown venue");
+    // -------------------------------------------------
+    // 4) Wire up the radio button (safe)
+    // -------------------------------------------------
+    const inputId = `performanceInput-${index}`;
+    inputEl.setAttribute("id", inputId);
+    inputEl.setAttribute("value", String(idNum));
+    labelEl.setAttribute("for", inputId);
 
+    // -------------------------------------------------
+    // 5) Sold-out handling (safe ordering)
+    // -------------------------------------------------
+    if (soldOut) {
+      soldOutEl?.setStyle({ display: "flex" });
+
+      rowElement.setStyle({
+        pointerEvents: "none",
+        opacity: "0.6",
+      });
+
+      inputEl.setAttribute("disabled", "true");
+    } else {
+      soldOutEl?.setStyle({ display: "none" });
+
+      // Attempt to ensure enabled when not sold out
+      // WFComponent doesn't expose removeAttribute, so do it safely via DOM:
+      try {
+        (inputEl.getElement() as HTMLInputElement).disabled = false;
+        (inputEl.getElement() as HTMLInputElement).removeAttribute("disabled");
+      } catch {
+        // no-op
+      }
+    }
+
+    // -------------------------------------------------
+    // 6) Timezone-aware formatting in New York (guarded)
+    // -------------------------------------------------
+    const ts = Number(perf.Date_Time);
+    const date = Number.isFinite(ts) ? new Date(ts) : null;
+
+    dayEl?.setText(
+      date
+        ? date.toLocaleString("en-US", {
+            day: "numeric",
+            timeZone: "America/New_York",
+          })
+        : ""
+    );
+
+    monthEl?.setText(
+      date
+        ? date.toLocaleString("en-US", {
+            month: "short",
+            timeZone: "America/New_York",
+          })
+        : ""
+    );
+
+    weekdayEl?.setText(
+      date
+        ? date.toLocaleString("en-US", {
+            weekday: "long",
+            timeZone: "America/New_York",
+          })
+        : ""
+    );
+
+    timeEl?.setText(
+      date
+        ? date.toLocaleTimeString("en-US", {
+            hour: "numeric",
+            minute: "2-digit",
+            hour12: true,
+            timeZone: "America/New_York",
+          })
+        : ""
+    );
+
+    // -------------------------------------------------
+    // 7) Fill in the rest (safe defaults)
+    // -------------------------------------------------
+    titleEl.setText(safeTitle);
+
+    const selectedProd = getSelectedProduction();
+    prodTitleEl?.setText(selectedProd?.name || "Unknown Production");
+
+    descEl?.setText(safeDesc);
+
+    if (imageEl) {
+      if (safeImg) {
+        imageEl.setAttribute("src", safeImg);
+        imageEl.setAttribute("alt", safeTitle || "Performance Image");
+        imageEl.setStyle({ display: "" });
+      } else {
+        imageEl.setAttribute("src", "");
+        imageEl.setStyle({ display: "none" });
+      }
+    }
+
+    locEl?.setText(safeVenue || "Unknown venue");
+
+    // -------------------------------------------------
+    // 8) Selection handler (safe strings)
+    // -------------------------------------------------
     inputEl.on("change", () => {
       saveSelectedPerformance({
-        id: perf.id.toString(),
-        name: perf.Displayed_Name,
-        dateTime: perf.Date_Time.toString(),
-        description: perf.Short_Description,
-        imageUrl: perf.Main_Image,
-        location: perf.location_details?.Name || "",
+        id: String(idNum),
+        name: safeTitle,
+        dateTime: String(perf.Date_Time ?? ""),
+        description: safeDesc,
+        imageUrl: safeImg,
+        location: safeVenue || "",
       });
     });
 
@@ -169,16 +227,30 @@ if (perf.Sold_Out) {
     return rowElement;
   });
 
+  // -------------------------------------------------
+  // 9) Data load
+  // -------------------------------------------------
   try {
     list.changeLoadingStatus(true);
+
     const prod = getSelectedProduction();
     if (!prod?.id) throw new Error("No production selected");
 
     const performances = await fetchPerformances(prod.id.toString());
-    performances.sort((a, b) => a.Date_Time - b.Date_Time);
+
+    // Guard sort if Date_Time isn't strictly numeric
+    performances.sort((a: any, b: any) => {
+      const aTs = Number(a?.Date_Time);
+      const bTs = Number(b?.Date_Time);
+      if (!Number.isFinite(aTs) && !Number.isFinite(bTs)) return 0;
+      if (!Number.isFinite(aTs)) return 1;
+      if (!Number.isFinite(bTs)) return -1;
+      return aTs - bTs;
+    });
 
     list.setData(performances);
     if (performances.length) initializePerformanceFilter();
+
     list.changeLoadingStatus(false);
     return performances;
   } catch (err) {
