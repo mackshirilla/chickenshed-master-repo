@@ -9,8 +9,10 @@ import { loadRegistrationUI } from "./components/loadRegistrationUi";
 import { WFComponent } from "@xatom/core";
 import { showActionRequiredDialogIfNoStudentProfiles } from "./components/actionRequiredDialog";
 
+const LOG = "[registration_new annual]";
+
 export async function newProgramRegistration(): Promise<void> {
-  console.log("new registration");
+  console.log(LOG, "newProgramRegistration() started");
 
   try {
     const response = await startRegistration({});
@@ -43,18 +45,43 @@ export async function newProgramRegistration(): Promise<void> {
     // Annual is not offered Jan 1 through May 31 (before June 1, local date).
     const subscriptionTypeSelect = document.getElementById("subscription_type") as HTMLSelectElement | null;
     const now = new Date();
-    const annualUnavailable = now < new Date(now.getFullYear(), 5, 1);
+    const june1 = new Date(now.getFullYear(), 5, 1);
+    const annualUnavailable = now < june1;
+    console.log(LOG, "date gate", {
+      now: now.toISOString(),
+      localString: now.toString(),
+      june1ThisYear: june1.toISOString(),
+      annualUnavailable,
+    });
+    console.log(LOG, "#subscription_type element", subscriptionTypeSelect ?? "MISSING — script runs before DOM or wrong id");
+    if (subscriptionTypeSelect) {
+      const opts = Array.from(subscriptionTypeSelect.options).map((o) => ({
+        value: o.value,
+        disabled: o.disabled,
+        text: o.textContent?.trim(),
+      }));
+      console.log(LOG, "select options before annual gate", opts);
+    }
     if (subscriptionTypeSelect && annualUnavailable) {
       const yearOpt = subscriptionTypeSelect.querySelector<HTMLOptionElement>('option[value="year"]');
-      if (yearOpt) yearOpt.disabled = true;
+      console.log(LOG, 'query option[value="year"]', yearOpt ?? "NOT FOUND — check Webflow option value");
+      if (yearOpt) {
+        yearOpt.disabled = true;
+        console.log(LOG, "set annual option disabled=true", { disabled: yearOpt.disabled });
+      }
+    } else if (!annualUnavailable) {
+      console.log(LOG, "annual allowed (on/after June 1 local); skipping disable");
     }
     let subscriptionType = state.subscriptionType;
+    console.log(LOG, "state.subscriptionType before coerce", subscriptionType);
     if (annualUnavailable && subscriptionType === "year") {
       saveState({ subscriptionType: "month" });
       subscriptionType = "month";
+      console.log(LOG, "coerced saved state year -> month");
     }
     if (subscriptionTypeSelect && subscriptionType) {
       subscriptionTypeSelect.value = subscriptionType;
+      console.log(LOG, "select.value after apply", subscriptionTypeSelect.value);
     }
 
     updateCheckoutLineItems(response);
@@ -90,9 +117,11 @@ export async function newProgramRegistration(): Promise<void> {
     if (subscriptionTypeSelect) {
       subscriptionTypeSelect.addEventListener("change", () => {
         let value = subscriptionTypeSelect.value;
+        console.log(LOG, "subscription_type change raw value", value, { annualUnavailable });
         if (annualUnavailable && value === "year") {
           value = "month";
           subscriptionTypeSelect.value = value;
+          console.log(LOG, "change handler blocked year -> forced month");
         }
         saveState({ subscriptionType: value });
         updateCheckoutLineItems(response);
@@ -127,6 +156,7 @@ export async function newProgramRegistration(): Promise<void> {
 
   } catch (error) {
     console.error("Error starting registration:", error);
+    console.log(LOG, "catch: annual gate never ran (failure above)");
   }
   initializeFinancialAid();
 }

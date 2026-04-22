@@ -11,7 +11,10 @@ import { showActionRequiredDialogIfNoStudentProfiles } from "./components/action
 import { initializeDeleteOrderFromUrl } from "./components/deleteOrderURLParam";
 
 export async function newProgramRegistration(): Promise<void> {
-  console.log("new registration");
+  console.log(
+    "[registration_labs]",
+    "newProgramRegistration() — lab-registration bundle (Jan–Jun annual gate lives in registration_new only)"
+  );
   // 🧹 If URL has ?session_id=cs_..., cancel it in Xano and strip the param.
   await initializeDeleteOrderFromUrl();
 
