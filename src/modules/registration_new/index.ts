@@ -40,10 +40,21 @@ export async function newProgramRegistration(): Promise<void> {
       loadRegistrationUI();
     }
 
-    // Set subscription type select value from state.
-    const subscriptionTypeSelect = document.getElementById("subscription_type") as HTMLSelectElement;
-    if (subscriptionTypeSelect && state.subscriptionType) {
-      subscriptionTypeSelect.value = state.subscriptionType;
+    // Annual is not offered Jan 1 through May 31 (before June 1, local date).
+    const subscriptionTypeSelect = document.getElementById("subscription_type") as HTMLSelectElement | null;
+    const now = new Date();
+    const annualUnavailable = now < new Date(now.getFullYear(), 5, 1);
+    if (subscriptionTypeSelect && annualUnavailable) {
+      const yearOpt = subscriptionTypeSelect.querySelector<HTMLOptionElement>('option[value="year"]');
+      if (yearOpt) yearOpt.disabled = true;
+    }
+    let subscriptionType = state.subscriptionType;
+    if (annualUnavailable && subscriptionType === "year") {
+      saveState({ subscriptionType: "month" });
+      subscriptionType = "month";
+    }
+    if (subscriptionTypeSelect && subscriptionType) {
+      subscriptionTypeSelect.value = subscriptionType;
     }
 
     updateCheckoutLineItems(response);
@@ -78,7 +89,12 @@ export async function newProgramRegistration(): Promise<void> {
     // When subscription type changes, update state and line items.
     if (subscriptionTypeSelect) {
       subscriptionTypeSelect.addEventListener("change", () => {
-        saveState({ subscriptionType: subscriptionTypeSelect.value });
+        let value = subscriptionTypeSelect.value;
+        if (annualUnavailable && value === "year") {
+          value = "month";
+          subscriptionTypeSelect.value = value;
+        }
+        saveState({ subscriptionType: value });
         updateCheckoutLineItems(response);
       });
     }
