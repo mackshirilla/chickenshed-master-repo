@@ -40,10 +40,14 @@ export async function newProgramRegistration(): Promise<void> {
       loadRegistrationUI();
     }
 
-    // Set subscription type select value from state.
+    // Set subscription type from state; default to annual ("year") when unset.
     const subscriptionTypeSelect = document.getElementById("subscription_type") as HTMLSelectElement;
-    if (subscriptionTypeSelect && state.subscriptionType) {
-      subscriptionTypeSelect.value = state.subscriptionType;
+    if (subscriptionTypeSelect) {
+      const subType = state.subscriptionType || "year";
+      subscriptionTypeSelect.value = subType;
+      if (state.subscriptionType !== subType) {
+        saveState({ subscriptionType: subType });
+      }
     }
 
     updateCheckoutLineItems(response);
