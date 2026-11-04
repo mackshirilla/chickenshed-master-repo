@@ -1,0 +1,53 @@
+{
+  "prepared_at": "2026-11-04T08:11:26.255Z",
+  "deployed": false,
+  "scope": "Three original narrow patches; compiled in blocked sandbox copies and covered by 13 focused probes. Not deployed; not full hosted legacy payment validation.",
+  "files": [
+    {
+      "id": 281,
+      "name": "registration/start_registration",
+      "source": "release/source/api-281.xs",
+      "before_sha256": "c15c4409952c919229f2887584e559e932052c27e3e17d43070d8b4f87acb355",
+      "candidate": "release/isolation-candidate/api-281.xs",
+      "after_sha256": "e9474be0a85c747679f5785b34f350ed276bb3a2913cc36d1bc4c1ebb3aa6187",
+      "change": "Exclude Summer program 13 from the regular selector, preserving subscription gate and all other behavior."
+    },
+    {
+      "id": 304,
+      "name": "registration/checkout",
+      "source": "release/source/api-304.xs",
+      "before_sha256": "074f8a71721cb419703334b233cf81f8a70b81b3a23a1b0d149f0fe51adf01b3",
+      "candidate": "release/isolation-candidate/api-304.xs",
+      "after_sha256": "2c38f83e927a20c80c1816cedb931c6c505345b35522cb1d110737cfd0b5d64e",
+      "change": "Validate session IDs and reject database-resolved Summer program 13 before Stripe, subscription, registration or aid writes; never trust client program_id."
+    },
+    {
+      "id": 284,
+      "name": "checkout/success",
+      "source": "release/source/api-284.xs",
+      "before_sha256": "badc0d19be8fdccfaf79a1655710fb32ac434b051bb6a934b289ac7164f6b086",
+      "candidate": "release/isolation-candidate/api-284.xs",
+      "after_sha256": "b045c6ead3fe191369d1d01cfdbf03704bdcc777a883ab20c1c7f2b403650c63",
+      "change": "Acknowledge canonical Summer policy without old generic accounting or fulfillment; preserve the existing non-Summer tail unchanged inside else. Summer sales will be visible in registration_orders, not the old All Sales views."
+    }
+  ],
+  "unchanged_labs": [
+    {
+      "id": 344,
+      "sha256": "f7f4d45287efd7815b58422b636e0193372bb21a6c7253fd216935c47f5a6673"
+    },
+    {
+      "id": 345,
+      "sha256": "953b581c32732ffca32016a38ef7ce708fa33ecd3f1ed362142d2946b9d417af"
+    },
+    {
+      "id": 347,
+      "sha256": "5146d1792945160a0ec8a5b7c6799af7211d8a0d79b0dbb580d13194c1828a2f"
+    }
+  ],
+  "validation_evidence": [
+    "evidence/isolation-regression-result.json",
+    "evidence/isolation-candidate-static-check.json"
+  ],
+  "additional_payment_intent_patch": "release/isolation-candidate/payment-intent-manifest.json"
+}

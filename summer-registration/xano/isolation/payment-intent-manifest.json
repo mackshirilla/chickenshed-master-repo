@@ -1,0 +1,13 @@
+{
+  "prepared_at": "2026-11-04T08:44:17.874Z",
+  "deployed": false,
+  "id": 290,
+  "group": 30,
+  "before_sha256": "88371b42da4932b718bfaabc0403f31c6531c587cb47498cb03477238625a9f2",
+  "after_sha256": "df434d6a6731a93639af11cc26cadc05eddb755e4f91b98b376cbbbf9645fab7",
+  "source": "release/source/api-290.xs",
+  "candidate": "release/isolation-candidate/api-290.xs",
+  "change": "Canonical live Summer PaymentIntent acknowledgement before legacy sale/default-payment-method writes; ordinary non-Summer body retained.",
+  "requires_incoming_metadata": true,
+  "production_payload_sets_pi_policy": true
+}

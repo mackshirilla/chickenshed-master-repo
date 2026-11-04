@@ -5,7 +5,8 @@
   "private": false,
   "scripts": {
     "start": "xatom dev",
-    "build": "xatom build"
+    "build": "xatom build",
+    "test:summer": "node --test summer-registration/tests/*.test.mjs"
   },
   "license": "MIT",
   "dependencies": {

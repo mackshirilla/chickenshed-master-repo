@@ -301,6 +301,16 @@ new WFRoute("/dashboard").execute(async () => {
     }
   );
 
+  // Separate Summer payment flow; existing registration and Labs routes stay intact.
+  new WFRoute('/summer-camp-registration').execute(async () => {
+    const {initializeSummerPage}=await import('../modules/summer');
+    await initializeSummerPage('registration');
+  });
+  new WFRoute('/checkout-success/summer-camp-success').execute(async () => {
+    const {initializeSummerPage}=await import('../modules/summer');
+    await initializeSummerPage('success');
+  });
+
   // Registration Routes
 
   new WFRoute("/program-registration").execute(async () => {

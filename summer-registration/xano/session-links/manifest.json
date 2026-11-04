@@ -1,0 +1,35 @@
+{
+  "prepared_at": "2026-11-04T20:41:05.872Z",
+  "deployed": false,
+  "table": {
+    "id": 14,
+    "before_sha256": "2065eedbcb48f5d8cf7d54306b532722afb311dd25ba73713f2e2c2db2e71662",
+    "after_sha256": "ff078e95317b16c80019ef4dc4e3b4dd15ce753da06420348e8fa7569a8bbcb5",
+    "source": "evidence/session-links-source/session_registrations.xs",
+    "candidate": "release/session-links/session_registrations.xs",
+    "change": "One optional nullable order relation; unique order/student/session index permits null legacy order references.",
+    "column_already_created_for_noloco": true,
+    "current_source_sha256": "f33235bfb665f9a081e5481612511e60138395cfefd25b73ab3663d7e8b638d5",
+    "remaining_schema_step": "Add the reviewed unique index only; preserve the current optional nullable link and every existing field."
+  },
+  "apis": [
+    {
+      "id": 176,
+      "name": "session_registrations",
+      "source": "evidence/session-links-source/api-176.xs",
+      "candidate": "release/session-links/api-176.xs",
+      "before_sha256": "7fe0c8705cb4e05d59032cb511aeebbbdc9ae885d00d6804912dd5d8bc9f76ad",
+      "after_sha256": "60680746d8e8e013650282de1faabe67271e53efcb416fb0ea704bb064290bd5",
+      "change": "Exclude Summer rows from old customer subscription-oriented screens; preserve all other query logic."
+    },
+    {
+      "id": 241,
+      "name": "dashboard/profiles/student/{student_id}/registrations",
+      "source": "evidence/session-links-source/api-241.xs",
+      "candidate": "release/session-links/api-241.xs",
+      "before_sha256": "093a99aeebd5d0acd528fc6647a46b655aad79f201933e42c2a442b59068d9e0",
+      "after_sha256": "d7eaca2f3d3da71b1f6890f8363fde07eb5bb42229960a3f61ece8a84990427b",
+      "change": "Exclude Summer rows from old customer subscription-oriented screens; preserve all other query logic."
+    }
+  ]
+}
