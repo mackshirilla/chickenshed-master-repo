@@ -1,18 +1,33 @@
 {
-  "status": "prepared; not built or published",
-  "dependency": "Deploy nullable registration_order_id on production Xano session_registrations table 14, then sync the Noloco data source.",
+  "status": "built and verified in draft; unpublished",
+  "dependency": "Production optional column and Noloco schema sync completed; production unique index and checkout code still require release.",
   "order_view": "/registration-orders",
   "order_source": "xanoRegistrationOrders",
   "registration_source": "xanoSessionRegistrations",
   "related_filter": "registration_order equals the current order record; use the synced relation, not numeric sandbox IDs or a loose student-name match",
-  "section_title": "Students and session registrations",
-  "fields": ["student", "session", "status", "workshop", "weekday", "time_block"],
-  "editable_fields": ["status"],
-  "readonly_links": ["student", "session"],
+  "section_title": "Registrations",
+  "fields": [
+    "status",
+    "student",
+    "weekday",
+    "session",
+    "time_block"
+  ],
+  "editable_fields": [
+    "status"
+  ],
+  "readonly_links": [
+    "student",
+    "session"
+  ],
   "include_pending": true,
   "record_create_import_delete_bulk_actions": false,
   "order_financial_fields_editable": false,
   "audience": "existing internal Team Admins only; preserve existing record permissions",
   "publish": "Review the complete shared draft including unrelated changes before publication.",
-  "test_mirror": "Do not link production TEST order 2 to sandbox student IDs."
+  "test_mirror": "Production TEST order 2 links dedicated fictional profiles 460/461 and placements 1815/1816. Never substitute sandbox IDs.",
+  "order_click": "Open page",
+  "registration_click": "Open page",
+  "verified_status_round_trip": "Pending -> Waitlist -> reload persisted -> Pending",
+  "test_url": "https://chickenshednyc.noloco.co/registration-orders/view/2/registrations"
 }

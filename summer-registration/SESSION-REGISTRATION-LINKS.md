@@ -1,22 +1,26 @@
 # Summer session-registration links
 
-Implemented and verified in the existing Xano sandbox on November 4 after Mack approved this extension. Production schema/code and Noloco publication remain unchanged. The earlier read-only assessment is retained below as design context.
+Implemented and verified in the existing Xano sandbox on November 4 after Mack approved this extension. The production-source nullable link and fictional Noloco review records are now added; production checkout code and Noloco publication remain unchanged. The earlier read-only assessment is retained below as design context.
 
 ## Current result
 
-- Sandbox `session_registrations` table **44** has one optional nullable `registration_order_id` relation to `registration_orders`, plus a unique order/student/session index. Existing field definitions were preserved. Production table **14** still awaits that reviewed migration.
+- Sandbox `session_registrations` table **44** has one optional nullable `registration_order_id` relation to `registration_orders`, plus a unique order/student/session index. Existing field definitions were preserved. Production table **14** now has the optional relation for the approved Noloco draft; its unique index remains a release step.
 - Canonical paid fulfillment creates the placement rows inside the existing order transaction. Each row has real student, parent, program, session, workshop, location and tuition-product references; it starts **Pending** regardless of whether payment was full tuition or deposit. Xano stores the empty optional subscription reference as `0`; no subscription is created. No additional payment or email action is introduced.
 - The approved real Stripe-test order **12** was deliberately linked in the sandbox to registrations **1/2**. One row was changed to **Waitlist** to simulate staff work. Two concurrent replays preserved that status and kept exactly those same IDs.
 - A separate synthetic paid transition, order **13**, created registrations **3/4**, both Pending and correctly linked to students **1/2** and sessions **64/65**. The synthetic unpaid order **14** has zero registrations. The existing financial-aid retry/cancel/reapply/privacy check still passed with the new fulfillment code. No provider requests, email or real charges were made by these checks.
 - All **22** local tests passed. The final nine-function production pack compiled in the sandbox behind closed runtime/blocked customer routes, along with blocked copies of the two new legacy query exclusions. API 241's blocked predicate copy omits unavailable old response addons; the production candidate preserves them. Local exact-predicate checks preserve regular/Labs results while excluding Summer. **52** non-Summer source documents remained byte-for-byte unchanged; only the intended session table was changed outside Summer resources.
 
-The production changes are prepared under `release/session-links/manifest.json`: the table migration and narrow exclusions for published APIs **176/241**. No production checkout code or table was changed. The live runtime guard remains closed.
+The production changes are prepared under `release/session-links/manifest.json`: the table migration and narrow exclusions for published APIs **176/241**. No production checkout code was deployed; only the authorized source relation and fictional staff-review data changed. The live runtime guard remains closed.
 
-## Noloco release dependency
+## Noloco linkage verified — November 4
 
-Noloco is connected to production workspace 3, not this sandbox. Its schema cannot expose the new reverse order relationship until production table 14 receives the nullable column and Noloco syncs it. The actual linked collection therefore remains a release step, not a completed staff UI. Keep the existing draft and permissions intact; once synced, add an order-related registrations list with clickable student/session fields and status editing. Do not expose order money/JSON fields as editable or publish the unrelated shared draft. The existing order click action remains **Nothing** pending that wiring; the inspection-only Open panel change was reverted.
+The authorized nullable `registration_order_id` column now exists on production-source session-registration table **14**, and Noloco schema sync exposes the real reverse relationship. No production checkout functions or APIs were deployed. The unique order/student/session index remains a release step.
 
-The original TEST order copy in production table 65 remains untouched. Never link it to sandbox numeric student IDs. No production backfill was performed.
+The `/registration-orders` draft now opens an order detail page on click. Its **Registrations** tab uses the current order’s related registrations collection, including Pending rows. Columns are Status, Student, Weekday, Session and Time block. Status is inline editable; Student is a read-only link. Registration rows retain normal staff detail-page navigation. Order-wide Edit, placement creation/import/export/bulk controls are absent in the verified preview. Existing order handled/staff-notes editing is preserved.
+
+The clearly marked TEST copy **order 2** has two dedicated fictional production-source profiles **460/461** and placements **1815/1816**, for sessions **64/65**. These are not sandbox numeric IDs and no real family was linked. The order remains $900 paid / $1,500 remaining. Verified Pending → Waitlist, reload persistence, then restored Pending. Both student and session links point to the correct source records. No payment or email was triggered by this staff check.
+
+Review in the current builder draft: https://chickenshednyc.noloco.co/registration-orders/view/2/registrations . No Noloco publication occurred; **Publish 4** still includes unrelated work. Keep permissions and all unrelated drafts intact. Cleanup IDs are in `evidence/noloco-test-placement-manifest.json`; retain these test records until review is finished.
 
 ## Confirmed fit
 
