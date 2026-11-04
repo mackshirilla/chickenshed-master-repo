@@ -1,3 +1,5 @@
+> Live release status and current operations: [LIVE-RELEASE.md](LIVE-RELEASE.md). Historical candidate notes below are retained for context.
+
 # Summer registration release candidate
 
 This branch adds two distinct Summer routes to the existing xAtom application. The existing header app script owns all logic; the Webflow page footers contain only the Summer styles and disabled configuration. Remove the earlier standalone Summer inline scripts when installing these footers, so the page has one controller. Enable only in the reviewed production release.

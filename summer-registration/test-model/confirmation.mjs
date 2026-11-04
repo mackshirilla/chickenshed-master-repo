@@ -2,7 +2,8 @@ import {requireValue,POLICY} from './quote.mjs';
 export const SUMMER_TEMPLATE_ID='d-71675df1534941f6b62ad88f59aac3ce';
 export function confirmationIdentity(order){return `Summer confirmation: ${order.order_reference}`;}
 export function confirmationData(order,{testMode=false,origin}){
- requireValue(order?.status==='paid'&&order.checkout_policy===POLICY&&order.paid_cents===order.quote?.totals?.due_now_cents&&order.checkout_session_id&&order.payment_intent_id,'MAIL_ORDER','A confirmed Summer payment is required.',409);
+ requireValue(order?.status==='paid'&&order.checkout_policy===POLICY&&order.paid_cents===order.quote?.totals?.due_now_cents&&order.checkout_session_id&&
+  (order.payment_intent_id||order.paid_cents===0&&['paid','no_payment_required'].includes(order.session_snapshot?.payment_status)&&order.session_snapshot?.status==='complete'),'MAIL_ORDER','A confirmed Summer payment is required.',409);
  requireValue(['http://127.0.0.1:4817','https://chickenshednyc2024.webflow.io','https://www.chickenshednyc.org'].includes(origin),'MAIL_ORIGIN','Summer confirmation is unavailable.',503);
  const money=cents=>new Intl.NumberFormat('en-US',{style:'currency',currency:'USD'}).format(cents/100),q=order.quote,t=q.totals;
  const path=origin==='http://127.0.0.1:4817'?'/summer-registration-success':'/checkout-success/summer-camp-success';
@@ -10,7 +11,7 @@ export function confirmationData(order,{testMode=false,origin}){
   aidPercent:q.aid_percent?`${q.aid_percent}%`:null,aidAmount:q.aid_percent?money(t.aid_cents):null,netTuition:q.aid_percent?money(t.net_tuition_cents):null,
   hasBalance:t.balance_after_checkout_cents>0,remainingBalance:money(t.balance_after_checkout_cents),pendingStudents:q.items.some(i=>i.student_status==='Pending'),
   receiptUrl:origin+path+'?session_id='+encodeURIComponent(order.checkout_session_id),
-  items:q.items.map(i=>({studentName:i.student_name,packageName:i.package_name,sessionTime:i.session_time||i.time||'',paymentLabel:i.student_status==='Pending'?'Deposit paid · student review pending':'Tuition paid in full',paidToday:money(i.paid_cents??i.due_now_cents),hasBalance:i.balance_after_checkout_cents>0,remainingBalance:money(i.balance_after_checkout_cents)}))};
+  items:q.items.map(i=>({studentName:i.student_name,packageName:i.package_name,sessionTime:i.session_time||i.time||'',paymentLabel:(i.student_status==='Pending'?(i.promotion_discount_cents&&i.due_now_cents===0?'Deposit covered by coupon · student review pending':'Deposit paid · student review pending'):(i.promotion_discount_cents&&i.due_now_cents===0?'Tuition covered by coupon':'Tuition paid in full'))+(i.promotion_discount_cents?' · Coupon '+money(i.promotion_discount_cents):''),paidToday:money(i.paid_cents??i.due_now_cents),hasBalance:i.balance_after_checkout_cents>0,remainingBalance:money(i.balance_after_checkout_cents)}))};
 }
 export async function sendConfirmation({key,fromEmail,recipient,data,validateOnly=false,fetcher=fetch}){
  requireValue(typeof key==='string'&&key.length>20&&/^[^\s@]+@chickenshednyc\.org$/i.test(fromEmail)&&/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(recipient),'MAIL_SETUP','Summer email is not configured.',503);

@@ -159,6 +159,22 @@ api.lambda {
       session.metadata.quote_version === String(order.quote_version) && session.customer === (order.stripe_customer_id || null) &&
       (!order.checkout_session_id || order.checkout_session_id === session.id),
     'PAYMENT_MISMATCH', 'Payment details need staff review.', 409);
+    const promotions = order.reservation_payload?.allow_promotion_codes === true && order.quote.aid_percent === 0;
+    if (promotions) {
+      const expected = [...order.quote.lines].sort((a,b)=>a.price.localeCompare(b.price));
+      const actual = [...session.line_items].sort((a,b)=>a.price.localeCompare(b.price));
+      requireValue(actual.length === expected.length && actual.every((line,index)=>{
+        const baseline=expected[index];
+        return line.price===baseline.price && line.product===baseline.product && line.quantity===baseline.quantity &&
+          line.amount_subtotal===baseline.amount_subtotal && integer(line.amount_discount) &&
+          line.amount_discount<=line.amount_subtotal && line.amount_total===line.amount_subtotal-line.amount_discount;
+      }) && session.amount_subtotal===order.quote.totals.checkout_gross_cents &&
+        session.amount_subtotal===actual.reduce((n,l)=>n+l.amount_subtotal,0) &&
+        session.amount_total===actual.reduce((n,l)=>n+l.amount_total,0) &&
+        session.total_details.amount_discount===actual.reduce((n,l)=>n+l.amount_discount,0),
+      'PAYMENT_MISMATCH','Payment discount needs staff review.',409);
+      return;
+    }
     requireValue(session.amount_total === order.quote.totals.due_now_cents &&
       session.amount_subtotal === order.quote.totals.checkout_gross_cents &&
       session.total_details.amount_discount === order.quote.totals.checkout_discount_cents,
@@ -167,6 +183,36 @@ api.lambda {
       [price,product,quantity,amount_subtotal,amount_discount,amount_total]).sort((a,b)=>a[0].localeCompare(b[0]));
     requireValue(JSON.stringify(norm(session.line_items)) === JSON.stringify(norm(order.quote.lines)),
       'PAYMENT_MISMATCH', 'Payment items need staff review.', 409);
+  }
+  function isSettledSession(session) {
+    return session?.payment_status === 'paid' || session?.payment_status === 'no_payment_required';
+  }
+  function settlementQuote(order,session) {
+    validateCanonical(order,session);
+    const quote=JSON.parse(JSON.stringify(order.quote));
+    if (!(order.reservation_payload?.allow_promotion_codes===true && quote.aid_percent===0)) return quote;
+    const discount=session.total_details.amount_discount;
+    if (!discount || quote.promotion_discount_cents===discount) return quote;
+    for (const line of session.line_items) {
+      const items=quote.items.filter(item=>item.charge_price===line.price);
+      requireValue(items.length===line.quantity,'PAYMENT_MISMATCH','Payment allocation needs staff review.',409);
+      const each=Math.floor(line.amount_discount/items.length),remainder=line.amount_discount%items.length;
+      items.forEach((item,index)=>{
+        const amount=each+(index<remainder?1:0);
+        requireValue(amount<=item.due_now_cents,'PAYMENT_MISMATCH','Payment allocation needs staff review.',409);
+        item.promotion_discount_cents=amount;
+        item.checkout_discount_cents+=amount;
+        item.due_now_cents-=amount;
+        item.net_tuition_cents-=amount;
+      });
+    }
+    quote.lines=JSON.parse(JSON.stringify(session.line_items));
+    quote.promotion_discount_cents=discount;
+    quote.totals.promotion_discount_cents=discount;
+    quote.totals.checkout_discount_cents=discount;
+    quote.totals.due_now_cents=session.amount_total;
+    quote.totals.net_tuition_cents-=discount;
+    return quote;
   }
   function formBody(input) {
     const body = new URLSearchParams();
@@ -330,6 +376,7 @@ api.lambda {
       cancel_url:`${origin}/summer-camp-registration`,expires_at:Math.floor(now/1000)+1800};
     if(actor.stripe_customer_id)payload.customer=actor.stripe_customer_id;else payload.customer_email=actor.email;
     if(quote.coupon_id)payload.discounts=[{coupon:quote.coupon_id}];
+    if(quote.aid_percent===0)payload.allow_promotion_codes=true;
     return {owner_user_id:actor.id,parent_email:actor.email,balance_after_checkout_cents:quote.totals.balance_after_checkout_cents,attempt_key:actor.id+':'+request.attempt_id,order_reference:reference,quote_version:version,
       status:'creating',checkout_policy:POLICY,quote_fingerprint:quoteIdentity(quote),quote,aid_intake:validateAidIntake(quote.aid_percent,request.aid_data),
       checkout_session_id:null,checkout_url:null,session_snapshot:null,reservation_payload:payload,stripe_customer_id:actor.stripe_customer_id||null,
@@ -348,7 +395,7 @@ api.lambda {
       requireValue(request.quote_fingerprint===fingerprint,'QUOTE_CHANGED','Review the updated payment before continuing.',409);
       const intake=linkedAidIntake(validateAidIntake(quote.aid_percent,request.aid_data),old?.aid_intake);
       if(phase==='reserve'&&old?.checkout_session_id){
-        const result={action:'inspect',order:old,fingerprint};
+        const result={action:'inspect',order:old,fingerprint,upgrade_promotions:quote.aid_percent===0&&old.reservation_payload?.allow_promotion_codes!==true};
         return old.quote_fingerprint===fingerprint&&JSON.stringify(old.aid_intake)!==JSON.stringify(intake)?update({aid_intake:intake},result):unchanged(result);
       }
       if(phase==='reserve'&&old) {
@@ -366,7 +413,7 @@ api.lambda {
       const version=old?old.quote_version+1:1;
       const data=reservation(actor,request,quote,reference,version,origin,now);
       data.aid_intake=intake;
-      data.previous_checkouts=old?[...(old.previous_checkouts||[]),{session_id:old.checkout_session_id,version:old.quote_version,quote:old.quote}]:[];
+      data.previous_checkouts=old?[...(old.previous_checkouts||[]),{session_id:old.checkout_session_id,version:old.quote_version,quote:old.quote,allow_promotion_codes:old.reservation_payload?.allow_promotion_codes===true}]:[];
       return {ok:true,write:old?'edit':'add',data,result:{action:'create'}};
     }
     requireValue(old&&old.checkout_policy===POLICY,'ORDER_NOT_READY','Order not ready; retry the event.',409);
@@ -374,21 +421,25 @@ api.lambda {
       const session=args.session;
       const previous=(old.previous_checkouts||[]).find(p=>p.session_id===session?.id);
       if(phase==='event'&&previous) {
-        validateCanonical({...old,checkout_session_id:previous.session_id,quote_version:previous.version,quote:previous.quote},session);
-        if(session.payment_status==='paid')return update({status:'review',review_reason:'RETIRED_CHECKOUT_PAID',
+        validateCanonical({...old,checkout_session_id:previous.session_id,quote_version:previous.version,quote:previous.quote,reservation_payload:{allow_promotion_codes:previous.allow_promotion_codes===true}},session);
+        if(isSettledSession(session))return update({status:'review',review_reason:'RETIRED_CHECKOUT_PAID',
           observed_payment_cents:session.amount_total,observed_payment_intent_id:session.payment_intent},{error:'Payment needs staff review.',applied:false});
         return unchanged({ignored:true,applied:false});
       }
       try{validateCanonical(old,session);}catch(error){
-        if(session?.payment_status==='paid'&&old.status!=='paid')return update({status:'review',review_reason:error.code,
+        if(isSettledSession(session)&&old.status!=='paid')return update({status:'review',review_reason:error.code,
           observed_payment_cents:session.amount_total,observed_payment_intent_id:session.payment_intent},{error:'Payment needs staff review.',applied:false});
         throw error;
       }
       if(old.status==='paid')return unchanged({...resultFor(old,origin),applied:false});
-      if(session.payment_status==='paid') {
-        requireValue(session.status==='complete'&&session.payment_intent,'PAYMENT_PENDING','Payment is still processing.',409);
-        const quote=JSON.parse(JSON.stringify(old.quote));quote.items.forEach(i=>{i.paid_cents=i.due_now_cents;});
+      if(isSettledSession(session)) {
+        requireValue(session.status==='complete' && (session.payment_status==='paid' && session.amount_total>0 && session.payment_intent ||
+          isSettledSession(session) && session.amount_total===0 && !session.payment_intent),
+        'PAYMENT_PENDING','Payment is still processing.',409);
+        const quote=settlementQuote(old,session);quote.items.forEach(i=>{i.paid_cents=i.due_now_cents;});
         return update({status:'paid',checkout_session_id:session.id,checkout_url:null,session_snapshot:session,quote,
+          balance_after_checkout_cents:quote.totals.balance_after_checkout_cents,
+          item_summary:quote.items.map(i=>`${i.student_name} | ${i.package_name} | ${i.payment_option} $${(i.due_now_cents/100).toFixed(2)}${i.promotion_discount_cents?' | coupon $'+(i.promotion_discount_cents/100).toFixed(2):''} | balance $${(i.balance_after_checkout_cents/100).toFixed(2)}`).join('\n'),
           paid_cents:session.amount_total,payment_intent_id:session.payment_intent,paid_at:now,
           event_ids:[...(old.event_ids||[]),...(args.event_id?[args.event_id]:[])]},{action:'done',applied:true});
       }
@@ -564,6 +615,22 @@ conditional {
       session.metadata.quote_version === String(order.quote_version) && session.customer === (order.stripe_customer_id || null) &&
       (!order.checkout_session_id || order.checkout_session_id === session.id),
     'PAYMENT_MISMATCH', 'Payment details need staff review.', 409);
+    const promotions = order.reservation_payload?.allow_promotion_codes === true && order.quote.aid_percent === 0;
+    if (promotions) {
+      const expected = [...order.quote.lines].sort((a,b)=>a.price.localeCompare(b.price));
+      const actual = [...session.line_items].sort((a,b)=>a.price.localeCompare(b.price));
+      requireValue(actual.length === expected.length && actual.every((line,index)=>{
+        const baseline=expected[index];
+        return line.price===baseline.price && line.product===baseline.product && line.quantity===baseline.quantity &&
+          line.amount_subtotal===baseline.amount_subtotal && integer(line.amount_discount) &&
+          line.amount_discount<=line.amount_subtotal && line.amount_total===line.amount_subtotal-line.amount_discount;
+      }) && session.amount_subtotal===order.quote.totals.checkout_gross_cents &&
+        session.amount_subtotal===actual.reduce((n,l)=>n+l.amount_subtotal,0) &&
+        session.amount_total===actual.reduce((n,l)=>n+l.amount_total,0) &&
+        session.total_details.amount_discount===actual.reduce((n,l)=>n+l.amount_discount,0),
+      'PAYMENT_MISMATCH','Payment discount needs staff review.',409);
+      return;
+    }
     requireValue(session.amount_total === order.quote.totals.due_now_cents &&
       session.amount_subtotal === order.quote.totals.checkout_gross_cents &&
       session.total_details.amount_discount === order.quote.totals.checkout_discount_cents,
@@ -572,6 +639,36 @@ conditional {
       [price,product,quantity,amount_subtotal,amount_discount,amount_total]).sort((a,b)=>a[0].localeCompare(b[0]));
     requireValue(JSON.stringify(norm(session.line_items)) === JSON.stringify(norm(order.quote.lines)),
       'PAYMENT_MISMATCH', 'Payment items need staff review.', 409);
+  }
+  function isSettledSession(session) {
+    return session?.payment_status === 'paid' || session?.payment_status === 'no_payment_required';
+  }
+  function settlementQuote(order,session) {
+    validateCanonical(order,session);
+    const quote=JSON.parse(JSON.stringify(order.quote));
+    if (!(order.reservation_payload?.allow_promotion_codes===true && quote.aid_percent===0)) return quote;
+    const discount=session.total_details.amount_discount;
+    if (!discount || quote.promotion_discount_cents===discount) return quote;
+    for (const line of session.line_items) {
+      const items=quote.items.filter(item=>item.charge_price===line.price);
+      requireValue(items.length===line.quantity,'PAYMENT_MISMATCH','Payment allocation needs staff review.',409);
+      const each=Math.floor(line.amount_discount/items.length),remainder=line.amount_discount%items.length;
+      items.forEach((item,index)=>{
+        const amount=each+(index<remainder?1:0);
+        requireValue(amount<=item.due_now_cents,'PAYMENT_MISMATCH','Payment allocation needs staff review.',409);
+        item.promotion_discount_cents=amount;
+        item.checkout_discount_cents+=amount;
+        item.due_now_cents-=amount;
+        item.net_tuition_cents-=amount;
+      });
+    }
+    quote.lines=JSON.parse(JSON.stringify(session.line_items));
+    quote.promotion_discount_cents=discount;
+    quote.totals.promotion_discount_cents=discount;
+    quote.totals.checkout_discount_cents=discount;
+    quote.totals.due_now_cents=session.amount_total;
+    quote.totals.net_tuition_cents-=discount;
+    return quote;
   }
   function formBody(input) {
     const body = new URLSearchParams();
@@ -735,6 +832,7 @@ conditional {
       cancel_url:`${origin}/summer-camp-registration`,expires_at:Math.floor(now/1000)+1800};
     if(actor.stripe_customer_id)payload.customer=actor.stripe_customer_id;else payload.customer_email=actor.email;
     if(quote.coupon_id)payload.discounts=[{coupon:quote.coupon_id}];
+    if(quote.aid_percent===0)payload.allow_promotion_codes=true;
     return {owner_user_id:actor.id,parent_email:actor.email,balance_after_checkout_cents:quote.totals.balance_after_checkout_cents,attempt_key:actor.id+':'+request.attempt_id,order_reference:reference,quote_version:version,
       status:'creating',checkout_policy:POLICY,quote_fingerprint:quoteIdentity(quote),quote,aid_intake:validateAidIntake(quote.aid_percent,request.aid_data),
       checkout_session_id:null,checkout_url:null,session_snapshot:null,reservation_payload:payload,stripe_customer_id:actor.stripe_customer_id||null,
@@ -753,7 +851,7 @@ conditional {
       requireValue(request.quote_fingerprint===fingerprint,'QUOTE_CHANGED','Review the updated payment before continuing.',409);
       const intake=linkedAidIntake(validateAidIntake(quote.aid_percent,request.aid_data),old?.aid_intake);
       if(phase==='reserve'&&old?.checkout_session_id){
-        const result={action:'inspect',order:old,fingerprint};
+        const result={action:'inspect',order:old,fingerprint,upgrade_promotions:quote.aid_percent===0&&old.reservation_payload?.allow_promotion_codes!==true};
         return old.quote_fingerprint===fingerprint&&JSON.stringify(old.aid_intake)!==JSON.stringify(intake)?update({aid_intake:intake},result):unchanged(result);
       }
       if(phase==='reserve'&&old) {
@@ -771,7 +869,7 @@ conditional {
       const version=old?old.quote_version+1:1;
       const data=reservation(actor,request,quote,reference,version,origin,now);
       data.aid_intake=intake;
-      data.previous_checkouts=old?[...(old.previous_checkouts||[]),{session_id:old.checkout_session_id,version:old.quote_version,quote:old.quote}]:[];
+      data.previous_checkouts=old?[...(old.previous_checkouts||[]),{session_id:old.checkout_session_id,version:old.quote_version,quote:old.quote,allow_promotion_codes:old.reservation_payload?.allow_promotion_codes===true}]:[];
       return {ok:true,write:old?'edit':'add',data,result:{action:'create'}};
     }
     requireValue(old&&old.checkout_policy===POLICY,'ORDER_NOT_READY','Order not ready; retry the event.',409);
@@ -779,21 +877,25 @@ conditional {
       const session=args.session;
       const previous=(old.previous_checkouts||[]).find(p=>p.session_id===session?.id);
       if(phase==='event'&&previous) {
-        validateCanonical({...old,checkout_session_id:previous.session_id,quote_version:previous.version,quote:previous.quote},session);
-        if(session.payment_status==='paid')return update({status:'review',review_reason:'RETIRED_CHECKOUT_PAID',
+        validateCanonical({...old,checkout_session_id:previous.session_id,quote_version:previous.version,quote:previous.quote,reservation_payload:{allow_promotion_codes:previous.allow_promotion_codes===true}},session);
+        if(isSettledSession(session))return update({status:'review',review_reason:'RETIRED_CHECKOUT_PAID',
           observed_payment_cents:session.amount_total,observed_payment_intent_id:session.payment_intent},{error:'Payment needs staff review.',applied:false});
         return unchanged({ignored:true,applied:false});
       }
       try{validateCanonical(old,session);}catch(error){
-        if(session?.payment_status==='paid'&&old.status!=='paid')return update({status:'review',review_reason:error.code,
+        if(isSettledSession(session)&&old.status!=='paid')return update({status:'review',review_reason:error.code,
           observed_payment_cents:session.amount_total,observed_payment_intent_id:session.payment_intent},{error:'Payment needs staff review.',applied:false});
         throw error;
       }
       if(old.status==='paid')return unchanged({...resultFor(old,origin),applied:false});
-      if(session.payment_status==='paid') {
-        requireValue(session.status==='complete'&&session.payment_intent,'PAYMENT_PENDING','Payment is still processing.',409);
-        const quote=JSON.parse(JSON.stringify(old.quote));quote.items.forEach(i=>{i.paid_cents=i.due_now_cents;});
+      if(isSettledSession(session)) {
+        requireValue(session.status==='complete' && (session.payment_status==='paid' && session.amount_total>0 && session.payment_intent ||
+          isSettledSession(session) && session.amount_total===0 && !session.payment_intent),
+        'PAYMENT_PENDING','Payment is still processing.',409);
+        const quote=settlementQuote(old,session);quote.items.forEach(i=>{i.paid_cents=i.due_now_cents;});
         return update({status:'paid',checkout_session_id:session.id,checkout_url:null,session_snapshot:session,quote,
+          balance_after_checkout_cents:quote.totals.balance_after_checkout_cents,
+          item_summary:quote.items.map(i=>`${i.student_name} | ${i.package_name} | ${i.payment_option} $${(i.due_now_cents/100).toFixed(2)}${i.promotion_discount_cents?' | coupon $'+(i.promotion_discount_cents/100).toFixed(2):''} | balance $${(i.balance_after_checkout_cents/100).toFixed(2)}`).join('\n'),
           paid_cents:session.amount_total,payment_intent_id:session.payment_intent,paid_at:now,
           event_ids:[...(old.event_ids||[]),...(args.event_id?[args.event_id]:[])]},{action:'done',applied:true});
       }
@@ -807,7 +909,7 @@ conditional {
     requireValue(false,'ORDER_OPERATION','Unsupported order request.',400);
   }
   
-  try { const old=$var.plan.order,s=$var.previous.session;validateCanonical(old,s);if(s.payment_status==='paid')return {ok:true,action:'event'};requireValue(s.status!=='complete','PAYMENT_PENDING','Payment is still being checked. Please do not pay again.',409);if(old.quote_fingerprint===$var.plan.fingerprint&&s.status==='open'&&s.expires_at>Date.now()/1000)return {ok:true,action:'reuse'};return {ok:true,action:s.status==='open'?'expire':'replace'}; } catch(e) { return {ok:false,code:e.code||'SUMMER_UNAVAILABLE',message:e.code?e.message:'Summer service is temporarily unavailable.'}; }
+  try { const old=$var.plan.order,s=$var.previous.session;validateCanonical(old,s);if(isSettledSession(s))return {ok:true,action:'event'};requireValue(s.status!=='complete','PAYMENT_PENDING','Payment is still being checked. Please do not pay again.',409);if(!$var.plan.upgrade_promotions&&old.quote_fingerprint===$var.plan.fingerprint&&s.status==='open'&&s.expires_at>Date.now()/1000)return {ok:true,action:'reuse'};return {ok:true,action:s.status==='open'?'expire':'replace'}; } catch(e) { return {ok:false,code:e.code||'SUMMER_UNAVAILABLE',message:e.code?e.message:'Summer service is temporarily unavailable.'}; }
   """
  timeout = 30
 } as $inspection
@@ -956,6 +1058,22 @@ conditional {
       session.metadata.quote_version === String(order.quote_version) && session.customer === (order.stripe_customer_id || null) &&
       (!order.checkout_session_id || order.checkout_session_id === session.id),
     'PAYMENT_MISMATCH', 'Payment details need staff review.', 409);
+    const promotions = order.reservation_payload?.allow_promotion_codes === true && order.quote.aid_percent === 0;
+    if (promotions) {
+      const expected = [...order.quote.lines].sort((a,b)=>a.price.localeCompare(b.price));
+      const actual = [...session.line_items].sort((a,b)=>a.price.localeCompare(b.price));
+      requireValue(actual.length === expected.length && actual.every((line,index)=>{
+        const baseline=expected[index];
+        return line.price===baseline.price && line.product===baseline.product && line.quantity===baseline.quantity &&
+          line.amount_subtotal===baseline.amount_subtotal && integer(line.amount_discount) &&
+          line.amount_discount<=line.amount_subtotal && line.amount_total===line.amount_subtotal-line.amount_discount;
+      }) && session.amount_subtotal===order.quote.totals.checkout_gross_cents &&
+        session.amount_subtotal===actual.reduce((n,l)=>n+l.amount_subtotal,0) &&
+        session.amount_total===actual.reduce((n,l)=>n+l.amount_total,0) &&
+        session.total_details.amount_discount===actual.reduce((n,l)=>n+l.amount_discount,0),
+      'PAYMENT_MISMATCH','Payment discount needs staff review.',409);
+      return;
+    }
     requireValue(session.amount_total === order.quote.totals.due_now_cents &&
       session.amount_subtotal === order.quote.totals.checkout_gross_cents &&
       session.total_details.amount_discount === order.quote.totals.checkout_discount_cents,
@@ -964,6 +1082,36 @@ conditional {
       [price,product,quantity,amount_subtotal,amount_discount,amount_total]).sort((a,b)=>a[0].localeCompare(b[0]));
     requireValue(JSON.stringify(norm(session.line_items)) === JSON.stringify(norm(order.quote.lines)),
       'PAYMENT_MISMATCH', 'Payment items need staff review.', 409);
+  }
+  function isSettledSession(session) {
+    return session?.payment_status === 'paid' || session?.payment_status === 'no_payment_required';
+  }
+  function settlementQuote(order,session) {
+    validateCanonical(order,session);
+    const quote=JSON.parse(JSON.stringify(order.quote));
+    if (!(order.reservation_payload?.allow_promotion_codes===true && quote.aid_percent===0)) return quote;
+    const discount=session.total_details.amount_discount;
+    if (!discount || quote.promotion_discount_cents===discount) return quote;
+    for (const line of session.line_items) {
+      const items=quote.items.filter(item=>item.charge_price===line.price);
+      requireValue(items.length===line.quantity,'PAYMENT_MISMATCH','Payment allocation needs staff review.',409);
+      const each=Math.floor(line.amount_discount/items.length),remainder=line.amount_discount%items.length;
+      items.forEach((item,index)=>{
+        const amount=each+(index<remainder?1:0);
+        requireValue(amount<=item.due_now_cents,'PAYMENT_MISMATCH','Payment allocation needs staff review.',409);
+        item.promotion_discount_cents=amount;
+        item.checkout_discount_cents+=amount;
+        item.due_now_cents-=amount;
+        item.net_tuition_cents-=amount;
+      });
+    }
+    quote.lines=JSON.parse(JSON.stringify(session.line_items));
+    quote.promotion_discount_cents=discount;
+    quote.totals.promotion_discount_cents=discount;
+    quote.totals.checkout_discount_cents=discount;
+    quote.totals.due_now_cents=session.amount_total;
+    quote.totals.net_tuition_cents-=discount;
+    return quote;
   }
   function formBody(input) {
     const body = new URLSearchParams();
@@ -1127,6 +1275,7 @@ conditional {
       cancel_url:`${origin}/summer-camp-registration`,expires_at:Math.floor(now/1000)+1800};
     if(actor.stripe_customer_id)payload.customer=actor.stripe_customer_id;else payload.customer_email=actor.email;
     if(quote.coupon_id)payload.discounts=[{coupon:quote.coupon_id}];
+    if(quote.aid_percent===0)payload.allow_promotion_codes=true;
     return {owner_user_id:actor.id,parent_email:actor.email,balance_after_checkout_cents:quote.totals.balance_after_checkout_cents,attempt_key:actor.id+':'+request.attempt_id,order_reference:reference,quote_version:version,
       status:'creating',checkout_policy:POLICY,quote_fingerprint:quoteIdentity(quote),quote,aid_intake:validateAidIntake(quote.aid_percent,request.aid_data),
       checkout_session_id:null,checkout_url:null,session_snapshot:null,reservation_payload:payload,stripe_customer_id:actor.stripe_customer_id||null,
@@ -1145,7 +1294,7 @@ conditional {
       requireValue(request.quote_fingerprint===fingerprint,'QUOTE_CHANGED','Review the updated payment before continuing.',409);
       const intake=linkedAidIntake(validateAidIntake(quote.aid_percent,request.aid_data),old?.aid_intake);
       if(phase==='reserve'&&old?.checkout_session_id){
-        const result={action:'inspect',order:old,fingerprint};
+        const result={action:'inspect',order:old,fingerprint,upgrade_promotions:quote.aid_percent===0&&old.reservation_payload?.allow_promotion_codes!==true};
         return old.quote_fingerprint===fingerprint&&JSON.stringify(old.aid_intake)!==JSON.stringify(intake)?update({aid_intake:intake},result):unchanged(result);
       }
       if(phase==='reserve'&&old) {
@@ -1163,7 +1312,7 @@ conditional {
       const version=old?old.quote_version+1:1;
       const data=reservation(actor,request,quote,reference,version,origin,now);
       data.aid_intake=intake;
-      data.previous_checkouts=old?[...(old.previous_checkouts||[]),{session_id:old.checkout_session_id,version:old.quote_version,quote:old.quote}]:[];
+      data.previous_checkouts=old?[...(old.previous_checkouts||[]),{session_id:old.checkout_session_id,version:old.quote_version,quote:old.quote,allow_promotion_codes:old.reservation_payload?.allow_promotion_codes===true}]:[];
       return {ok:true,write:old?'edit':'add',data,result:{action:'create'}};
     }
     requireValue(old&&old.checkout_policy===POLICY,'ORDER_NOT_READY','Order not ready; retry the event.',409);
@@ -1171,21 +1320,25 @@ conditional {
       const session=args.session;
       const previous=(old.previous_checkouts||[]).find(p=>p.session_id===session?.id);
       if(phase==='event'&&previous) {
-        validateCanonical({...old,checkout_session_id:previous.session_id,quote_version:previous.version,quote:previous.quote},session);
-        if(session.payment_status==='paid')return update({status:'review',review_reason:'RETIRED_CHECKOUT_PAID',
+        validateCanonical({...old,checkout_session_id:previous.session_id,quote_version:previous.version,quote:previous.quote,reservation_payload:{allow_promotion_codes:previous.allow_promotion_codes===true}},session);
+        if(isSettledSession(session))return update({status:'review',review_reason:'RETIRED_CHECKOUT_PAID',
           observed_payment_cents:session.amount_total,observed_payment_intent_id:session.payment_intent},{error:'Payment needs staff review.',applied:false});
         return unchanged({ignored:true,applied:false});
       }
       try{validateCanonical(old,session);}catch(error){
-        if(session?.payment_status==='paid'&&old.status!=='paid')return update({status:'review',review_reason:error.code,
+        if(isSettledSession(session)&&old.status!=='paid')return update({status:'review',review_reason:error.code,
           observed_payment_cents:session.amount_total,observed_payment_intent_id:session.payment_intent},{error:'Payment needs staff review.',applied:false});
         throw error;
       }
       if(old.status==='paid')return unchanged({...resultFor(old,origin),applied:false});
-      if(session.payment_status==='paid') {
-        requireValue(session.status==='complete'&&session.payment_intent,'PAYMENT_PENDING','Payment is still processing.',409);
-        const quote=JSON.parse(JSON.stringify(old.quote));quote.items.forEach(i=>{i.paid_cents=i.due_now_cents;});
+      if(isSettledSession(session)) {
+        requireValue(session.status==='complete' && (session.payment_status==='paid' && session.amount_total>0 && session.payment_intent ||
+          isSettledSession(session) && session.amount_total===0 && !session.payment_intent),
+        'PAYMENT_PENDING','Payment is still processing.',409);
+        const quote=settlementQuote(old,session);quote.items.forEach(i=>{i.paid_cents=i.due_now_cents;});
         return update({status:'paid',checkout_session_id:session.id,checkout_url:null,session_snapshot:session,quote,
+          balance_after_checkout_cents:quote.totals.balance_after_checkout_cents,
+          item_summary:quote.items.map(i=>`${i.student_name} | ${i.package_name} | ${i.payment_option} $${(i.due_now_cents/100).toFixed(2)}${i.promotion_discount_cents?' | coupon $'+(i.promotion_discount_cents/100).toFixed(2):''} | balance $${(i.balance_after_checkout_cents/100).toFixed(2)}`).join('\n'),
           paid_cents:session.amount_total,payment_intent_id:session.payment_intent,paid_at:now,
           event_ids:[...(old.event_ids||[]),...(args.event_id?[args.event_id]:[])]},{action:'done',applied:true});
       }
@@ -1199,7 +1352,7 @@ conditional {
     requireValue(false,'ORDER_OPERATION','Unsupported order request.',400);
   }
   
-  try { const s=$var.previous.session;if(s.payment_status==='paid')return {ok:true,phase:'event',args:{session:s,origin:'https://www.chickenshednyc.org'}};if($var.inspection.action==='reuse')return {ok:true,phase:'attach',args:{session:s,origin:'https://www.chickenshednyc.org'}};return {ok:true,phase:'replace',args:{...$var.prepared.args,expected_version:$var.plan.order.quote_version,previous_session:s}}; } catch(e) { return {ok:false,code:e.code||'SUMMER_UNAVAILABLE',message:e.code?e.message:'Summer service is temporarily unavailable.'}; }
+  try { const s=$var.previous.session;if(isSettledSession(s))return {ok:true,phase:'event',args:{session:s,origin:'https://www.chickenshednyc.org'}};if($var.inspection.action==='reuse')return {ok:true,phase:'attach',args:{session:s,origin:'https://www.chickenshednyc.org'}};return {ok:true,phase:'replace',args:{...$var.prepared.args,expected_version:$var.plan.order.quote_version,previous_session:s}}; } catch(e) { return {ok:false,code:e.code||'SUMMER_UNAVAILABLE',message:e.code?e.message:'Summer service is temporarily unavailable.'}; }
   """
  timeout = 30
 } as $next
@@ -1359,6 +1512,22 @@ api.lambda {
       session.metadata.quote_version === String(order.quote_version) && session.customer === (order.stripe_customer_id || null) &&
       (!order.checkout_session_id || order.checkout_session_id === session.id),
     'PAYMENT_MISMATCH', 'Payment details need staff review.', 409);
+    const promotions = order.reservation_payload?.allow_promotion_codes === true && order.quote.aid_percent === 0;
+    if (promotions) {
+      const expected = [...order.quote.lines].sort((a,b)=>a.price.localeCompare(b.price));
+      const actual = [...session.line_items].sort((a,b)=>a.price.localeCompare(b.price));
+      requireValue(actual.length === expected.length && actual.every((line,index)=>{
+        const baseline=expected[index];
+        return line.price===baseline.price && line.product===baseline.product && line.quantity===baseline.quantity &&
+          line.amount_subtotal===baseline.amount_subtotal && integer(line.amount_discount) &&
+          line.amount_discount<=line.amount_subtotal && line.amount_total===line.amount_subtotal-line.amount_discount;
+      }) && session.amount_subtotal===order.quote.totals.checkout_gross_cents &&
+        session.amount_subtotal===actual.reduce((n,l)=>n+l.amount_subtotal,0) &&
+        session.amount_total===actual.reduce((n,l)=>n+l.amount_total,0) &&
+        session.total_details.amount_discount===actual.reduce((n,l)=>n+l.amount_discount,0),
+      'PAYMENT_MISMATCH','Payment discount needs staff review.',409);
+      return;
+    }
     requireValue(session.amount_total === order.quote.totals.due_now_cents &&
       session.amount_subtotal === order.quote.totals.checkout_gross_cents &&
       session.total_details.amount_discount === order.quote.totals.checkout_discount_cents,
@@ -1367,6 +1536,36 @@ api.lambda {
       [price,product,quantity,amount_subtotal,amount_discount,amount_total]).sort((a,b)=>a[0].localeCompare(b[0]));
     requireValue(JSON.stringify(norm(session.line_items)) === JSON.stringify(norm(order.quote.lines)),
       'PAYMENT_MISMATCH', 'Payment items need staff review.', 409);
+  }
+  function isSettledSession(session) {
+    return session?.payment_status === 'paid' || session?.payment_status === 'no_payment_required';
+  }
+  function settlementQuote(order,session) {
+    validateCanonical(order,session);
+    const quote=JSON.parse(JSON.stringify(order.quote));
+    if (!(order.reservation_payload?.allow_promotion_codes===true && quote.aid_percent===0)) return quote;
+    const discount=session.total_details.amount_discount;
+    if (!discount || quote.promotion_discount_cents===discount) return quote;
+    for (const line of session.line_items) {
+      const items=quote.items.filter(item=>item.charge_price===line.price);
+      requireValue(items.length===line.quantity,'PAYMENT_MISMATCH','Payment allocation needs staff review.',409);
+      const each=Math.floor(line.amount_discount/items.length),remainder=line.amount_discount%items.length;
+      items.forEach((item,index)=>{
+        const amount=each+(index<remainder?1:0);
+        requireValue(amount<=item.due_now_cents,'PAYMENT_MISMATCH','Payment allocation needs staff review.',409);
+        item.promotion_discount_cents=amount;
+        item.checkout_discount_cents+=amount;
+        item.due_now_cents-=amount;
+        item.net_tuition_cents-=amount;
+      });
+    }
+    quote.lines=JSON.parse(JSON.stringify(session.line_items));
+    quote.promotion_discount_cents=discount;
+    quote.totals.promotion_discount_cents=discount;
+    quote.totals.checkout_discount_cents=discount;
+    quote.totals.due_now_cents=session.amount_total;
+    quote.totals.net_tuition_cents-=discount;
+    return quote;
   }
   function formBody(input) {
     const body = new URLSearchParams();
@@ -1530,6 +1729,7 @@ api.lambda {
       cancel_url:`${origin}/summer-camp-registration`,expires_at:Math.floor(now/1000)+1800};
     if(actor.stripe_customer_id)payload.customer=actor.stripe_customer_id;else payload.customer_email=actor.email;
     if(quote.coupon_id)payload.discounts=[{coupon:quote.coupon_id}];
+    if(quote.aid_percent===0)payload.allow_promotion_codes=true;
     return {owner_user_id:actor.id,parent_email:actor.email,balance_after_checkout_cents:quote.totals.balance_after_checkout_cents,attempt_key:actor.id+':'+request.attempt_id,order_reference:reference,quote_version:version,
       status:'creating',checkout_policy:POLICY,quote_fingerprint:quoteIdentity(quote),quote,aid_intake:validateAidIntake(quote.aid_percent,request.aid_data),
       checkout_session_id:null,checkout_url:null,session_snapshot:null,reservation_payload:payload,stripe_customer_id:actor.stripe_customer_id||null,
@@ -1548,7 +1748,7 @@ api.lambda {
       requireValue(request.quote_fingerprint===fingerprint,'QUOTE_CHANGED','Review the updated payment before continuing.',409);
       const intake=linkedAidIntake(validateAidIntake(quote.aid_percent,request.aid_data),old?.aid_intake);
       if(phase==='reserve'&&old?.checkout_session_id){
-        const result={action:'inspect',order:old,fingerprint};
+        const result={action:'inspect',order:old,fingerprint,upgrade_promotions:quote.aid_percent===0&&old.reservation_payload?.allow_promotion_codes!==true};
         return old.quote_fingerprint===fingerprint&&JSON.stringify(old.aid_intake)!==JSON.stringify(intake)?update({aid_intake:intake},result):unchanged(result);
       }
       if(phase==='reserve'&&old) {
@@ -1566,7 +1766,7 @@ api.lambda {
       const version=old?old.quote_version+1:1;
       const data=reservation(actor,request,quote,reference,version,origin,now);
       data.aid_intake=intake;
-      data.previous_checkouts=old?[...(old.previous_checkouts||[]),{session_id:old.checkout_session_id,version:old.quote_version,quote:old.quote}]:[];
+      data.previous_checkouts=old?[...(old.previous_checkouts||[]),{session_id:old.checkout_session_id,version:old.quote_version,quote:old.quote,allow_promotion_codes:old.reservation_payload?.allow_promotion_codes===true}]:[];
       return {ok:true,write:old?'edit':'add',data,result:{action:'create'}};
     }
     requireValue(old&&old.checkout_policy===POLICY,'ORDER_NOT_READY','Order not ready; retry the event.',409);
@@ -1574,21 +1774,25 @@ api.lambda {
       const session=args.session;
       const previous=(old.previous_checkouts||[]).find(p=>p.session_id===session?.id);
       if(phase==='event'&&previous) {
-        validateCanonical({...old,checkout_session_id:previous.session_id,quote_version:previous.version,quote:previous.quote},session);
-        if(session.payment_status==='paid')return update({status:'review',review_reason:'RETIRED_CHECKOUT_PAID',
+        validateCanonical({...old,checkout_session_id:previous.session_id,quote_version:previous.version,quote:previous.quote,reservation_payload:{allow_promotion_codes:previous.allow_promotion_codes===true}},session);
+        if(isSettledSession(session))return update({status:'review',review_reason:'RETIRED_CHECKOUT_PAID',
           observed_payment_cents:session.amount_total,observed_payment_intent_id:session.payment_intent},{error:'Payment needs staff review.',applied:false});
         return unchanged({ignored:true,applied:false});
       }
       try{validateCanonical(old,session);}catch(error){
-        if(session?.payment_status==='paid'&&old.status!=='paid')return update({status:'review',review_reason:error.code,
+        if(isSettledSession(session)&&old.status!=='paid')return update({status:'review',review_reason:error.code,
           observed_payment_cents:session.amount_total,observed_payment_intent_id:session.payment_intent},{error:'Payment needs staff review.',applied:false});
         throw error;
       }
       if(old.status==='paid')return unchanged({...resultFor(old,origin),applied:false});
-      if(session.payment_status==='paid') {
-        requireValue(session.status==='complete'&&session.payment_intent,'PAYMENT_PENDING','Payment is still processing.',409);
-        const quote=JSON.parse(JSON.stringify(old.quote));quote.items.forEach(i=>{i.paid_cents=i.due_now_cents;});
+      if(isSettledSession(session)) {
+        requireValue(session.status==='complete' && (session.payment_status==='paid' && session.amount_total>0 && session.payment_intent ||
+          isSettledSession(session) && session.amount_total===0 && !session.payment_intent),
+        'PAYMENT_PENDING','Payment is still processing.',409);
+        const quote=settlementQuote(old,session);quote.items.forEach(i=>{i.paid_cents=i.due_now_cents;});
         return update({status:'paid',checkout_session_id:session.id,checkout_url:null,session_snapshot:session,quote,
+          balance_after_checkout_cents:quote.totals.balance_after_checkout_cents,
+          item_summary:quote.items.map(i=>`${i.student_name} | ${i.package_name} | ${i.payment_option} $${(i.due_now_cents/100).toFixed(2)}${i.promotion_discount_cents?' | coupon $'+(i.promotion_discount_cents/100).toFixed(2):''} | balance $${(i.balance_after_checkout_cents/100).toFixed(2)}`).join('\n'),
           paid_cents:session.amount_total,payment_intent_id:session.payment_intent,paid_at:now,
           event_ids:[...(old.event_ids||[]),...(args.event_id?[args.event_id]:[])]},{action:'done',applied:true});
       }

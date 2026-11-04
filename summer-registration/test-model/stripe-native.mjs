@@ -34,6 +34,22 @@ export function validateCanonical(order, session) {
     session.metadata.quote_version === String(order.quote_version) && session.customer === (order.stripe_customer_id || null) &&
     (!order.checkout_session_id || order.checkout_session_id === session.id),
   'PAYMENT_MISMATCH', 'Payment details need staff review.', 409);
+  const promotions = order.reservation_payload?.allow_promotion_codes === true && order.quote.aid_percent === 0;
+  if (promotions) {
+    const expected = [...order.quote.lines].sort((a,b)=>a.price.localeCompare(b.price));
+    const actual = [...session.line_items].sort((a,b)=>a.price.localeCompare(b.price));
+    requireValue(actual.length === expected.length && actual.every((line,index)=>{
+      const baseline=expected[index];
+      return line.price===baseline.price && line.product===baseline.product && line.quantity===baseline.quantity &&
+        line.amount_subtotal===baseline.amount_subtotal && integer(line.amount_discount) &&
+        line.amount_discount<=line.amount_subtotal && line.amount_total===line.amount_subtotal-line.amount_discount;
+    }) && session.amount_subtotal===order.quote.totals.checkout_gross_cents &&
+      session.amount_subtotal===actual.reduce((n,l)=>n+l.amount_subtotal,0) &&
+      session.amount_total===actual.reduce((n,l)=>n+l.amount_total,0) &&
+      session.total_details.amount_discount===actual.reduce((n,l)=>n+l.amount_discount,0),
+    'PAYMENT_MISMATCH','Payment discount needs staff review.',409);
+    return;
+  }
   requireValue(session.amount_total === order.quote.totals.due_now_cents &&
     session.amount_subtotal === order.quote.totals.checkout_gross_cents &&
     session.total_details.amount_discount === order.quote.totals.checkout_discount_cents,
@@ -42,6 +58,36 @@ export function validateCanonical(order, session) {
     [price,product,quantity,amount_subtotal,amount_discount,amount_total]).sort((a,b)=>a[0].localeCompare(b[0]));
   requireValue(JSON.stringify(norm(session.line_items)) === JSON.stringify(norm(order.quote.lines)),
     'PAYMENT_MISMATCH', 'Payment items need staff review.', 409);
+}
+export function isSettledSession(session) {
+  return session?.payment_status === 'paid' || session?.payment_status === 'no_payment_required';
+}
+export function settlementQuote(order,session) {
+  validateCanonical(order,session);
+  const quote=JSON.parse(JSON.stringify(order.quote));
+  if (!(order.reservation_payload?.allow_promotion_codes===true && quote.aid_percent===0)) return quote;
+  const discount=session.total_details.amount_discount;
+  if (!discount || quote.promotion_discount_cents===discount) return quote;
+  for (const line of session.line_items) {
+    const items=quote.items.filter(item=>item.charge_price===line.price);
+    requireValue(items.length===line.quantity,'PAYMENT_MISMATCH','Payment allocation needs staff review.',409);
+    const each=Math.floor(line.amount_discount/items.length),remainder=line.amount_discount%items.length;
+    items.forEach((item,index)=>{
+      const amount=each+(index<remainder?1:0);
+      requireValue(amount<=item.due_now_cents,'PAYMENT_MISMATCH','Payment allocation needs staff review.',409);
+      item.promotion_discount_cents=amount;
+      item.checkout_discount_cents+=amount;
+      item.due_now_cents-=amount;
+      item.net_tuition_cents-=amount;
+    });
+  }
+  quote.lines=JSON.parse(JSON.stringify(session.line_items));
+  quote.promotion_discount_cents=discount;
+  quote.totals.promotion_discount_cents=discount;
+  quote.totals.checkout_discount_cents=discount;
+  quote.totals.due_now_cents=session.amount_total;
+  quote.totals.net_tuition_cents-=discount;
+  return quote;
 }
 export function formBody(input) {
   const body = new URLSearchParams();

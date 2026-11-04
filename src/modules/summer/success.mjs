@@ -53,8 +53,8 @@ if (root) {
         note.textContent = 'Payment has not been confirmed yet. Check again shortly or contact Chickenshed. Please do not pay again.';
         return;
       }
-      heading.textContent = 'Your Summer payment is received';
-      field('status', 'Payment', 'Confirmed');
+      heading.textContent = result.paid_cents===0?'Your Summer registration is confirmed':'Your Summer payment is received';
+      field('status', 'Payment', result.paid_cents===0?'No payment required':'Confirmed');
       field('billingCycle', 'Students', String(new Set(result.items.map(item => item.student_id)).size));
       const deposits = result.items.filter(item => item.payment_option === 'deposit');
       field('pendingStudents', 'Deposit students', String(new Set(deposits.map(item => item.student_id)).size));
@@ -63,7 +63,8 @@ if (root) {
       showAid(result.items.some(item => Number(item.aid_percent) > 0));
       field('subtotal', 'Total tuition', dollars(result.totals.tuition_cents));
       field('depositPaid', 'Deposits received', dollars(deposits.reduce((sum, item) => sum + item.paid_cents, 0)));
-      field('AmountDiscount', 'Aid on this payment', dollars(result.totals.checkout_discount_cents));
+      field('AmountDiscount', result.totals.promotion_discount_cents?'Coupon discount':'Aid on this payment', dollars(result.totals.checkout_discount_cents));
+      if(result.totals.promotion_discount_cents)root.querySelector('#AmountDiscount').hidden=false;
       field('subscriptionTotal', 'Amount received', dollars(result.paid_cents));
       field('dueUponApproval', 'Balance remaining', dollars(result.totals.balance_after_checkout_cents));
       const list = document.createElement('ul');
@@ -71,11 +72,12 @@ if (root) {
         const row = document.createElement('li');
         row.append(textElement('strong', `${item.student_name} · ${item.package_name}`));
         row.append(textElement('p', `${item.payment_option === 'deposit' ? 'Deposit received' : 'Full tuition received'}: ${dollars(item.paid_cents)}`));
+        if(item.promotion_discount_cents)row.append(textElement('p', `Coupon applied: ${dollars(item.promotion_discount_cents)}`));
         if (item.payment_option === 'deposit') row.append(textElement('p', `Balance after this checkout: ${dollars(item.balance_after_checkout_cents)}. Chickenshed will follow up about student review and the remaining payment.`));
         list.append(row);
       }
       items.append(list);
-      note.textContent = 'Your Summer registration confirmation will arrive by email. Your Stripe payment receipt is separate.';
+      note.textContent = result.paid_cents===0?'No payment was required. Your Summer registration confirmation will arrive by email.':'Your Summer registration confirmation will arrive by email. Your Stripe payment receipt is separate.';
       root.dataset.summerPaid = 'true';
       root.querySelector('.success_trigger')?.click();
       refresh.hidden = true;
