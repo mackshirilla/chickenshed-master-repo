@@ -13,15 +13,14 @@ export async function initializeSummerRegistrationPage(){
     if(node.textContent.trim()==='Build Subscription')node.textContent='Summer registration';
     if(node.textContent.includes('Any deposit paid today will be subtracted from your first invoice'))node.textContent='Deposits are credited toward that child’s Summer tuition. Chickenshed will follow up about the remaining balance.';
   });
-  const message=textElement('p',config.enabled?'Summer registration':'Summer registration is not open yet.','summer-registration-notice');
-  root.prepend(message);
+  const message=textElement('p','Summer registration is not open yet.','summer-registration-notice');
   root.querySelectorAll('.loading_wall,.loading_wall_wrap,.dashboard_loading_wall,[data-summer-loading]').forEach(node=>{node.hidden=true;node.style.display='none';});
   root.querySelectorAll('dialog[open]').forEach(dialog=>dialog.close());
-  if(config.enabled!==true){root.querySelectorAll('button,input,select').forEach(node=>{node.disabled=true;});return;}
+  if(config.enabled!==true){root.prepend(message);root.querySelectorAll('button,input,select').forEach(node=>{node.disabled=true;});return;}
   delete root.dataset.summerApiTenant;delete root.dataset.summerDemo;delete root.dataset.summerLocalTest;delete root.dataset.summerTest;
   root.dataset.summerRegistration='';root.dataset.summerApiBase=config.apiBase;
   const box=root.querySelector('#subscription_line_items_wrap');
-  if(!box) {message.textContent='Summer page layout needs review.';return;}
+  if(!box) {message.textContent='Summer page layout needs review.';root.prepend(message);return;}
   const headerRow=root.querySelector('#subscription_items_table thead tr');
   if(headerRow?.children.length===4){const actions=document.createElement('th');actions.scope='col';actions.append(textElement('span','Actions','summer-sr-only'));headerRow.append(actions);}
   [...box.children].forEach(node=>{node.hidden=true;node.style.display='none';});

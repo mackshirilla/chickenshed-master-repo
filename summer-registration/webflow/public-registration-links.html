@@ -1,0 +1,17 @@
+<!-- Summer public registration links; exact Summer pages only. -->
+<script id="summer-public-registration-links">
+(function () {
+  var paths = ["/programs/summer-shed","/workshops/summer-shed-3-weeks","/workshops/summer-shed-2-weeks","/workshops/summer-shed-1-week","/sessions/summer-shed-3-weeks","/sessions/summer-shed-2-week","/sessions/summer-shed-1-week"];
+  if (paths.indexOf(location.pathname.replace(/\/$/, "")) === -1) return;
+  function connectSummerRegistration() {
+    document.querySelectorAll('a[href]').forEach(function (link) {
+      var target = new URL(link.getAttribute('href'), location.origin);
+      if (target.origin === location.origin && target.pathname === "/program-registration") {
+        link.setAttribute("href", "/summer-camp-registration");
+      }
+    });
+  }
+  if (document.readyState === "loading") document.addEventListener("DOMContentLoaded", connectSummerRegistration);
+  else connectSummerRegistration();
+})();
+</script>
