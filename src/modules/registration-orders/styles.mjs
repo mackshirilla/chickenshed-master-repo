@@ -24,6 +24,7 @@ export function installRegistrationStyles(){
  [data-registration-mounted="true"] .registration-payment-preference label{display:block;margin:0;line-height:1.35}
  [data-registration-mounted="true"] .registration-payment-preference select{display:block;width:100%;max-width:none;min-width:0;min-height:3rem;margin:0;padding:.875rem 2.5rem .875rem 1rem;font:inherit;line-height:1.4}
  [data-registration-mounted="true"] .registration-payment-preference p{margin:0;line-height:1.6;text-align:left}
+ [data-registration-mounted="true"] .registration-deposit-notice{display:grid;gap:.5rem;padding:1.25rem;border:1px solid #bfe3f0;border-radius:.75rem;background:#dcebf3;color:#062632;line-height:1.6}
  [data-registration-mounted="true"] #registrationPaymentChoice{scroll-margin-block:6rem}
  [data-registration-mounted="true"] .registration-plan-link{display:inline-block;padding:.5rem 0;color:var(--swatch--brand-1,#009fce);text-decoration:underline;text-underline-offset:.2em;font-weight:600}
  [data-registration-mounted="true"] .registration-plan-link:focus-visible{outline:2px solid currentColor;outline-offset:3px;border-radius:.2rem}
@@ -41,6 +42,30 @@ export function installRegistrationStyles(){
   [data-summer-familiar-success][data-registration-mounted="true"] .registration-success-extra,[data-summer-familiar-success][data-registration-mounted="true"] #summerOrderItems>ul{gap:1.25rem}
   [data-summer-familiar-success][data-registration-mounted="true"] .registration-order-continue{width:100%}
  }
+ `;
+ document.head.append(style);
+}
+
+export function installRegistrationDashboardStyles(){
+ if(document.getElementById('registration-dashboard-layout'))return;
+ const style=document.createElement('style');style.id='registration-dashboard-layout';
+ style.textContent=`
+ #registrationOrdersDashboard{display:grid;gap:1.5rem;padding:clamp(1.25rem,2.5vw,2rem);min-width:0}
+ #registrationOrdersDashboard .registration-dashboard-heading{display:flex;flex-wrap:wrap;gap:1rem;justify-content:space-between;align-items:center}
+ #registrationOrdersDashboard h2,#registrationOrdersDashboard h3,#registrationOrdersDashboard p{margin:0}
+ #registrationOrdersDashboard h2{font-size:1.5rem;line-height:1.35}
+ #registrationOrdersDashboard .registration-dashboard-list{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,22rem),1fr));gap:1.25rem;min-width:0}
+ #registrationOrdersDashboard .registration-order-card{display:flex;flex-direction:column;align-items:flex-start;gap:.75rem;padding:1.5rem;border:1px solid color-mix(in srgb,currentColor 16%,transparent);border-radius:1rem;min-width:0;overflow-wrap:anywhere;line-height:1.55;background:color-mix(in srgb,var(--theme--text,#062632) 3%,transparent)}
+ #registrationOrdersDashboard .registration-order-card h3{font-size:1.25rem;line-height:1.35;font-weight:700}
+ #registrationOrdersDashboard .registration-card-program{font-weight:600}
+ #registrationOrdersDashboard .registration-card-status{display:inline-block;max-width:100%;padding:.3rem .75rem;border-radius:999px;background:#dcebf3;color:#062632;font-size:.85rem;font-weight:600}
+ #registrationOrdersDashboard .registration-card-status[data-status="active"]{background:#e3efcf}
+ #registrationOrdersDashboard .registration-card-actions{display:flex;gap:.75rem;flex-wrap:wrap;margin-top:auto;padding-top:.5rem}
+ #registrationOrdersDashboard .registration-card-button{display:inline-flex;align-items:center;justify-content:center;min-height:2.75rem;padding:.625rem 1rem;border:1px solid currentColor;border-radius:.5rem;text-decoration:none;font:inherit;color:inherit;background:transparent;text-align:center;white-space:normal;cursor:pointer}
+ #registrationOrdersDashboard .registration-card-button:focus-visible{outline:2px solid currentColor;outline-offset:3px}
+ #registrationOrdersDashboard .registration-card-files{display:grid;gap:.75rem;width:100%}
+ #registrationOrdersDashboard .registration-card-files:empty,#registrationOrdersDashboard .registration-dashboard-notice:empty{display:none}
+ @media(max-width:767px){#registrationOrdersDashboard .registration-dashboard-heading .btn_main_wrap{width:100%;text-align:center}#registrationOrdersDashboard .registration-order-card{padding:1.25rem}}
  `;
  document.head.append(style);
 }

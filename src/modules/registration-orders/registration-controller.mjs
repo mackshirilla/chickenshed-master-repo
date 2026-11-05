@@ -169,6 +169,9 @@ export async function initializeRegistration(root) {
     planSelect.id='registrationPaymentChoice';planSelect.required=true;planSelect.setAttribute('aria-describedby','registrationPaymentHelp');
     const labHelp=textElement('p','Labs require this student to have an Active Players 2, 3 or 4 registration covering the Lab, or a qualifying Players item in this checkout.','registration-eligibility-help u-text-small');labHelp.hidden=true;root.querySelector('#subscription_items_table').after(labHelp);
     const planHelp=textElement('p','','u-text-small');planHelp.id='registrationPaymentHelp';planBox.append(planLabel,planSelect,planHelp);summaryCard.before(planBox);
+    const monthlyNotice=textElement('div','','registration-deposit-notice');monthlyNotice.id='registrationMonthlyDepositNotice';monthlyNotice.hidden=true;monthlyNotice.setAttribute('role','status');monthlyNotice.setAttribute('aria-live','polite');
+    monthlyNotice.append(textElement('strong','Deposit due today'),textElement('p','Monthly payments collect the assigned deposit for each eligible registration today. Your deposit is credited toward tuition. Chickenshed NYC will contact you to arrange the remaining payments.'));
+    planBox.append(monthlyNotice);
     function selectedPlannedSessions(){return state.items.map(i=>catalog.sessions.find(s=>String(s.id)===String(i.session_id))).filter(s=>s&&paymentOptions(s).length>1);}
     function needsPlan(){return selectedPlannedSessions().length>0;}
     function renderPlan(){
@@ -187,6 +190,7 @@ export async function initializeRegistration(root) {
     function renderQuote() {
       quoteNode.replaceChildren();
       const shown=quote||(updating?lastQuote:null);
+      monthlyNotice.hidden=!(state.payment_preference==='monthly'&&shown?.items.some(item=>item.payment_option==='deposit'));
       const hasAid=shown?.aid_percent>0;
       const existingDue=root.querySelector('#total_amount_due');
       if(existingDue){existingDue.textContent=shown?dollars(shown.totals.due_now_cents):'—';existingDue.setAttribute('aria-busy',String(updating));}

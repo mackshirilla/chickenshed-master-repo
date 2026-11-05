@@ -1,0 +1,90 @@
+{
+  "account": "acct_1LYZ6CDK5b8P0zFQ",
+  "livemode": true,
+  "changes": [
+    {
+      "id": "prod_VZQ5MQIRfNFl6D",
+      "name": "My Little (Mini) Adventure — Journey Over The Rainbow - Tuesdays",
+      "description_before": "Chickenshed NYC themed block, 2027-04-13 through 2027-05-04. One-time tuition.",
+      "description_after": null,
+      "default_price_unchanged": true
+    },
+    {
+      "id": "prod_VZQ5czVxcFoajV",
+      "name": "My Little (Mini) Adventure — Into The Wild Jungle Adventure - Saturdays",
+      "description_before": "Chickenshed NYC themed block, 2027-01-09 through 2027-01-30. One-time tuition.",
+      "description_after": null,
+      "default_price_unchanged": true
+    },
+    {
+      "id": "prod_VZQ52Fe1mrOnrY",
+      "name": "My Little (Mini) Adventure — Into The Wild Jungle Adventure - Tuesdays",
+      "description_before": "Chickenshed NYC themed block, 2027-01-05 through 2027-01-26. One-time tuition.",
+      "description_after": null,
+      "default_price_unchanged": true
+    },
+    {
+      "id": "prod_VZQ5NZHHWhVfWA",
+      "name": "My Little (Mini) Adventure — Heroes In Training - Saturdays",
+      "description_before": "Chickenshed NYC themed block, 2027-02-06 through 2027-03-06. One-time tuition.",
+      "description_after": null,
+      "default_price_unchanged": true
+    },
+    {
+      "id": "prod_VZQ5MRtDp5xSNY",
+      "name": "My Little (Mini) Adventure — Magic & Mystery - Tuesdays",
+      "description_before": "Chickenshed NYC themed block, 2026-10-13 through 2026-11-17. One-time tuition.",
+      "description_after": null,
+      "default_price_unchanged": true
+    },
+    {
+      "id": "prod_VZQ5EE6gNs40Ls",
+      "name": "My Little (Mini) Adventure — Under The Sea - Saturdays",
+      "description_before": "Chickenshed NYC themed block, 2027-03-13 through 2027-04-17. One-time tuition.",
+      "description_after": null,
+      "default_price_unchanged": true
+    },
+    {
+      "id": "prod_VZQ5lg1jfD52gF",
+      "name": "My Little (Mini) Adventure — Heroes In Training - Tuesdays",
+      "description_before": "Chickenshed NYC themed block, 2027-02-02 through 2027-03-02. One-time tuition.",
+      "description_after": null,
+      "default_price_unchanged": true
+    },
+    {
+      "id": "prod_VZQ5fvqJu8CZLq",
+      "name": "My Little (Mini) Adventure — Journey Over The Rainbow - Saturdays",
+      "description_before": "Chickenshed NYC themed block, 2027-04-24 through 2027-05-22. One-time tuition.",
+      "description_after": null,
+      "default_price_unchanged": true
+    },
+    {
+      "id": "prod_VZQ5OIzVd9YOHb",
+      "name": "My Little (Mini) Adventure — Cookies, Sweets & Holiday Treats - Tuesdays",
+      "description_before": "Chickenshed NYC themed block, 2026-11-24 through 2026-12-22. One-time tuition.",
+      "description_after": null,
+      "default_price_unchanged": true
+    },
+    {
+      "id": "prod_VZQ5ZYah9gevuW",
+      "name": "My Little (Mini) Adventure — Park Life Adventure - Tuesdays",
+      "description_before": "Chickenshed NYC themed block, 2027-05-11 through 2027-06-01. One-time tuition.",
+      "description_after": null,
+      "default_price_unchanged": true
+    },
+    {
+      "id": "prod_VZQ5wjDQacBnXA",
+      "name": "My Little (Mini) Adventure — Under The Sea - Tuesdays",
+      "description_before": "Chickenshed NYC themed block, 2027-03-09 through 2027-04-06. One-time tuition.",
+      "description_after": null,
+      "default_price_unchanged": true
+    },
+    {
+      "id": "prod_VZQ4fcVR52CF9T",
+      "name": "My Little (Mini) Adventure — Cookies, Sweets & Holiday Treats - Saturdays",
+      "description_before": "Chickenshed NYC themed block, 2026-11-07 through 2026-12-05. One-time tuition.",
+      "description_after": null,
+      "default_price_unchanged": true
+    }
+  ]
+}
