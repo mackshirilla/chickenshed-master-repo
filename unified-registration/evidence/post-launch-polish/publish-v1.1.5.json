@@ -1,0 +1,19 @@
+{
+  "label": "Publish approved registration layout fixes",
+  "action": "publish_site",
+  "result": {
+    "customDomains": [
+      {
+        "id": "68302cc97c4f9781e3b027ca",
+        "url": "chickenshednyc.org"
+      },
+      {
+        "id": "68302cc97c4f9781e3b027c1",
+        "url": "www.chickenshednyc.org"
+      }
+    ],
+    "publishToWebflowSubdomain": false,
+    "publishTaskId": "8e691447-1cf9-4c30-8cfb-bd1f3ea287d8",
+    "publishScope": "site"
+  }
+}

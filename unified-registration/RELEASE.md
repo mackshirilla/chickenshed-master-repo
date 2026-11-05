@@ -49,3 +49,9 @@ The conditional payment-plan card now appears before the order breakdown in the 
 ## v.1.1.5 long-name wrapping
 
 Unified row text now outranks the later Webflow embed's first-column nowrap rule. Long program names and session times wrap within their cells while the existing desktop form/sidebar grid remains intact. Includes v.1.1.4's payment-choice card placement above the breakdown.
+
+## Published polish checkpoint — v1.1.5
+
+Both custom domains published at 2026-11-05 03:49:44 UTC. The header uses the canonical `v1.1.5` tag; all 40 referenced CDN assets match the tagged build. The authenticated live desktop check reproduced and resolved the long Mini Adventure program name: computed white-space is normal and the text stays within its cell. At 390px, row text stays within 318px cells and the document has no horizontal overflow. The payment-choice card precedes the breakdown; the prompt link focuses and centers its select at y=398–446 in an 844px viewport, clear of the fixed header. Checkout stays disabled while that required choice is missing. Only the agent-created quote row was removed afterward; no live order or charge was created.
+
+The public link audit loaded 59 public pages and representative CMS pages with zero obsolete registration-entry links after the native button updates. Twelve Mini blocks and their combined financial-aid quote passed. See `evidence/post-launch-polish/`.

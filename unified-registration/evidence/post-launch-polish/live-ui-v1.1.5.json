@@ -1,0 +1,31 @@
+{
+  "checked_at": "2026-11-05T03:51:04.829603+00:00",
+  "release": "v1.1.5",
+  "live_script_verified": true,
+  "desktop": {
+    "viewport_width": 1711,
+    "program_white_space": "normal",
+    "program_cell_width": 100.421875,
+    "program_scroll_width": 100,
+    "grid_preserved": true
+  },
+  "mobile": {
+    "viewport": [
+      390,
+      844
+    ],
+    "document_scroll_width": 390,
+    "cell_width": 318,
+    "long_text_scroll_width": 318,
+    "payment_card_before_breakdown": true,
+    "shortcut_focus": "registrationPaymentChoice",
+    "shortcut_select_bounds": [
+      397.9453125,
+      445.9453125
+    ],
+    "checkout_disabled_without_required_choice": true
+  },
+  "temporary_viewport_reset": true,
+  "agent_quote_row_removed": true,
+  "new_live_order_or_charge": false
+}
