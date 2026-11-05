@@ -1,0 +1,17 @@
+{
+  "mode": "email-finish",
+  "at": "2026-11-05T05:47:09.574Z",
+  "writes": [
+    {
+      "function_id": 352,
+      "sha256": "16ec0ed43e6b28706f4969e9cd3631dfeccac28a480da43a7dcbe3cfa3b09a87"
+    },
+    {
+      "function_id": 353,
+      "sha256": "f095dff830c08cbcad9c31a58cc512d0eaeba6cffb6608d0da00ed7b9c405c15"
+    }
+  ],
+  "charges_created": false,
+  "emails_delivered": false,
+  "ok": true
+}

@@ -1,0 +1,14 @@
+{
+  "mode": "validate-mail",
+  "at": "2026-11-05T05:48:12.116Z",
+  "writes": [],
+  "charges_created": false,
+  "emails_delivered": false,
+  "sendgrid_validation": {
+    "ok": true,
+    "validated": true,
+    "http_status": 200,
+    "delivered": false
+  },
+  "ok": true
+}

@@ -1,0 +1,30 @@
+{
+  "created_at": "2026-11-05",
+  "account": "mack@bigstachedesign.com",
+  "folder_url": "https://drive.google.com/drive/folders/1MtVNjosVcgvyrWyOWaRo2jYWM97G3SfH",
+  "sharing": "Private; owner-only verified. Do not share until Mack approves.",
+  "docs": [
+    {
+      "title": "Start here: Chickenshed NYC registration",
+      "url": "https://docs.google.com/document/d/1hue0PHPwDib2mVmUKZ_uELtTUZhVfz2P4cfUyRkZHmU/edit?usp=drivesdk",
+      "id": "1hue0PHPwDib2mVmUKZ_uELtTUZhVfz2P4cfUyRkZHmU",
+      "complete": true
+    },
+    {
+      "title": "Staff tasks: Step-by-step registration help",
+      "url": "https://docs.google.com/document/d/12rCBkOAqYTtizLvBGmrOVZm2GT-DunIx4hOQn0LnT2k/edit?usp=drivesdk",
+      "id": "12rCBkOAqYTtizLvBGmrOVZm2GT-DunIx4hOQn0LnT2k",
+      "complete": true
+    },
+    {
+      "title": "What the fields mean: Payments, statuses and follow-up",
+      "url": "https://docs.google.com/document/d/1tWF2M5D-SyDreNPhiQLk5sTmGMahDkt5iC5xxfhL01k/edit?usp=drivesdk",
+      "id": "1tWF2M5D-SyDreNPhiQLk5sTmGMahDkt5iC5xxfhL01k",
+      "complete": true
+    }
+  ],
+  "intended_commenters_after_approval": [
+    "elliot@chickenshednyc.org",
+    "elaine@chickenshednyc.org"
+  ]
+}

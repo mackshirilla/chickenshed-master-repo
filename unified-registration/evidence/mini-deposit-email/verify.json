@@ -1,0 +1,330 @@
+{
+  "mode": "verify",
+  "at": "2026-11-05T05:42:08.981Z",
+  "writes": [],
+  "charges_created": false,
+  "emails_delivered": false,
+  "student_statuses": [
+    {
+      "id": 210,
+      "status": "Pending"
+    },
+    {
+      "id": 209,
+      "status": "Approved"
+    }
+  ],
+  "sessions": [
+    {
+      "id": 51,
+      "deposit": 25,
+      "tuition_unchanged": true
+    },
+    {
+      "id": 52,
+      "deposit": 25,
+      "tuition_unchanged": true
+    },
+    {
+      "id": 53,
+      "deposit": 25,
+      "tuition_unchanged": true
+    },
+    {
+      "id": 54,
+      "deposit": 25,
+      "tuition_unchanged": true
+    },
+    {
+      "id": 55,
+      "deposit": 25,
+      "tuition_unchanged": true
+    },
+    {
+      "id": 57,
+      "deposit": 25,
+      "tuition_unchanged": true
+    },
+    {
+      "id": 58,
+      "deposit": 25,
+      "tuition_unchanged": true
+    },
+    {
+      "id": 59,
+      "deposit": 25,
+      "tuition_unchanged": true
+    },
+    {
+      "id": 60,
+      "deposit": 25,
+      "tuition_unchanged": true
+    },
+    {
+      "id": 61,
+      "deposit": 25,
+      "tuition_unchanged": true
+    },
+    {
+      "id": 62,
+      "deposit": 25,
+      "tuition_unchanged": true
+    },
+    {
+      "id": 63,
+      "deposit": 25,
+      "tuition_unchanged": true
+    }
+  ],
+  "start_options": [
+    {
+      "id": 52,
+      "options": [
+        "full"
+      ]
+    },
+    {
+      "id": 54,
+      "options": [
+        "full"
+      ]
+    },
+    {
+      "id": 55,
+      "options": [
+        "full"
+      ]
+    },
+    {
+      "id": 59,
+      "options": [
+        "full"
+      ]
+    },
+    {
+      "id": 60,
+      "options": [
+        "full"
+      ]
+    },
+    {
+      "id": 53,
+      "options": [
+        "full"
+      ]
+    },
+    {
+      "id": 58,
+      "options": [
+        "full"
+      ]
+    },
+    {
+      "id": 61,
+      "options": [
+        "full"
+      ]
+    },
+    {
+      "id": 57,
+      "options": [
+        "full"
+      ]
+    },
+    {
+      "id": 62,
+      "options": [
+        "full"
+      ]
+    },
+    {
+      "id": 63,
+      "options": [
+        "full"
+      ]
+    },
+    {
+      "id": 51,
+      "options": [
+        "full"
+      ]
+    }
+  ],
+  "quotes": [
+    {
+      "session_id": 51,
+      "status": "Approved",
+      "due_cents": 14000,
+      "balance_cents": 0,
+      "mode": "full"
+    },
+    {
+      "session_id": 52,
+      "status": "Approved",
+      "due_cents": 14000,
+      "balance_cents": 0,
+      "mode": "full"
+    },
+    {
+      "session_id": 53,
+      "status": "Approved",
+      "due_cents": 17500,
+      "balance_cents": 0,
+      "mode": "full"
+    },
+    {
+      "session_id": 54,
+      "status": "Approved",
+      "due_cents": 14000,
+      "balance_cents": 0,
+      "mode": "full"
+    },
+    {
+      "session_id": 55,
+      "status": "Approved",
+      "due_cents": 17500,
+      "balance_cents": 0,
+      "mode": "full"
+    },
+    {
+      "session_id": 57,
+      "status": "Approved",
+      "due_cents": 14000,
+      "balance_cents": 0,
+      "mode": "full"
+    },
+    {
+      "session_id": 58,
+      "status": "Approved",
+      "due_cents": 17500,
+      "balance_cents": 0,
+      "mode": "full"
+    },
+    {
+      "session_id": 59,
+      "status": "Approved",
+      "due_cents": 17500,
+      "balance_cents": 0,
+      "mode": "full"
+    },
+    {
+      "session_id": 60,
+      "status": "Approved",
+      "due_cents": 14000,
+      "balance_cents": 0,
+      "mode": "full"
+    },
+    {
+      "session_id": 61,
+      "status": "Approved",
+      "due_cents": 14000,
+      "balance_cents": 0,
+      "mode": "full"
+    },
+    {
+      "session_id": 62,
+      "status": "Approved",
+      "due_cents": 14000,
+      "balance_cents": 0,
+      "mode": "full"
+    },
+    {
+      "session_id": 63,
+      "status": "Approved",
+      "due_cents": 14000,
+      "balance_cents": 0,
+      "mode": "full"
+    },
+    {
+      "session_id": 51,
+      "status": "Pending",
+      "due_cents": 2500,
+      "balance_cents": 11500,
+      "mode": "deposit"
+    },
+    {
+      "session_id": 52,
+      "status": "Pending",
+      "due_cents": 2500,
+      "balance_cents": 11500,
+      "mode": "deposit"
+    },
+    {
+      "session_id": 53,
+      "status": "Pending",
+      "due_cents": 2500,
+      "balance_cents": 15000,
+      "mode": "deposit"
+    },
+    {
+      "session_id": 54,
+      "status": "Pending",
+      "due_cents": 2500,
+      "balance_cents": 11500,
+      "mode": "deposit"
+    },
+    {
+      "session_id": 55,
+      "status": "Pending",
+      "due_cents": 2500,
+      "balance_cents": 15000,
+      "mode": "deposit"
+    },
+    {
+      "session_id": 57,
+      "status": "Pending",
+      "due_cents": 2500,
+      "balance_cents": 11500,
+      "mode": "deposit"
+    },
+    {
+      "session_id": 58,
+      "status": "Pending",
+      "due_cents": 2500,
+      "balance_cents": 15000,
+      "mode": "deposit"
+    },
+    {
+      "session_id": 59,
+      "status": "Pending",
+      "due_cents": 2500,
+      "balance_cents": 15000,
+      "mode": "deposit"
+    },
+    {
+      "session_id": 60,
+      "status": "Pending",
+      "due_cents": 2500,
+      "balance_cents": 11500,
+      "mode": "deposit"
+    },
+    {
+      "session_id": 61,
+      "status": "Pending",
+      "due_cents": 2500,
+      "balance_cents": 11500,
+      "mode": "deposit"
+    },
+    {
+      "session_id": 62,
+      "status": "Pending",
+      "due_cents": 2500,
+      "balance_cents": 11500,
+      "mode": "deposit"
+    },
+    {
+      "session_id": 63,
+      "status": "Pending",
+      "due_cents": 2500,
+      "balance_cents": 11500,
+      "mode": "deposit"
+    }
+  ],
+  "sendgrid_validation": {
+    "ok": true,
+    "validated": true,
+    "http_status": 200,
+    "delivered": false
+  },
+  "ok": true
+}

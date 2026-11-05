@@ -485,7 +485,7 @@ api.lambda {
    requireValue(program&&(!program.Add_On_Program||lab)&&!program.Archived,'SESSION_UNAVAILABLE','This program is unavailable.');
    const p=base.products.find(p=>p.id===row.Tuition_product),d=base.products.find(p=>p.id===row.Deposit_product);
    requireValue(p,'CATALOG_INVALID','This session needs verified pricing.');
-   const payment_options=row.Parent_program===13?['full']:['full',...(p.Semester_price_id?['semester']:[]),...(d?.Single_sale_price_id?['monthly']:[])];
+   const payment_options=(row.Parent_program===13||(row.Parent_program===3&&row.Parent_workshop===21))?['full']:['full',...(p.Semester_price_id?['semester']:[]),...(d?.Single_sale_price_id?['monthly']:[])];
    const preference=payment_options.length>1?$input.request.payment_preference:'full';
    const tuition=await load(preference==='semester'?p.Semester_price_id:p.Single_sale_price_id),deposit=await load(d?.Single_sale_price_id);
    requireValue(tuition?.product_id===p.Product_id&&(!deposit||deposit.product_id===d.Product_id),'CATALOG_INVALID','This session’s product mapping needs review.');

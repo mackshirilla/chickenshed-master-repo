@@ -1,0 +1,109 @@
+{
+  "mode": "inspect",
+  "at": "2026-11-05T05:40:12.882Z",
+  "writes": [],
+  "charges_created": false,
+  "emails_delivered": false,
+  "resources": [
+    {
+      "path": "function/344",
+      "file": "unified-registration/xano/production-candidate/function/registration_live_quote_context_v1.xs",
+      "sha256": "64e31a82868caebfa25fc2dbf4aa551042ebc2b49eeb2186996314951d6f5c92"
+    },
+    {
+      "path": "apigroup/65/api/793",
+      "file": "unified-registration/xano/production-candidate/api/unified_registration/start_GET.xs",
+      "sha256": "da710166b9b5000addf80b9646481eb83c85364b7ce4563fe4d300d46c5e6a4f"
+    },
+    {
+      "path": "function/352",
+      "file": "unified-registration/staff-actions/function/registration_staff_send_confirmation_v1.xs",
+      "sha256": "adc808524b226b155ed4cecd6d85e8e93ac0caa7e07baf73a14c2fb87ef74384"
+    },
+    {
+      "path": "function/353",
+      "file": "unified-registration/staff-actions/function/registration_staff_validate_delivery_v1.xs",
+      "sha256": "9fb8b6e4be607e782e546aa7406365fac1ad73ba649c5850a0db80ff1d395140"
+    }
+  ],
+  "sessions": [
+    {
+      "id": 51,
+      "name": "Cookies, Sweets & Holiday Treats - Saturdays",
+      "deposit_before": 0,
+      "tuition": 78
+    },
+    {
+      "id": 52,
+      "name": "Under The Sea - Tuesdays",
+      "deposit_before": 0,
+      "tuition": 79
+    },
+    {
+      "id": 53,
+      "name": "Cookies, Sweets & Holiday Treats - Tuesdays",
+      "deposit_before": 0,
+      "tuition": 80
+    },
+    {
+      "id": 54,
+      "name": "Park Life Adventure - Tuesdays",
+      "deposit_before": 0,
+      "tuition": 81
+    },
+    {
+      "id": 55,
+      "name": "Journey Over The Rainbow - Saturdays",
+      "deposit_before": 0,
+      "tuition": 82
+    },
+    {
+      "id": 57,
+      "name": "Heroes In Training - Tuesdays",
+      "deposit_before": 0,
+      "tuition": 83
+    },
+    {
+      "id": 58,
+      "name": "Under The Sea - Saturdays",
+      "deposit_before": 0,
+      "tuition": 84
+    },
+    {
+      "id": 59,
+      "name": "Magic & Mystery - Tuesdays",
+      "deposit_before": 0,
+      "tuition": 85
+    },
+    {
+      "id": 60,
+      "name": "Heroes In Training - Saturdays",
+      "deposit_before": 0,
+      "tuition": 86
+    },
+    {
+      "id": 61,
+      "name": "Into The Wild Jungle Adventure - Tuesdays",
+      "deposit_before": 0,
+      "tuition": 87
+    },
+    {
+      "id": 62,
+      "name": "Into The Wild Jungle Adventure - Saturdays",
+      "deposit_before": 0,
+      "tuition": 88
+    },
+    {
+      "id": 63,
+      "name": "Journey Over The Rainbow - Tuesdays",
+      "deposit_before": 0,
+      "tuition": 89
+    }
+  ],
+  "deposit": {
+    "id": 25,
+    "amount": 25,
+    "price": "price_1RRoeTDK5b8P0zFQpuicDecJ"
+  },
+  "ok": true
+}

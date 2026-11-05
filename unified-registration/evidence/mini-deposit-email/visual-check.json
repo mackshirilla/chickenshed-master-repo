@@ -1,0 +1,11 @@
+{
+  "checked": true,
+  "fictional_preview": true,
+  "desktop_width": 1100,
+  "mobile_width": 390,
+  "logo_loaded": true,
+  "overflow_or_overlap_seen": false,
+  "matches_original_email_styles": true,
+  "payment_label_checks": "Deposit received / Deposit covered by coupon verified in model tests",
+  "screenshots_location": "Operator-only local preview; not published"
+}
