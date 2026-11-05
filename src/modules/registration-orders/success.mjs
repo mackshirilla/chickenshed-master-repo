@@ -50,20 +50,41 @@ if (root) {
       field(id, label, id === 'status' ? 'Checking…' : '—');
     }
   };
-  let checking = false;
+  // Stripe may redirect before the signed payment event finishes fulfillment.
+  // Read the owned receipt until it settles; this never creates/repeats a payment.
+  const sessionId = new URLSearchParams(location.search).get('session_id');
+  const delays=[2000,2000,3000,5000,8000,10000,15000,15000];
+  let checking=false,autoTimer=null,attempt=0,deadline=Date.now()+60000,stopped=false;
+  note.setAttribute('role','status');note.setAttribute('aria-live','polite');note.setAttribute('aria-atomic','true');
+  function cancelAutomaticCheck(){if(autoTimer!==null){window.clearTimeout(autoTimer);autoTimer=null;}}
+  function scheduleAutomaticCheck(){
+    const remaining=deadline-Date.now();
+    if(stopped||attempt>=delays.length||remaining<=0)return false;
+    const delay=Math.min(delays[attempt++],remaining);
+    autoTimer=window.setTimeout(()=>{autoTimer=null;if(!stopped)check();},delay);return true;
+  }
+  function waitingMessage(automatic){
+    heading.textContent='Your registration payment is being checked';
+    field('status','Payment','Awaiting confirmation');
+    note.textContent=automatic?'We’re waiting for payment confirmation. This page will update automatically. Please do not pay again.':'Confirmation is taking longer than usual. You can check again below or contact Chickenshed NYC. Please do not pay again.';
+    refresh.hidden=automatic;
+  }
+  window.addEventListener('pagehide',()=>{stopped=true;cancelAutomaticCheck();},{once:true});
   async function check() {
     if (checking) return;
-    checking = true; refresh.disabled = true;
+    if(stopped)return;cancelAutomaticCheck();
+    checking = true; refresh.disabled = true;refresh.hidden=true;card.setAttribute('aria-busy','true');
     clear();
     try {
-      const sessionId = new URLSearchParams(location.search).get('session_id');
       if (!sessionId) throw new Error('We could not identify this payment. Contact Chickenshed NYC before paying again.');
       const result = await transport(root)(`receipt?session_id=${encodeURIComponent(sessionId)}`);
+      if(stopped)return;
       if (result.status !== 'paid') {
-        heading.textContent = 'Your registration payment is being checked';
-        field('status', 'Payment', result.status === 'review' ? 'Under review' : 'Awaiting confirmation');
-        note.textContent = 'Payment has not been confirmed yet. Check again shortly or contact Chickenshed NYC. Please do not pay again.';
-        return;
+        if(['pending','creating'].includes(result.status)){waitingMessage(scheduleAutomaticCheck());return;}
+        heading.textContent=result.status==='review'?'Your registration payment needs review':'This checkout is no longer active';
+        field('status','Payment',result.status==='review'?'Under review':'Not confirmed');
+        note.textContent=result.status==='review'?'Chickenshed NYC needs to review this payment before confirming the registration. Please do not pay again.':'If you completed payment, contact Chickenshed NYC before paying again.';
+        refresh.hidden=false;return;
       }
       heading.textContent = result.paid_cents===0?'Your registration is confirmed':'Your registration payment is received';
       field('status', 'Payment', result.paid_cents===0?'No payment required':'Confirmed');
@@ -98,11 +119,14 @@ if (root) {
       refresh.hidden = true;
       sessionStorage.removeItem('registrationOrders:v2');
     } catch (failure) {
-      clear(); heading.textContent = 'We could not verify this registration payment';
-      field('status', 'Payment', 'Not verified'); note.textContent = failure.message;
-    } finally { checking = false; refresh.disabled = false; }
+      if(stopped)return;
+      clear();
+      const retryable=sessionId&&(!failure.httpStatus||failure.httpStatus>=500||failure.httpStatus===429);
+      if(retryable&&scheduleAutomaticCheck())waitingMessage(true);
+      else{heading.textContent='We could not verify this registration payment';field('status','Payment','Not verified');note.textContent=failure.message;refresh.hidden=false;}
+    } finally { checking = false; refresh.disabled = false;card.setAttribute('aria-busy',String(autoTimer!==null)); }
   }
-  refresh.addEventListener('click', check);
+  refresh.addEventListener('click',()=>{deadline=Date.now()+60000;attempt=0;check();});
   check();
 }
 
