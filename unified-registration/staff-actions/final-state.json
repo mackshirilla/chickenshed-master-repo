@@ -1,0 +1,13 @@
+{
+  "task_id": 25,
+  "active": true,
+  "source_live": true,
+  "worker_reference_valid": true,
+  "test_order_status": "archived",
+  "test_registration_status": "Archived",
+  "confirmation_status": "Confirmation sent",
+  "request_consumed": true,
+  "current_balance_cents": 1725,
+  "original_paid_cents": 2500,
+  "original_balance_cents": 7500
+}

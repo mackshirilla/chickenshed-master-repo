@@ -1,0 +1,38 @@
+[
+  {
+    "id": 8497170,
+    "name": "paidAmount",
+    "display": "Paid amount",
+    "type": "DECIMAL",
+    "typeOptions": {
+      "format": "currency",
+      "precision": 2,
+      "symbol": "$"
+    },
+    "formula": "{{paidCents}} / 100"
+  },
+  {
+    "id": 8497171,
+    "name": "remainingBalance",
+    "display": "Remaining balance",
+    "type": "DECIMAL",
+    "typeOptions": {
+      "format": "currency",
+      "precision": 2,
+      "symbol": "$"
+    },
+    "formula": "{{balanceAfterCheckoutCents}} / 100"
+  },
+  {
+    "id": 8505052,
+    "name": "currentBalance",
+    "display": "Current balance",
+    "type": "DECIMAL",
+    "typeOptions": {
+      "format": "currency",
+      "precision": 2,
+      "symbol": "$"
+    },
+    "formula": "IF(ISBLANK({{currentBalanceCents}}), {{balanceAfterCheckoutCents}}/100, {{currentBalanceCents}}/100)"
+  }
+]

@@ -1,0 +1,167 @@
+{
+  "checked_at": "2026-11-05T05:13:12.136067+00:00",
+  "version": "v1.1.8",
+  "assets": [
+    {
+      "file": "accountProfile.dccb0e17.js",
+      "match": true
+    },
+    {
+      "file": "addStudentProfile.8a3a7bbd.js",
+      "match": true
+    },
+    {
+      "file": "app.js",
+      "match": true
+    },
+    {
+      "file": "completeUserProfile.335155db.js",
+      "match": true
+    },
+    {
+      "file": "dashboard.1aeccdc1.js",
+      "match": true
+    },
+    {
+      "file": "dashboard.96e2d8ae.js",
+      "match": true
+    },
+    {
+      "file": "dashboard.f74f6227.js",
+      "match": true
+    },
+    {
+      "file": "dashboardListStudents.e56f1653.js",
+      "match": true
+    },
+    {
+      "file": "donationDetails.19513c84.js",
+      "match": true
+    },
+    {
+      "file": "donation_success.198c023a.js",
+      "match": true
+    },
+    {
+      "file": "forgotPasswordForm.6861718c.js",
+      "match": true
+    },
+    {
+      "file": "lab_registration_success.577820a7.js",
+      "match": true
+    },
+    {
+      "file": "listAddOnRegistrations.79a479f1.js",
+      "match": true
+    },
+    {
+      "file": "listDonations.c92519de.js",
+      "match": true
+    },
+    {
+      "file": "listRegistration.148fe519.js",
+      "match": true
+    },
+    {
+      "file": "listTicketOrders.45e8acb5.js",
+      "match": true
+    },
+    {
+      "file": "loginForm.44b4e60a.js",
+      "match": true
+    },
+    {
+      "file": "magicLogin.59c1566b.js",
+      "match": true
+    },
+    {
+      "file": "makeDonation.0ac260bd.js",
+      "match": true
+    },
+    {
+      "file": "makeTicketPurchase.f60b8352.js",
+      "match": true
+    },
+    {
+      "file": "manageSubscription.04d0e268.js",
+      "match": true
+    },
+    {
+      "file": "programDetails.fee7bdec.js",
+      "match": true
+    },
+    {
+      "file": "registration-orders.67dcea1a.js",
+      "match": true
+    },
+    {
+      "file": "registration.48939853.js",
+      "match": true
+    },
+    {
+      "file": "registration.e4ee3ff8.js",
+      "match": true
+    },
+    {
+      "file": "registration_labs.0046d930.js",
+      "match": true
+    },
+    {
+      "file": "registration_new.dd2bba76.js",
+      "match": true
+    },
+    {
+      "file": "registration_success.6b6eb8b8.js",
+      "match": true
+    },
+    {
+      "file": "resetPasswordForm.4dc1bc2c.js",
+      "match": true
+    },
+    {
+      "file": "sessionDetails.ff044be2.js",
+      "match": true
+    },
+    {
+      "file": "signupForm.2abf6fcb.js",
+      "match": true
+    },
+    {
+      "file": "studentDashboard.dbcc97f0.js",
+      "match": true
+    },
+    {
+      "file": "studentProfile.59d4d841.js",
+      "match": true
+    },
+    {
+      "file": "success.729bee87.js",
+      "match": true
+    },
+    {
+      "file": "success.eb222a27.js",
+      "match": true
+    },
+    {
+      "file": "summer.f1526897.js",
+      "match": true
+    },
+    {
+      "file": "ticketOrderDetails.6c8dc449.js",
+      "match": true
+    },
+    {
+      "file": "ticketOrderNoLogin.4013c1b5.js",
+      "match": true
+    },
+    {
+      "file": "ticket_success.85a213ae.js",
+      "match": true
+    },
+    {
+      "file": "workshopDetails.ba0da6a9.js",
+      "match": true
+    }
+  ],
+  "ok": true
+}

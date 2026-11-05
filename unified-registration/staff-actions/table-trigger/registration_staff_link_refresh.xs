@@ -19,7 +19,7 @@ field_value=$event.next} as $next_order
 conditional {if ($next_order.checkout_policy == "staff_manual_v1") {function.run registration_staff_sync_v1 {input={order_id:$event.next}} as $next_sync}} } }
 conditional {if ($event.previous > 0 && $event.previous != $event.next) { db.get registration_orders {field_name="id"
 field_value=$event.previous} as $old_order
-conditional {if ($old_order.checkout_policy == "staff_manual_v1") {function.run registration_staff_sync_v1 {input={order_id:$event.previous}} as $previous_sync}} }} 
+conditional {if ($old_order.checkout_policy == "staff_manual_v1") {function.run registration_staff_sync_v1 {input={order_id:$event.previous}} as $previous_sync}} }}
 }
 history = 100
 }

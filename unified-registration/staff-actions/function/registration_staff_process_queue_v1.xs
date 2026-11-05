@@ -3,7 +3,7 @@ input {bool send?=true}
 stack {
 function.run registration_orders_live_guard_v1 {input={}} as $guard
 db.query registration_orders {
-where = ($db.registration_orders.checkout_policy == "staff_manual_v1" || $db.registration_orders.checkout_policy == "registration_order_v2" || $db.registration_orders.checkout_policy == "summer_family_v1") && ($db.registration_orders.status == "paid" || $db.registration_orders.status == "review" || $db.registration_orders.status == "manual" || $db.registration_orders.status == "manual_review")
+where = ($db.registration_orders.checkout_policy == "staff_manual_v1" || $db.registration_orders.checkout_policy == "registration_order_v2" || $db.registration_orders.checkout_policy == "summer_family_v1") && ($db.registration_orders.status == "paid" || $db.registration_orders.status == "review" || $db.registration_orders.status == "manual" || $db.registration_orders.status == "manual_review") && ($db.registration_orders.resend_requested == true || $db.registration_orders.current_balance_cents == null || $db.registration_orders.items_display == null || $db.registration_orders.staff_validation_error != null || ($db.registration_orders.staff_balance_amount != null && ($db.registration_orders.staff_balance_applied_amount == null || $db.registration_orders.staff_balance_amount != $db.registration_orders.staff_balance_applied_amount)) || ($db.registration_orders.staff_balance_amount == null && $db.registration_orders.staff_balance_applied_amount != null) || ($db.registration_orders.checkout_policy == "staff_manual_v1" && $db.registration_orders.handled != true))
 return={type:"list"}
 } as $orders
 foreach ($orders) {each as $order {
@@ -16,5 +16,5 @@ function.run registration_staff_send_confirmation_v1 {input={order_id:$order.id}
  catch {debug.log {value="Staff registration request needs review"}}}
 }}
 }
-response={checked:true}
+response={checked:true,orders_checked:($orders|count)}
 }

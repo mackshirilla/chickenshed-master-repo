@@ -4,6 +4,12 @@ table registration_orders {
 
   schema {
     int id
+    decimal? staff_balance_amount?
+    text? staff_balance_note?
+    text? staff_balance_updated_by?
+    timestamp? staff_balance_updated_at?
+    decimal? staff_balance_applied_amount?
+    int? current_balance_cents?
     text? items_display?
     int? manual_parent_id? {
       table = "users"

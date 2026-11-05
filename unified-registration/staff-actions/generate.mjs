@@ -1,4 +1,5 @@
-import{readFile,writeFile}from'node:fs/promises';
+import{readFile,writeFile as writeGeneratedFile}from'node:fs/promises';
+const writeFile=(path,content)=>writeGeneratedFile(path,content.replace(/[ \t]+$/gm,'').trimEnd()+'\n');
 const target=new URL('./',import.meta.url),core=(await readFile(new URL('model.mjs',target),'utf8')).replace(/^export /gm,''),old=await readFile(new URL('../xano/production-candidate/function/registration_live_confirmation_v1.xs',import.meta.url),'utf8');
 const legacyEmail=(await readFile(new URL('../../summer-registration/test-model/confirmation.mjs',import.meta.url),'utf8')).replace(/^import .*\n/gm,'').split('export async function sendConfirmation')[0].replace(/^export /gm,'').replaceAll('SUMMER_TEMPLATE_ID','LEGACY_TEMPLATE_ID').replaceAll('POLICY','LEGACY_POLICY').replaceAll('confirmationIdentity','legacyIdentity').replaceAll('confirmationData','legacyConfirmationData');
 const online=old.match(/code = """\n([\s\S]*?)\n\s*"""/)[1].split('  try {const order=$var.order;')[0];
@@ -57,7 +58,7 @@ conditional {
  ${lambda(`const p=$var.prepared,key=$env.sendgrid_api_key||$env.workspace?.sendgrid_api_key,from=$env.sendgrid_from_email||$env.workspace?.sendgrid_from_email;if(typeof key!=='string'||!from)return {accepted:false,uncertain:false,http_status:0};try{const payload={from:{email:from,name:'Chickenshed NYC'},personalizations:[{to:[{email:p.recipient}],...(p.raw_message?{}:{dynamic_template_data:p.data})}],...(p.raw_message?{subject:p.subject,content:[{type:'text/plain',value:p.text},{type:'text/html',value:p.html}]}:{template_id:p.template_id}),categories:['registration-orders','staff-confirmation'],tracking_settings:{click_tracking:{enable:false,enable_text:false}}};const r=await fetch('https://api.sendgrid.com/v3/mail/send',{method:'POST',headers:{Authorization:'Bearer '+key,'Content-Type':'application/json'},body:JSON.stringify(payload),signal:AbortSignal.timeout(15000),redirect:'error'});return {accepted:r.status===202,uncertain:false,http_status:r.status,message_id:r.headers.get('x-message-id')};}catch{return {accepted:false,uncertain:true,http_status:null};}`,'delivery')}
  ${lambda(`const d=$var.delivery,j=JSON.parse($var.claim.journal);return {successful:d.accepted?1:0,status:d.accepted?'sent':'failed',label:d.accepted?'Confirmation sent':d.uncertain?'Delivery needs review':'Not sent — check email log',journal:JSON.stringify({...j,state:d.accepted?'accepted':d.uncertain?'uncertain':'failed',finished_at:Date.now(),http_status:d.http_status,message_id:d.message_id||null})};`,'completion')}
  db.edit emails_sent { field_name = "id"\nfield_value = $claim.mail_id\ndata = {status:$completion.status,successful_sends:$completion.successful,text_message:$completion.journal} } as $completed_mail
- db.edit registration_orders { field_name = "id"\nfield_value = $input.order_id\ndata = {resend_status:$completion.label} } as $completed_order
+ db.edit registration_orders { field_name = "id"\nfield_value = $input.order_id\ndata = {resend_status:$completion.label,resend_requested:false} } as $completed_order
  var.update $result { value = {ok:$delivery.accepted,sent:$delivery.accepted,mail_id:$claim.mail_id,status:$completion.label} }
  } }
  }
@@ -85,31 +86,13 @@ var.update $result {value=$validation}
 response=$result
 }`;
 await writeFile(new URL('function/registration_staff_validate_delivery_v1.xs',target),validation+'\n');
-const worker=`function registration_staff_process_queue_v1 {
-input {bool send?=true}
-stack {
-function.run registration_orders_live_guard_v1 {input={}} as $guard
-db.query registration_orders {
-where = ($db.registration_orders.checkout_policy == "staff_manual_v1" || $db.registration_orders.checkout_policy == "registration_order_v2" || $db.registration_orders.checkout_policy == "summer_family_v1") && ($db.registration_orders.status == "paid" || $db.registration_orders.status == "review" || $db.registration_orders.status == "manual" || $db.registration_orders.status == "manual_review")
-return={type:"list"}
-} as $orders
-foreach ($orders) {each as $order {
-try_catch {try {
-function.run registration_staff_sync_v1 {input={order_id:$order.id}} as $sync
-conditional {if ($input.send === true && $order.resend_requested === true) {
-function.run registration_staff_send_confirmation_v1 {input={order_id:$order.id}} as $mail
-}}
-}\n catch {debug.log {value="Staff registration request needs review"}}}
-}}
-}
-response={checked:true}
-}`;
+const worker="function registration_staff_process_queue_v1 {\ninput {bool send?=true}\nstack {\nfunction.run registration_orders_live_guard_v1 {input={}} as $guard\ndb.query registration_orders {\nwhere = ($db.registration_orders.checkout_policy == \"staff_manual_v1\" || $db.registration_orders.checkout_policy == \"registration_order_v2\" || $db.registration_orders.checkout_policy == \"summer_family_v1\") && ($db.registration_orders.status == \"paid\" || $db.registration_orders.status == \"review\" || $db.registration_orders.status == \"manual\" || $db.registration_orders.status == \"manual_review\") && ($db.registration_orders.resend_requested == true || $db.registration_orders.current_balance_cents == null || $db.registration_orders.items_display == null || $db.registration_orders.staff_validation_error != null || ($db.registration_orders.staff_balance_amount != null && ($db.registration_orders.staff_balance_applied_amount == null || $db.registration_orders.staff_balance_amount != $db.registration_orders.staff_balance_applied_amount)) || ($db.registration_orders.staff_balance_amount == null && $db.registration_orders.staff_balance_applied_amount != null) || ($db.registration_orders.checkout_policy == \"staff_manual_v1\" && $db.registration_orders.handled != true))\nreturn={type:\"list\"}\n} as $orders\nforeach ($orders) {each as $order {\ntry_catch {try {\nfunction.run registration_staff_sync_v1 {input={order_id:$order.id}} as $sync\nconditional {if ($input.send === true && $order.resend_requested === true) {\nfunction.run registration_staff_send_confirmation_v1 {input={order_id:$order.id}} as $mail\n}}\n}\n catch {debug.log {value=\"Staff registration request needs review\"}}}\n}}\n}\nresponse={checked:true,orders_checked:($orders|count)}\n}\n";
 await writeFile(new URL('function/registration_staff_process_queue_v1.xs',target),worker+'\n');
 await writeFile(new URL('registration_staff_queue.xs',target),`task registration_staff_queue {
  description = "Validate staff order edits and deliver explicitly requested confirmations; no charges."
  stack {function.run registration_staff_process_queue_v1 {input={send:true}} as $processed}
  schedule = [{starts_on: 2026-11-05 00:00:00+0000, freq: 60}]
- history = false
+ history = 10
 }
 `);
 const trigger=(name,table,code,stack)=>`table_trigger ${name} {\ntable = "${table}"\nactions = {insert:true,update:true,delete:false,truncate:false}\ndatasources = ["live"]\nactive = false\ninput { json new\njson old\nenum action { values = ["insert","update","delete","truncate"] }\ntext datasource }\nstack {\n${lambda(code,'event')}\n${stack}\n}\nhistory = 100\n}\n`;

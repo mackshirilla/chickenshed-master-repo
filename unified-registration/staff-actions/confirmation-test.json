@@ -1,0 +1,18 @@
+{
+  "count": 1,
+  "records": [
+    {
+      "noloco_record_id": 775,
+      "successful_sends": 1,
+      "status": "SENT",
+      "order_id": 5,
+      "source": "staff_manual_v1",
+      "recipient_matches_approved_test_address": true,
+      "http_status": 202,
+      "message_id": "ozKQa7xYSAuGi8o1dJ5BTw",
+      "requested_by": "webdev@chickenshednyc.org",
+      "requested_at": 1793856275009,
+      "finished_at": 1793856278509
+    }
+  ]
+}

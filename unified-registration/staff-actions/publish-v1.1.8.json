@@ -1,0 +1,19 @@
+{
+  "label": "Publish staff order dashboard support",
+  "action": "publish_site",
+  "result": {
+    "customDomains": [
+      {
+        "id": "68302cc97c4f9781e3b027ca",
+        "url": "chickenshednyc.org"
+      },
+      {
+        "id": "68302cc97c4f9781e3b027c1",
+        "url": "www.chickenshednyc.org"
+      }
+    ],
+    "publishToWebflowSubdomain": false,
+    "publishTaskId": "104a567d-1f3d-48f5-a1f2-6df091bdc5a4",
+    "publishScope": "site"
+  }
+}
