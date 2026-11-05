@@ -37,7 +37,7 @@ export async function initializeRegistration(root) {
     try { state = JSON.parse(sessionStorage.getItem(KEY) || 'null'); } catch { /* invalid draft resets */ }
     if (!state || !Array.isArray(state.items)) state = { items: [], aid_percent: 0, aid_data: null, attempt_id: crypto.randomUUID() };
     if (!state.items.length) state.items.push({ student_id: '', session_id: '' });
-    let quote = null, lastQuote=null, version = 0, submitting = false, updating=false, quoteFailure=false;
+    let quote = null, lastQuote=null, version = 0, submitting = false, updating=false, quoteFailure=false, validationFailure=null;
     const editing=new Set();
     const list = root.querySelector('#subscription_items_list');
     const summaryCard=quoteNode.closest('.registration_line_items')||quoteNode.parentElement;
@@ -78,6 +78,28 @@ export async function initializeRegistration(root) {
       const text=names.join(', ');if(pendingNames.textContent!==text)pendingNames.textContent=text;
       pendingNotice.hidden=!names.length;if(names.length)pendingNotice.style.removeProperty('display');else pendingNotice.style.display='none';
     }
+    const validationNotice=textElement('div','','registration-validation-notice');validationNotice.id='registrationRequirementAlert';validationNotice.hidden=true;validationNotice.setAttribute('role','alert');
+    (root.querySelector('.registration_bento')||list.closest('table')).before(validationNotice);
+    const requirementCodes=new Set(['LAB_ELIGIBILITY','ALREADY_REGISTERED','DUPLICATE_ITEM','STUDENT_UNAVAILABLE','SESSION_UNAVAILABLE','TERM_UNAVAILABLE','PAYMENT_UNAVAILABLE','PAYMENT_PREFERENCE','DEPOSIT_UNAVAILABLE','CATALOG_INVALID','AID_UNAVAILABLE','AID_DETAILS']);
+    function showValidation(failure){
+      validationFailure=requirementCodes.has(failure?.code)?failure:null;validationNotice.replaceChildren();validationNotice.hidden=!validationFailure;
+      if(!validationFailure)return false;
+      const lab=failure.code==='LAB_ELIGIBILITY';
+      validationNotice.append(textElement('h2',lab?'Players enrollment required for this Lab':'Please review your registration','u-text-h6'));
+      if(lab&&failure.issues?.length){
+        const affected=textElement('ul','','registration-validation-items');
+        for(const issue of failure.issues){
+          const entry=textElement('li','');entry.append(textElement('strong',`${issue.student_name} · ${issue.session_name}`));
+          const index=state.items.findIndex(i=>Number(i.student_id)===issue.student_id&&Number(i.session_id)===issue.session_id);
+          if(index>=0){const edit=textElement('button','Edit this registration','registration-validation-edit');edit.type='button';edit.setAttribute('aria-label',`Edit registration ${index+1} requirement`);edit.addEventListener('click',()=>{editing.add(state.items[index]);renderRows();list.querySelector(`[aria-label="Student for registration ${index+1}"]`)?.focus();});entry.append(edit);}
+          affected.append(entry);
+        }
+        validationNotice.append(affected);
+      }
+      validationNotice.append(textElement('p',lab?'Each child taking a Lab needs their own Active Players 2, 3 or 4 registration covering the Lab’s dates. An approved profile or another child’s registration does not qualify.':failure.message));
+      if(lab)validationNotice.append(textElement('p','Add a qualifying Players item for this same child, choose a child who already qualifies, or remove the Lab. A qualifying Players item in this cart counts only if the child is Approved and it becomes Active after confirmed checkout.'));
+      return true;
+    }
     const previousValue=input=>input.value==='true'?'Yes':input.value==='false'?'No':input.value;
     const selectedDiscount=()=>root.querySelector('#discountValue')?.value || root.querySelector('[name="discountValue"]:checked')?.value || '';
     const save = () => sessionStorage.setItem(KEY, JSON.stringify(state));
@@ -107,6 +129,7 @@ export async function initializeRegistration(root) {
       state.items.forEach((item, index) => {
         const row = document.createElement('tr'),complete=Boolean(item.student_id&&item.session_id),isEditing=!complete||editing.has(item);
         row.className=isEditing?'summer-registration-row is-editing':'summer-registration-row is-confirmed';
+        if(validationFailure?.issues?.some(i=>i.student_id===Number(item.student_id)&&i.session_id===Number(item.session_id))){row.classList.add('has-registration-error');row.setAttribute('aria-describedby','registrationRequirementAlert');}
         const session=catalog.sessions.find(s=>String(s.id)===String(item.session_id)),student=catalog.students.find(s=>String(s.id)===String(item.student_id));
         const programId=String(session?.program_id||item.program_id||''),workshopId=String(session?.workshop_id||item.workshop_id||'');
         const programOptions=[...new Map(catalog.sessions.map(s=>[s.program_id,{id:s.program_id,label:s.program_name}])).values()];
@@ -165,7 +188,7 @@ export async function initializeRegistration(root) {
       const hasAid=shown?.aid_percent>0;
       const existingDue=root.querySelector('#total_amount_due');
       if(existingDue){existingDue.textContent=shown?dollars(shown.totals.due_now_cents):'—';existingDue.setAttribute('aria-busy',String(updating));}
-      if (!shown) { quoteNode.append(textElement('p', updating?'Calculating your total…':quoteFailure?'We could not update your total. Change a selection to try again.':needsPlan()&&!state.payment_preference?'Choose a payment option to see your total.':'Select a session and student for each row to see your payment.', 'muted')); return; }
+      if (!shown) { quoteNode.append(textElement('p', updating?'Calculating your total…':validationFailure?'Resolve the highlighted requirement to see your total.':quoteFailure?'Your total is temporarily unavailable. Please try again.':needsPlan()&&!state.payment_preference?'Choose a payment option to see your total.':'Select a session and student for each row to see your payment.', 'muted'));if(quoteFailure&&!validationFailure){const retry=textElement('button','Try again','registration-validation-edit');retry.type='button';retry.addEventListener('click',changed);quoteNode.append(retry);} return; }
       for (const item of shown.items) {
         const node = textElement('div', '', 'item-line');
         if(item.student_status==='Pending')node.append(textElement('span','Pending approval','registration-status-pill'));
@@ -182,7 +205,7 @@ export async function initializeRegistration(root) {
     }
     async function changed() {
       holdSummaryHeight();renderPlan();renderPendingNotice();
-      const current = ++version; quote = null;quoteFailure=false;updating=Boolean(state.items.length&&state.items.every(item=>item.student_id&&item.session_id)&&(!needsPlan()||Boolean(state.payment_preference)));error.textContent = ''; renderCheckoutState(); save();
+      const current = ++version; quote = null;quoteFailure=false;showValidation(null);updating=Boolean(state.items.length&&state.items.every(item=>item.student_id&&item.session_id)&&(!needsPlan()||Boolean(state.payment_preference)));error.textContent = ''; renderCheckoutState(); save();
       checkbox.checked = state.aid_percent > 0;
       root.querySelector('#aidSummary').textContent = state.aid_percent ? `${state.aid_percent}% requested aid on tuition. Deposits use the price assigned to each session and are charged per line.` : '';
       root.querySelector('#editAid').hidden = !state.aid_percent;
@@ -195,7 +218,7 @@ export async function initializeRegistration(root) {
         status('Prices updated.');
         priceStatus.append(textElement('span',`Amount due today ${dollars(result.totals.due_now_cents)}. Balance ${dollars(result.totals.balance_after_checkout_cents)}.`,'summer-sr-only'));
         releaseSummaryHeight();
-      } catch (failure) { if (current === version){updating=false;quoteFailure=true;renderRows();renderQuote();renderCheckoutState();error.textContent=failure.message;status('Prices could not be updated. Change a selection to try again.','error');} }
+      } catch (failure) { if (current === version){updating=false;quoteFailure=true;const needsReview=showValidation(failure);renderRows();renderQuote();renderCheckoutState();error.textContent=needsReview?'':failure.message;status(needsReview?'Registration needs attention.':'We could not get your total. Please try again.',needsReview?'blocked':'error');releaseSummaryHeight();} }
     }
     root.querySelector('#add_subscription_item').addEventListener('click', () => { state.items.push({ student_id: '', session_id: '' }); changed(); });
     function openAid() {
@@ -227,7 +250,7 @@ export async function initializeRegistration(root) {
         const destination = new URL(result.url, location.origin);
         if (!(destination.origin === 'https://checkout.stripe.com' || destination.origin === location.origin && ['/checkout-success/registration-order','/registration-success-preview'].includes(destination.pathname))) throw new Error('Unexpected checkout destination. Please contact Chickenshed NYC.');
         location.assign(destination.href);
-      } catch (failure) { error.textContent = failure.message; submitting = false; unlockCheckoutControls(); await changed(); error.textContent = failure.message; }
+      } catch (failure) { error.textContent = failure.message; submitting = false; unlockCheckoutControls(); await changed(); if(showValidation(failure)){error.textContent='';renderRows();}else if(!validationFailure)error.textContent = failure.message; }
     });
     await changed();
   } catch (failure) { error.textContent = failure.message;status('Registration could not be loaded. Please try again.','error'); }

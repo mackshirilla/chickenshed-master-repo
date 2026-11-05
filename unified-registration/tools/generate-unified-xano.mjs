@@ -67,6 +67,9 @@ generator=generator.replace('students:$var.students,sessions:$var.sessions,produ
 const start=generator.indexOf('const client=new StripeTestClient({key:$env.summer_stripe_test_api_key}),base=$var.base;');
 const end=generator.indexOf("`),'result')}",start);if(start<0||end<0)throw Error('Quote-context scaffold changed');
 const code=await readFile(new URL('catalog-context.js.txt',root),'utf8');generator=generator.slice(0,start)+code+generator.slice(end);
+// Preserve safe business-validation details instead of masking them as pricing outages.
+generator=generator.replace("code:e.code||'SUMMER_UNAVAILABLE',message:e.code?e.message:","code:e.code||'SUMMER_UNAVAILABLE',issues:e.issues||[],message:e.code?e.message:");
+generator=generator.replace("${check('result','Registration test pricing is not configured or failed validation.')}",'precondition ($result.ok === true) { error = $result.message\n payload = {registration_code:$result.code,issues:$result.issues} }');
 // Only the authenticated checkout route can request coupon provisioning.
 generator=generator.replace("fn('registration_quote_context_v1','  int actor_id\\n  json request'","fn('registration_quote_context_v1','  int actor_id\\n  json request\\n  bool ensure_aid_coupon?=false'");
 generator=generator.replace("${req(['items','aid_percent','aid_data','attempt_id','quote_fingerprint','payment_preference'])}\n${quoteContext}","${req(['items','aid_percent','aid_data','attempt_id','quote_fingerprint','payment_preference'])}\n${quoteContext.replace('request:$request','request:$request,ensure_aid_coupon:true')}");
@@ -76,7 +79,7 @@ if(!generator.includes(old))throw Error('Start scaffold changed');generator=gene
 generator=generator.replace(/await import\('\.\/generate-xano-email.mjs'\);?/g,'');
 await writeFile(new URL('tools/.run-unified-scaffold.mjs',root),generator);await import('./.run-unified-scaffold.mjs');
 const quoteSource=(await readFile(new URL('test-model/quote.mjs',root),'utf8')).replace(/^export /gm,'');
-await writeFile(new URL('function/registration_quote_v1.xs',base),`function registration_quote_v1 {\n input { json request\n json context }\n stack {\n function.run summer_bridge_fixture_guard { input = {} } as $guard\n api.lambda { code = """\n${quoteSource}\ntry { return {ok:true,...quoteFamily($input.request,$input.context)}; } catch(e) { return {ok:false,code:e.code||'QUOTE_UNAVAILABLE',message:e.code?e.message:'Pricing is temporarily unavailable.'}; }\n"""\n timeout = 30 } as $quote\n precondition ($quote.ok === true) { error = $quote.message }\n }\n response = $quote\n}\n`);
+await writeFile(new URL('function/registration_quote_v1.xs',base),`function registration_quote_v1 {\n input { json request\n json context }\n stack {\n function.run summer_bridge_fixture_guard { input = {} } as $guard\n api.lambda { code = """\n${quoteSource}\ntry { return {ok:true,...quoteFamily($input.request,$input.context)}; } catch(e) { return {ok:false,code:e.code||'QUOTE_UNAVAILABLE',issues:e.issues||[],message:e.code?e.message:'Pricing is temporarily unavailable.'}; }\n"""\n timeout = 30 } as $quote\n precondition ($quote.ok === true) { error = $quote.message\n payload = {registration_code:$quote.code,issues:$quote.issues} }\n }\n response = $quote\n}\n`);
 console.log('Generated new unified sandbox adapter; existing Summer resources unchanged.');
 
 const cardSources=await Promise.all(['quote','stripe-native','payment-method'].map(async name=>(await readFile(new URL('test-model/'+name+'.mjs',root),'utf8')).replace(/^import .*\n/gm,'').replace(/^export /gm,'')));

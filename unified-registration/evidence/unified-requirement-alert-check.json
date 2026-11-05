@@ -1,0 +1,28 @@
+{
+  "checked_at": "2026-11-05T01:54:51.273Z",
+  "sandbox": "spgm-3uz8-a402",
+  "production_changes": false,
+  "payments_executed": false,
+  "lab_alone": {
+    "http": 500,
+    "code": "LAB_ELIGIBILITY",
+    "affected_student": 205,
+    "affected_session": 21
+  },
+  "different_child_players": {
+    "student_id": 1,
+    "rejected": true
+  },
+  "same_child_players": {
+    "http": 200,
+    "eligible": true,
+    "total_cents": 117200
+  },
+  "server_readback_payload_verified": true,
+  "frontend_verified": {
+    "alert_names_child_and_lab": true,
+    "affected_row_highlighted": true,
+    "checkout_blocked": true,
+    "same_child_recovery_clears_alert": true
+  }
+}

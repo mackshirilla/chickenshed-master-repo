@@ -88,7 +88,11 @@ api.lambda {
     return {student_id:student.id,student_name:student.full_name,student_status:student.Status,session_id:session.id,package_name:session.name,session_time:session.time||'',program_id:session.program_id,program_name:session.program_name,workshop_name:session.workshop_name||'',workshop_id:session.workshop_id,registration_kind:lab?'lab':'program',payment_preference:paymentPreference,coverage_key:coverage.key,coverage_label:coverage.label,coverage_start:coverage.start||null,coverage_end:coverage.end||null,tuition_period:coverage.period,deposit_reason:!deposit?null:pending?(monthly?'review_and_monthly':'student_review'):(monthly?'monthly':null),tuition_product:tuition.product_id,tuition_price:tuition.price_id,deposit_product:session.deposit?.product_id||null,deposit_price:session.deposit?.price_id||null,payment_option:deposit?'deposit':'full',aid_percent:lineAid,tuition_cents:tuitionCents,aid_cents:aidCents,net_tuition_cents:net,checkout_gross_cents:gross,checkout_discount_cents:discount,due_now_cents:due,paid_cents:0,balance_after_checkout_cents:net-due,charge_price:deposit?session.deposit.price_id:tuition.price_id,charge_product:deposit?session.deposit.product_id:tuition.product_id};
    });
    const cart=items.map(i=>({...i,will_be_active:i.student_status==='Approved'}));
-   for(const item of items.filter(isLab))requireValue(labEligibility(item.student_id,item,{actorId,enrollments,cart}),'LAB_ELIGIBILITY','Labs require this student to have an Active Players 2, 3 or 4 registration covering the Lab’s dates. You may add a qualifying Players registration for an Approved student in this checkout.',409);
+   const missingPlayers=items.filter(i=>isLab(i)&&!labEligibility(i.student_id,i,{actorId,enrollments,cart}));
+   if(missingPlayers.length){
+    const failure=new SummerError('LAB_ELIGIBILITY','Each student taking a Lab needs their own Active Players 2, 3 or 4 registration covering the Lab’s dates. A qualifying Players item in this cart can satisfy this requirement for an Approved student after confirmed checkout.',409);
+    failure.issues=missingPlayers.map(i=>({student_id:i.student_id,student_name:i.student_name,session_id:i.session_id,session_name:i.package_name}));throw failure;
+   }
    // Stripe discounts grouped price/quantity lines. Allocate any fractional-cent
    // remainder in cart order so the displayed child amounts equal the charge.
    const chargedTuition=new Map();
@@ -471,7 +475,7 @@ api.lambda {
     return value;
   }
   
-  return {ok:true,reference:referenceFor($auth.id,$var.request.attempt_id),args:{actor:$var.quoted.actor,context:$var.quoted.context,request:$var.request,origin:sandboxReturnOrigin($env.$http_headers),now:Date.now()}}; } catch(e) { return {ok:false,code:e.code||'SUMMER_UNAVAILABLE',message:e.code?e.message:'Registration service is temporarily unavailable.'}; }
+  return {ok:true,reference:referenceFor($auth.id,$var.request.attempt_id),args:{actor:$var.quoted.actor,context:$var.quoted.context,request:$var.request,origin:sandboxReturnOrigin($env.$http_headers),now:Date.now()}}; } catch(e) { return {ok:false,code:e.code||'SUMMER_UNAVAILABLE',issues:e.issues||[],message:e.code?e.message:'Registration service is temporarily unavailable.'}; }
   """
  timeout = 30
 } as $prepared
@@ -555,7 +559,11 @@ conditional {
     return {student_id:student.id,student_name:student.full_name,student_status:student.Status,session_id:session.id,package_name:session.name,session_time:session.time||'',program_id:session.program_id,program_name:session.program_name,workshop_name:session.workshop_name||'',workshop_id:session.workshop_id,registration_kind:lab?'lab':'program',payment_preference:paymentPreference,coverage_key:coverage.key,coverage_label:coverage.label,coverage_start:coverage.start||null,coverage_end:coverage.end||null,tuition_period:coverage.period,deposit_reason:!deposit?null:pending?(monthly?'review_and_monthly':'student_review'):(monthly?'monthly':null),tuition_product:tuition.product_id,tuition_price:tuition.price_id,deposit_product:session.deposit?.product_id||null,deposit_price:session.deposit?.price_id||null,payment_option:deposit?'deposit':'full',aid_percent:lineAid,tuition_cents:tuitionCents,aid_cents:aidCents,net_tuition_cents:net,checkout_gross_cents:gross,checkout_discount_cents:discount,due_now_cents:due,paid_cents:0,balance_after_checkout_cents:net-due,charge_price:deposit?session.deposit.price_id:tuition.price_id,charge_product:deposit?session.deposit.product_id:tuition.product_id};
    });
    const cart=items.map(i=>({...i,will_be_active:i.student_status==='Approved'}));
-   for(const item of items.filter(isLab))requireValue(labEligibility(item.student_id,item,{actorId,enrollments,cart}),'LAB_ELIGIBILITY','Labs require this student to have an Active Players 2, 3 or 4 registration covering the Lab’s dates. You may add a qualifying Players registration for an Approved student in this checkout.',409);
+   const missingPlayers=items.filter(i=>isLab(i)&&!labEligibility(i.student_id,i,{actorId,enrollments,cart}));
+   if(missingPlayers.length){
+    const failure=new SummerError('LAB_ELIGIBILITY','Each student taking a Lab needs their own Active Players 2, 3 or 4 registration covering the Lab’s dates. A qualifying Players item in this cart can satisfy this requirement for an Approved student after confirmed checkout.',409);
+    failure.issues=missingPlayers.map(i=>({student_id:i.student_id,student_name:i.student_name,session_id:i.session_id,session_name:i.package_name}));throw failure;
+   }
    // Stripe discounts grouped price/quantity lines. Allocate any fractional-cent
    // remainder in cart order so the displayed child amounts equal the charge.
    const chargedTuition=new Map();
@@ -924,7 +932,7 @@ conditional {
    return {saved:true,default_changed:true,existing_default_preserved:false};
   }
   
-  try { const old=$var.plan.order,s=$var.previous.session;validateCanonical(old,s);if(isSettledSession(s))return {ok:true,action:'event'};requireValue(s.status!=='complete','PAYMENT_PENDING','Payment is still being checked. Please do not pay again.',409);if(!$var.plan.upgrade_promotions&&old.quote_fingerprint===$var.plan.fingerprint&&s.status==='open'&&s.expires_at>Date.now()/1000)return {ok:true,action:'reuse'};return {ok:true,action:s.status==='open'?'expire':'replace'}; } catch(e) { return {ok:false,code:e.code||'SUMMER_UNAVAILABLE',message:e.code?e.message:'Registration service is temporarily unavailable.'}; }
+  try { const old=$var.plan.order,s=$var.previous.session;validateCanonical(old,s);if(isSettledSession(s))return {ok:true,action:'event'};requireValue(s.status!=='complete','PAYMENT_PENDING','Payment is still being checked. Please do not pay again.',409);if(!$var.plan.upgrade_promotions&&old.quote_fingerprint===$var.plan.fingerprint&&s.status==='open'&&s.expires_at>Date.now()/1000)return {ok:true,action:'reuse'};return {ok:true,action:s.status==='open'?'expire':'replace'}; } catch(e) { return {ok:false,code:e.code||'SUMMER_UNAVAILABLE',issues:e.issues||[],message:e.code?e.message:'Registration service is temporarily unavailable.'}; }
   """
  timeout = 30
 } as $inspection
@@ -1009,7 +1017,11 @@ conditional {
     return {student_id:student.id,student_name:student.full_name,student_status:student.Status,session_id:session.id,package_name:session.name,session_time:session.time||'',program_id:session.program_id,program_name:session.program_name,workshop_name:session.workshop_name||'',workshop_id:session.workshop_id,registration_kind:lab?'lab':'program',payment_preference:paymentPreference,coverage_key:coverage.key,coverage_label:coverage.label,coverage_start:coverage.start||null,coverage_end:coverage.end||null,tuition_period:coverage.period,deposit_reason:!deposit?null:pending?(monthly?'review_and_monthly':'student_review'):(monthly?'monthly':null),tuition_product:tuition.product_id,tuition_price:tuition.price_id,deposit_product:session.deposit?.product_id||null,deposit_price:session.deposit?.price_id||null,payment_option:deposit?'deposit':'full',aid_percent:lineAid,tuition_cents:tuitionCents,aid_cents:aidCents,net_tuition_cents:net,checkout_gross_cents:gross,checkout_discount_cents:discount,due_now_cents:due,paid_cents:0,balance_after_checkout_cents:net-due,charge_price:deposit?session.deposit.price_id:tuition.price_id,charge_product:deposit?session.deposit.product_id:tuition.product_id};
    });
    const cart=items.map(i=>({...i,will_be_active:i.student_status==='Approved'}));
-   for(const item of items.filter(isLab))requireValue(labEligibility(item.student_id,item,{actorId,enrollments,cart}),'LAB_ELIGIBILITY','Labs require this student to have an Active Players 2, 3 or 4 registration covering the Lab’s dates. You may add a qualifying Players registration for an Approved student in this checkout.',409);
+   const missingPlayers=items.filter(i=>isLab(i)&&!labEligibility(i.student_id,i,{actorId,enrollments,cart}));
+   if(missingPlayers.length){
+    const failure=new SummerError('LAB_ELIGIBILITY','Each student taking a Lab needs their own Active Players 2, 3 or 4 registration covering the Lab’s dates. A qualifying Players item in this cart can satisfy this requirement for an Approved student after confirmed checkout.',409);
+    failure.issues=missingPlayers.map(i=>({student_id:i.student_id,student_name:i.student_name,session_id:i.session_id,session_name:i.package_name}));throw failure;
+   }
    // Stripe discounts grouped price/quantity lines. Allocate any fractional-cent
    // remainder in cart order so the displayed child amounts equal the charge.
    const chargedTuition=new Map();
@@ -1378,7 +1390,7 @@ conditional {
    return {saved:true,default_changed:true,existing_default_preserved:false};
   }
   
-  try { const s=$var.previous.session;if(isSettledSession(s))return {ok:true,phase:'event',args:{session:s,origin:'https://chickenshednyc2024.webflow.io'}};if($var.inspection.action==='reuse')return {ok:true,phase:'attach',args:{session:s,origin:'https://chickenshednyc2024.webflow.io'}};return {ok:true,phase:'replace',args:{...$var.prepared.args,expected_version:$var.plan.order.quote_version,previous_session:s}}; } catch(e) { return {ok:false,code:e.code||'SUMMER_UNAVAILABLE',message:e.code?e.message:'Registration service is temporarily unavailable.'}; }
+  try { const s=$var.previous.session;if(isSettledSession(s))return {ok:true,phase:'event',args:{session:s,origin:'https://chickenshednyc2024.webflow.io'}};if($var.inspection.action==='reuse')return {ok:true,phase:'attach',args:{session:s,origin:'https://chickenshednyc2024.webflow.io'}};return {ok:true,phase:'replace',args:{...$var.prepared.args,expected_version:$var.plan.order.quote_version,previous_session:s}}; } catch(e) { return {ok:false,code:e.code||'SUMMER_UNAVAILABLE',issues:e.issues||[],message:e.code?e.message:'Registration service is temporarily unavailable.'}; }
   """
  timeout = 30
 } as $next
@@ -1474,7 +1486,11 @@ api.lambda {
     return {student_id:student.id,student_name:student.full_name,student_status:student.Status,session_id:session.id,package_name:session.name,session_time:session.time||'',program_id:session.program_id,program_name:session.program_name,workshop_name:session.workshop_name||'',workshop_id:session.workshop_id,registration_kind:lab?'lab':'program',payment_preference:paymentPreference,coverage_key:coverage.key,coverage_label:coverage.label,coverage_start:coverage.start||null,coverage_end:coverage.end||null,tuition_period:coverage.period,deposit_reason:!deposit?null:pending?(monthly?'review_and_monthly':'student_review'):(monthly?'monthly':null),tuition_product:tuition.product_id,tuition_price:tuition.price_id,deposit_product:session.deposit?.product_id||null,deposit_price:session.deposit?.price_id||null,payment_option:deposit?'deposit':'full',aid_percent:lineAid,tuition_cents:tuitionCents,aid_cents:aidCents,net_tuition_cents:net,checkout_gross_cents:gross,checkout_discount_cents:discount,due_now_cents:due,paid_cents:0,balance_after_checkout_cents:net-due,charge_price:deposit?session.deposit.price_id:tuition.price_id,charge_product:deposit?session.deposit.product_id:tuition.product_id};
    });
    const cart=items.map(i=>({...i,will_be_active:i.student_status==='Approved'}));
-   for(const item of items.filter(isLab))requireValue(labEligibility(item.student_id,item,{actorId,enrollments,cart}),'LAB_ELIGIBILITY','Labs require this student to have an Active Players 2, 3 or 4 registration covering the Lab’s dates. You may add a qualifying Players registration for an Approved student in this checkout.',409);
+   const missingPlayers=items.filter(i=>isLab(i)&&!labEligibility(i.student_id,i,{actorId,enrollments,cart}));
+   if(missingPlayers.length){
+    const failure=new SummerError('LAB_ELIGIBILITY','Each student taking a Lab needs their own Active Players 2, 3 or 4 registration covering the Lab’s dates. A qualifying Players item in this cart can satisfy this requirement for an Approved student after confirmed checkout.',409);
+    failure.issues=missingPlayers.map(i=>({student_id:i.student_id,student_name:i.student_name,session_id:i.session_id,session_name:i.package_name}));throw failure;
+   }
    // Stripe discounts grouped price/quantity lines. Allocate any fractional-cent
    // remainder in cart order so the displayed child amounts equal the charge.
    const chargedTuition=new Map();
@@ -1843,7 +1859,7 @@ api.lambda {
    return {saved:true,default_changed:true,existing_default_preserved:false};
   }
   
-  try { const p=$var.plan,o=p.order;requireValue(!p.error,'PAYMENT_MISMATCH','Payment needs staff review.',409);return {ok:true,order_id:o.id,status:o.status,url:o.status==='paid'?registrationSuccessUrl($var.prepared.args.origin,o.checkout_session_id):o.checkout_url}; } catch(e) { return {ok:false,code:e.code||'SUMMER_UNAVAILABLE',message:e.code?e.message:'Registration service is temporarily unavailable.'}; }
+  try { const p=$var.plan,o=p.order;requireValue(!p.error,'PAYMENT_MISMATCH','Payment needs staff review.',409);return {ok:true,order_id:o.id,status:o.status,url:o.status==='paid'?registrationSuccessUrl($var.prepared.args.origin,o.checkout_session_id):o.checkout_url}; } catch(e) { return {ok:false,code:e.code||'SUMMER_UNAVAILABLE',issues:e.issues||[],message:e.code?e.message:'Registration service is temporarily unavailable.'}; }
   """
  timeout = 30
 } as $result

@@ -9,7 +9,7 @@ query "registration/staff" verb=GET {
 function.run summer_bridge_fixture_guard { input = {} } as $sandbox_guard
 api.lambda {
  code = """
-  try { let ids=[];try{ids=JSON.parse($env.summer_staff_user_ids||'[]')}catch{}requireValue(Array.isArray(ids)&&ids.includes($auth.id),'FORBIDDEN','Staff access is not configured for this sandbox.',403);return {ok:true}; } catch(e) { return {ok:false,code:e.code||'SUMMER_UNAVAILABLE',message:e.code?e.message:'Registration service is temporarily unavailable.'}; }
+  try { let ids=[];try{ids=JSON.parse($env.summer_staff_user_ids||'[]')}catch{}requireValue(Array.isArray(ids)&&ids.includes($auth.id),'FORBIDDEN','Staff access is not configured for this sandbox.',403);return {ok:true}; } catch(e) { return {ok:false,code:e.code||'SUMMER_UNAVAILABLE',issues:e.issues||[],message:e.code?e.message:'Registration service is temporarily unavailable.'}; }
   """
  timeout = 30
 } as $staff_guard

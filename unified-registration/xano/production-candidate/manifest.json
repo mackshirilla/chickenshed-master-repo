@@ -1,5 +1,5 @@
 {
-  "prepared_at": "2026-11-05T01:39:48.532Z",
+  "prepared_at": "2026-11-05T01:54:16.452Z",
   "deployed": false,
   "production_changes": false,
   "operation": "Local files only; do not import until release approval",
@@ -10,23 +10,23 @@
     },
     {
       "path": "function/registration_live_quote_context_v1.xs",
-      "sha256": "af4fbd6438700dca377029d75e3d67c0c5200cf07a94ee97e7f3420725a4f5a7"
+      "sha256": "d91f24e6a8081413addf5274816c0852e0be48a08546bbeec397d6b51df9622b"
     },
     {
       "path": "function/registration_live_quote_v1.xs",
-      "sha256": "d1a501b4f0eb71dc23686034d431ac01588e403bc6fb8782e2572046d6e32969"
+      "sha256": "4c9754f850384c02616f5950bd43db9feca106b78754556b2fbbaac38404b09c"
     },
     {
       "path": "function/registration_live_order_v1.xs",
-      "sha256": "873b1d5b3378f9cf1df46e456a8b257c290750ed023c9e03c3e441b96d1cd580"
+      "sha256": "5b46a853209abbb7d75e2adf54c5873c7809e193ec305bb218f70ef1a0fd7020"
     },
     {
       "path": "function/registration_live_stripe_session_v1.xs",
-      "sha256": "77d65947a5558655aa7a24544f0d594c0a2f621d5f038b5b5674a865a1cbccfd"
+      "sha256": "35e926565102504fe52216f688188a2b50263cf5d57062e5c747d230c47eca86"
     },
     {
       "path": "function/registration_live_verify_event_v1.xs",
-      "sha256": "95a3235be920ca4c9b414cab1aeea5ec36f0aa9eb11d704f76c9a13aff24bbfd"
+      "sha256": "8762af3b015a1a859d57eb3189bdc70c81e3b838a3952c6fee1a8523a171df42"
     },
     {
       "path": "function/registration_live_confirmation_v1.xs",
@@ -38,7 +38,7 @@
     },
     {
       "path": "function/registration_live_save_payment_method_v1.xs",
-      "sha256": "6cdf2ff4feb84a4def718590c0161677b333d13ebd73845b78f4d12c0a3cf077"
+      "sha256": "2b07deae44995fe860b913bad161116d6bc5f004ec7ebab3e353d8eaab43814e"
     },
     {
       "path": "function/registration_orders_live_guard_v1.xs",
@@ -56,15 +56,15 @@
     },
     {
       "path": "api/unified_registration/checkout_POST.xs",
-      "sha256": "5e5d3c3290090fc7c7c0edb154e818eb9854dd51c047359b6ec3b535c304bea5"
+      "sha256": "2bbb7903598ac54b2ecdb033d842dd8e8ed00c90156bb3a00602dc7e353834d2"
     },
     {
       "path": "api/unified_registration/receipt_GET.xs",
-      "sha256": "09cf333bdb4be048c4472b9d141664acf38f3d4cc1f441e6dce4f444eecdf390"
+      "sha256": "ccf63f85922fedb1125704a19ca0029e9a2386e480a6cc4b4c2af4c78955b741"
     },
     {
       "path": "api/unified_registration/payment_events_POST.xs",
-      "sha256": "3db4be188cd4346f0aa21cbd251f15c5e6658bd61d329459d1e0579d7b748d07"
+      "sha256": "c675cba6ee52721d60eb692fbb7737d630c1c8183cfc424a9df5ef9b7582963c"
     },
     {
       "path": "api/unified_registration/account_GET.xs",

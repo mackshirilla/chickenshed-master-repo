@@ -8,6 +8,12 @@ export function installRegistrationStyles(){
  [data-registration-mounted="true"] .registration-pending-notice{display:grid;gap:.75rem;margin:0;padding:1.25rem;border:1px solid #bfe3f0;border-radius:.75rem;background:#dcebf3;color:#062632;text-align:left;line-height:1.6}
  [data-registration-mounted="true"] .registration-pending-notice .alert-title{font-weight:700}
  [data-registration-mounted="true"] .registration-pending-notice .alert-message{margin:0}
+ [data-registration-mounted="true"] .registration-validation-notice{display:grid;gap:.875rem;margin:0;padding:1.25rem;border:1px solid #dfba67;border-radius:.75rem;background:#fff4d7;color:#062632;text-align:left;line-height:1.6;min-width:0;overflow-wrap:anywhere}
+ [data-registration-mounted="true"] .registration-validation-notice h2,[data-registration-mounted="true"] .registration-validation-notice p{margin:0}
+ [data-registration-mounted="true"] .registration-validation-items{display:grid;gap:.75rem;list-style:none;padding:0;margin:0}
+ [data-registration-mounted="true"] .registration-validation-items li{display:flex;gap:.5rem 1rem;align-items:center;justify-content:space-between;flex-wrap:wrap}
+ [data-registration-mounted="true"] .registration-validation-edit{background:transparent;color:inherit;text-decoration:underline;font:inherit;padding:.25rem 0;text-align:left;cursor:pointer}
+ [data-registration-mounted="true"] #subscription_items_list .has-registration-error{background:#fff4d780;box-shadow:inset 3px 0 #c38b20}
  [data-registration-mounted="true"] .registration-status-pill,[data-registration-mounted="true"] #subscription_items_list td>.registration-status-pill{display:block;width:fit-content;max-width:100%;margin:0 0 .5rem;padding:.2rem .625rem;border-radius:999px;background:#dcebf3;color:#062632;font-size:.75rem;font-weight:700;line-height:1.5;white-space:normal}
  [data-registration-mounted="true"] .registration_management_grid>*{min-width:0}
  [data-registration-mounted="true"] .registration_table{width:100%;table-layout:fixed}
