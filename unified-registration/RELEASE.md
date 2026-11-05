@@ -45,3 +45,7 @@ Twelve current/upcoming Mini Adventure blocks now have individual active one-tim
 ## v.1.1.4 payment-card placement
 
 The conditional payment-plan card now appears before the order breakdown in the same sidebar stack. The inline requirement link focuses and centers the selector; it stops bubbling so Webflow’s delegated anchor handler cannot override that positioning. Focused DOM checks cover card order, focus, and suppression of competing delegated clicks.
+
+## v.1.1.5 long-name wrapping
+
+Unified row text now outranks the later Webflow embed's first-column nowrap rule. Long program names and session times wrap within their cells while the existing desktop form/sidebar grid remains intact. Includes v.1.1.4's payment-choice card placement above the breakdown.

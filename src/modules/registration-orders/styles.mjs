@@ -1,4 +1,4 @@
-// Shared presentation for the unpublished unified pages only.
+// Shared presentation scoped to the unified registration pages.
 export function installRegistrationStyles(){
  if(document.getElementById('registration-order-layout'))return;
  const style=document.createElement('style');style.id='registration-order-layout';
@@ -18,7 +18,8 @@ export function installRegistrationStyles(){
  [data-registration-mounted="true"] .registration_management_grid>*{min-width:0}
  [data-registration-mounted="true"] .registration_table{width:100%;table-layout:fixed}
  [data-registration-mounted="true"] #subscription_items_list td{min-width:0;white-space:normal;overflow-wrap:anywhere;word-break:normal}
- [data-registration-mounted="true"] #subscription_items_list td>span,[data-registration-mounted="true"] #subscription_items_list td:first-child>span,[data-registration-mounted="true"] .summer-row-time{display:block;max-width:100%;white-space:normal;overflow-wrap:anywhere;word-break:normal}
+ /* Outrank the later Webflow embed's first-column nowrap rule. */
+ [data-registration-mounted="true"] .registration_table #subscription_items_list td>span,[data-registration-mounted="true"] .registration_table #subscription_items_list td:first-child>span,[data-registration-mounted="true"] .registration_table .summer-row-time{display:block;min-width:0;max-width:100%;white-space:normal;overflow-wrap:anywhere;word-break:normal}
  [data-registration-mounted="true"] .registration-payment-preference.bento_box{display:grid;grid-template-columns:minmax(0,1fr);gap:1rem;width:100%;min-width:0;padding:clamp(1.25rem,2.5vw,2rem);margin:0;text-align:left;justify-items:stretch;align-items:start}
  [data-registration-mounted="true"] .registration-payment-preference label{display:block;margin:0;line-height:1.35}
  [data-registration-mounted="true"] .registration-payment-preference select{display:block;width:100%;max-width:none;min-width:0;min-height:3rem;margin:0;padding:.875rem 2.5rem .875rem 1rem;font:inherit;line-height:1.4}
