@@ -1,0 +1,16 @@
+{
+  "checked_at": "2026-11-05T00:57:52.398Z",
+  "ok": true,
+  "real_network": false,
+  "checks": [
+    "Closed gate makes no requests",
+    "Regular cart requires an explicit payment preference",
+    "Semester price and session coverage match backend",
+    "Summer-only cart needs no payment selection",
+    "Full-only Lab needs no plan selection and accepts aid",
+    "Mixed cart payment choice affects planned items; Lab remains full pay after aid",
+    "Free monthly receipt explains follow-up without aid wording or placeholders",
+    "Parent dashboard shows student registration status and owned order links",
+    "Blue pending-student notice names selected Pending profiles and stays hidden for Approved-only carts"
+  ]
+}

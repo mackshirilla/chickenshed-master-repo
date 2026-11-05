@@ -1,0 +1,31 @@
+{
+  "checked_at": "2026-11-05T00:29:00Z",
+  "production_changes": false,
+  "desktop_checked": true,
+  "phone_width": 390,
+  "phone_content_width": 390,
+  "payment_preference_surface": "separate bento card",
+  "payment_preference_gap_px": 16,
+  "saved_card_copy_removed": true,
+  "success_item_surface": "one bento card per registration",
+  "success_item_phone_gap_px": 20,
+  "success_item_dividers_removed": true,
+  "register_another_child": "site button styling",
+  "temporary_viewport_reset": true,
+  "latest_check": {
+    "checked_at": "2026-11-05T01:00:08.852695+00:00",
+    "blue_pending_notice": true,
+    "selected_pending_names_only": true,
+    "desktop_width": 1710,
+    "desktop_grid_columns": [
+      797.484,
+      514.516
+    ],
+    "long_program_text_white_space": "normal",
+    "desktop_cells_overflow": false,
+    "mobile_width": 390,
+    "mobile_content_width": 390,
+    "mobile_cells_overflow": false,
+    "viewport_restored": true
+  }
+}

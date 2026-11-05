@@ -1,0 +1,11 @@
+export function fixtures(){
+ const price=(id,cents,product)=>({price_id:'price_'+id,product_id:'prod_'+product,cents,type:'one_time',currency:'usd',active:true});
+ const season={season_start:1788278400000,season_end:1812240000000,second_semester_start:1798822800000};
+ const sessions=[{id:1,name:'CP1 - Saturdays',program_id:1,program_name:'Players',workshop_name:'CP1',...season,tuition:price('cp1_full',116250,'cp1'),semester:price('cp1_semester',58125,'cp1'),deposit:price('cpdeposit',2500,'cpdeposit')},{id:8,name:'MLA - Saturdays',program_id:3,program_name:'My Little Adventure',workshop_name:'My Little Adventure',...season,tuition:price('mla_full',87000,'mla'),semester:price('mla_semester',43500,'mla'),deposit:price('mladeposit',2500,'mladeposit')},{id:64,name:'Summer Shed (1 Week)',program_id:13,program_name:'Summer Shed',tuition:price('summer',80000,'summer'),deposit:price('summer_deposit',10000,'summer_deposit')},{id:65,name:'Summer Shed (2 Weeks)',program_id:13,program_name:'Summer Shed',tuition:price('summer2',160000,'summer2'),deposit:price('summer_deposit',10000,'summer_deposit')}].map(s=>({...s,time:'Saturdays · 9:00 AM–12:00 PM',draft:false,archived:false,add_on:false}));
+ const students=[{id:9101,parent_user_id:9001,full_name:'TEST Approved Child',Status:'Approved'},{id:9102,parent_user_id:9001,full_name:'TEST Pending Child',Status:'Pending'},{id:9103,parent_user_id:9001,full_name:'TEST Archived Child',Status:'Archived'}];
+ sessions[0].workshop_id=1;sessions[1].workshop_id=22;
+ for(const workshop_id of [2,3,4])sessions.push({...sessions[0],id:workshop_id+100,workshop_id,name:`TEST Players ${workshop_id}`,workshop_name:`CP${workshop_id}`});
+ sessions.push({id:21,name:'TEST Winter Lab',program_id:10,program_name:'Labs',workshop_id:13,workshop_name:'Dance Lab',start_date:Date.UTC(2027,0,15),end_date:Date.UTC(2027,2,5),tuition:price('lab',17500,'lab'),add_on:true,draft:false,archived:false});
+ const products=[...new Set(sessions.map(s=>s.tuition.product_id))];
+ return {actor:{id:9001,email:'test@example.com'},actorId:9001,students,sessions,coupons:[10,20,35,50,75].map(percent_off=>({id:'coupon_'+percent_off,valid:true,duration:'once',percent_off,products})),enrollments:[],now:Date.UTC(2026,10,4)};
+}

@@ -24,6 +24,9 @@ export const dashboard = async () => {
     await initializeDynamicFileList("#filesList");
     await initializeDynamicCaregiverList("#caregiversList");
 
+    const {initializeRegistrationDashboard}=await import('../registration-orders/dashboard.mjs');
+    await initializeRegistrationDashboard();
+
     // Subscriptions (existing)
     initializeDynamicSubscriptionList("#listRegistration");
 

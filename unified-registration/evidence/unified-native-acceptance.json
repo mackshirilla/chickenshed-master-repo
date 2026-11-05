@@ -1,0 +1,70 @@
+{
+  "checked_at": "2026-11-05T00:19:46.467Z",
+  "sandbox": "spgm-3uz8-a402",
+  "production_changes": false,
+  "real_funds_moved": false,
+  "positive_orders": [
+    {
+      "id": 16,
+      "preference": "semester",
+      "paid_cents": 60625,
+      "balance_cents": 41000,
+      "registrations": [
+        {
+          "id": 7,
+          "student_id": 201,
+          "session_id": 1,
+          "status": "Active"
+        },
+        {
+          "id": 8,
+          "student_id": 202,
+          "session_id": 8,
+          "status": "Pending"
+        }
+      ],
+      "card_attached_to_customer": true,
+      "new_customer_default_set": true
+    },
+    {
+      "id": 17,
+      "preference": "monthly",
+      "aid_percent": 20,
+      "paid_cents": 16500,
+      "balance_cents": 157020,
+      "registrations": [
+        {
+          "id": 9,
+          "student_id": 201,
+          "session_id": 3,
+          "status": "Active"
+        },
+        {
+          "id": 10,
+          "student_id": 201,
+          "session_id": 21,
+          "status": "Active"
+        }
+      ],
+      "lab_full_pay_after_aid_cents": 14000,
+      "assigned_players_deposit_cents": 2500,
+      "signed_event_response": 200,
+      "replay_applied": false,
+      "email": {
+        "journal_id": 4,
+        "status": "sent",
+        "successful_sends": 1,
+        "meaning": "Accepted by SendGrid; not independent inbox-delivery proof."
+      }
+    }
+  ],
+  "browser": {
+    "desktop_grid_verified": true,
+    "mobile_width": 390,
+    "horizontal_overflow": false,
+    "conditional_payment_choice": true,
+    "lab_only_eligibility_rejection_visible": true,
+    "mixed_aid_total_cents": 16500,
+    "parent_dashboard_active_lab_verified": true
+  }
+}

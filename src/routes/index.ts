@@ -181,7 +181,9 @@ new WFRoute("/dashboard").execute(async () => {
           import("../modules/dashboard/listAddOnRegistrations")
         ]);
   
-        // Initialize both lists
+        const {initializeRegistrationDashboard}=await import('../modules/registration-orders/dashboard.mjs');
+        await initializeRegistrationDashboard();
+        // Initialize both legacy lists for existing billing and Labs.
         initializeDynamicSubscriptionList("#listRegistration");
         initializeDynamicAddOnRegistrationList("#listAddOnRegistration");
       } else {
@@ -301,8 +303,10 @@ new WFRoute("/dashboard").execute(async () => {
     }
   );
 
-  // Separate Summer payment flow; existing registration and Labs routes stay intact.
+  // Unified registration is opt-in; closed gates preserve the current Summer and legacy flows.
   new WFRoute('/summer-camp-registration').execute(async () => {
+    let unified=false;try{unified=JSON.parse(document.querySelector('#registration-orders-config')?.textContent||'{}').enabled===true;}catch{}
+    if(unified){window.location.replace('/program-registration');return;}
     const {initializeSummerPage}=await import('../modules/summer');
     await initializeSummerPage('registration');
   });
@@ -311,10 +315,18 @@ new WFRoute("/dashboard").execute(async () => {
     await initializeSummerPage('success');
   });
 
+  new WFRoute('/checkout-success/registration-order').execute(async () => {
+    const {initializeRegistrationOrdersPage}=await import('../modules/registration-orders');
+    await initializeRegistrationOrdersPage('success');
+  });
+
   // Registration Routes
 
   new WFRoute("/program-registration").execute(async () => {
     try {
+      let unified=false;try{unified=JSON.parse(document.querySelector('#registration-orders-config')?.textContent||'{}').enabled===true;}catch{}
+      if(unified){const {initializeRegistrationOrdersPage}=await import('../modules/registration-orders');await initializeRegistrationOrdersPage('registration');return;}
+
       const isValidUser = await validateUser();
 
       if (isValidUser) {
@@ -347,6 +359,8 @@ new WFRoute("/dashboard").execute(async () => {
 
   new WFRoute("/lab-registration").execute(async () => {
     try {
+      let unified=false;try{unified=JSON.parse(document.querySelector('#registration-orders-config')?.textContent||'{}').enabled===true;}catch{}
+      if(unified){window.location.replace('/program-registration');return;}
       const isValidUser = await validateUser();
 
       if (isValidUser) {

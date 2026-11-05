@@ -159,7 +159,8 @@ export async function initializeDynamicSubscriptionList(
       if (addBtn) addBtn.style.display = "block";
       if (manageBtn) manageBtn.style.display = "none";
     } else {
-      if (addBtn) addBtn.style.display = "none";
+      let unified=false;try{unified=JSON.parse(document.querySelector("#registration-orders-config")?.textContent||"{}").enabled===true;}catch{}
+      if (addBtn) {addBtn.style.display = unified ? "block" : "none";if(unified)addBtn.setAttribute("href","/program-registration");}
       if (manageBtn) manageBtn.style.display = "block";
     }
   } catch (error) {

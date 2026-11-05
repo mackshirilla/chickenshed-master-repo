@@ -1,0 +1,49 @@
+{
+  "prepared_at": "2026-11-05T00:16:17.558Z",
+  "production_changes": false,
+  "policy": "registration_order_v2",
+  "candidates": [
+    {
+      "id": 176,
+      "group": 29,
+      "before_sha256": "60680746d8e8e013650282de1faabe67271e53efcb416fb0ea704bb064290bd5",
+      "after_sha256": "1bd075ddf09a5ace2590fbf22ea93b10399fa0c66374d2a5fb82728bf3bd2184",
+      "deployed": false
+    },
+    {
+      "id": 241,
+      "group": 29,
+      "before_sha256": "d7eaca2f3d3da71b1f6890f8363fde07eb5bb42229960a3f61ece8a84990427b",
+      "after_sha256": "dbd4a70a836885fb1c716e76a9ce123a4945d083c665912544d98590a1c1406b",
+      "deployed": false
+    },
+    {
+      "id": 284,
+      "group": 29,
+      "before_sha256": "db9a0c3e45e66648ece8ba864fb7461f1cca92d6576ae1270462b012d194b976",
+      "after_sha256": "7d1485346ed5f4285d3aae46f69ecd7b3b93796ec4cdea52ce0e9cd1ef84f7b2",
+      "deployed": false
+    },
+    {
+      "id": 304,
+      "group": 29,
+      "before_sha256": "3de459094f70504e7b4ba553eb9fa4fdc15affda3ed42fef8021003493fe2f33",
+      "after_sha256": "a3bad7fae737819cb5996e085d16dd7a12107f9a32aed89c7d20e59b0a1be5f2",
+      "deployed": false
+    },
+    {
+      "id": 345,
+      "group": 29,
+      "before_sha256": "953b581c32732ffca32016a38ef7ce708fa33ecd3f1ed362142d2946b9d417af",
+      "after_sha256": "c84a33c99e9f7ddbed16f2dc2545041c0c522ff4f3d644be29661268bb615a2f",
+      "deployed": false
+    },
+    {
+      "id": 290,
+      "group": 30,
+      "before_sha256": "91e00e9888090f172922bd4cabcc507b0edc8d11f2cbe7edef0a8c3e5a23fd14",
+      "after_sha256": "e6632dffdab117e98cf15ca65c40bf5188806da775c0bd4ebd6a4d47986d0778",
+      "deployed": false
+    }
+  ]
+}

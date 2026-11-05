@@ -14,6 +14,7 @@ interface ProgramDetails {
 
 interface SessionRegistration {
   id: number;
+  registration_order_id?: number;
   status: string;              // "Active", etc.
   update_status: string;
   student_id: number;
@@ -49,7 +50,9 @@ export async function fetchAddOnRegistrations(): Promise<SessionRegistration[]> 
 
   // Normalize to a plain array either way
   const arr = Array.isArray(res) ? res : res?.data;
-  return Array.isArray(arr) ? arr : [];
+  let unified = false;
+  try { unified = JSON.parse(document.getElementById("registration-orders-config")?.textContent || "{}").enabled === true; } catch { /* closed gate */ }
+  return Array.isArray(arr) ? arr.filter(row => !unified || !row.registration_order_id) : [];
 }
 
 // ---------- List Init ----------

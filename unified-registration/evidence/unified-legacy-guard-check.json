@@ -1,0 +1,13 @@
+{
+  "checked_at": "2026-11-05T00:56:27.185Z",
+  "passed": true,
+  "production_changes": false,
+  "provider_calls": false,
+  "checks": [
+    "Canonical Checkout policy skips legacy fulfillment for Summer and unified orders",
+    "Canonical PaymentIntent validation distinguishes legacy payments and rejects mismatched IDs",
+    "Old checkout creation closes only under the coordinated unified feature flag",
+    "Legacy lists exclude all order-linked registrations and retain parent ownership"
+  ],
+  "limitations": "Source/predicate preservation checks; candidates have not been published or exercised against production payment handlers."
+}

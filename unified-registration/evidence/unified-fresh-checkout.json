@@ -1,0 +1,58 @@
+{
+  "checked_at": "2026-11-05T00:50:37.211Z",
+  "sandbox": "spgm-3uz8-a402",
+  "read_only": true,
+  "production_changes": false,
+  "real_funds_moved": false,
+  "fulfillment": "Stripe CLI forwarding to signed unified receiver; no operator finalize or signed-probe call for this order",
+  "order": {
+    "id": 18,
+    "status": "paid",
+    "paid_cents": 183520,
+    "balance_cents": 54000,
+    "payment_preference": "full",
+    "billing_followup": "Needs arrangement",
+    "event_ids": [
+      "evt_1UYEqGDK5b8P0zFQGq9tkYCM"
+    ],
+    "customer_linked": true,
+    "payment_intent_linked": true,
+    "aid_percent": 20,
+    "aid_record_id": 7
+  },
+  "registrations": [
+    {
+      "id": 11,
+      "student_id": 203,
+      "session_id": 3,
+      "program_id": 1,
+      "status": "Active"
+    },
+    {
+      "id": 12,
+      "student_id": 203,
+      "session_id": 21,
+      "program_id": 10,
+      "status": "Active"
+    },
+    {
+      "id": 13,
+      "student_id": 204,
+      "session_id": 64,
+      "program_id": 13,
+      "status": "Pending"
+    }
+  ],
+  "email": [
+    {
+      "id": 5,
+      "status": "sent",
+      "successful_sends": 1
+    }
+  ],
+  "aid_candidates": [
+    {
+      "id": 7
+    }
+  ]
+}

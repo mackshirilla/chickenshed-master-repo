@@ -1,0 +1,23 @@
+{
+  "checked_at": "2026-11-04T23:52:22.205Z",
+  "test_only": true,
+  "checkout_id": "cs_test_b1mswauL8LcbYUEzSiISRQOeNVuBHTAfXwbfA1liHYHas0mxWQ1zV95DAs",
+  "preference": "semester",
+  "status": "complete",
+  "payment_status": "paid",
+  "amount": 60625,
+  "customer_id": "cus_VZMhbgNHgcvnYQ",
+  "payment_intent_id": "pi_3UYDy7DK5b8P0zFQ1kyuiHsA",
+  "setup_future_usage": "off_session",
+  "payment_method_id": "pm_1UYDy6DK5b8P0zFQAhashlZy",
+  "payment_method_type": "card",
+  "payment_method_attached_to_customer": true,
+  "customer_default_payment_method": null,
+  "real_funds_moved": false,
+  "default_setup": {
+    "verified_by": "Xano registration_save_payment_method_v1",
+    "ok": true,
+    "default_changed": true,
+    "verified_at": "2026-11-05T00:19:46.107Z"
+  }
+}

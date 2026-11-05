@@ -1,0 +1,94 @@
+{
+  "prepared_at": "2026-11-05T01:00:09.112Z",
+  "deployed": false,
+  "production_changes": false,
+  "operation": "Local files only; do not import until release approval",
+  "functions": [
+    {
+      "path": "function/registration_live_context_v1.xs",
+      "sha256": "65f7198be2624f684e333fae5d580b4e2e6533879b10183d10ac8fb65100cc08"
+    },
+    {
+      "path": "function/registration_live_quote_context_v1.xs",
+      "sha256": "528b3f1be691efa028fdd89303f110c6109f5d7b33c969aad8c3e75181acb986"
+    },
+    {
+      "path": "function/registration_live_quote_v1.xs",
+      "sha256": "405ddd94543f31965bd61344e8d062960ceeb646d06b03c66aa29766cf5de4a1"
+    },
+    {
+      "path": "function/registration_live_order_v1.xs",
+      "sha256": "afa4f771a0179b3d31a09444bf13ce8bb16c69897ceb5b3ef64f120329d0234b"
+    },
+    {
+      "path": "function/registration_live_stripe_session_v1.xs",
+      "sha256": "40a7bd886d330364651d122c69af34e2bb8710035f43571c5d7fb5d361497f3d"
+    },
+    {
+      "path": "function/registration_live_verify_event_v1.xs",
+      "sha256": "9e3027dd88e80820f6650d5062720948c8d4e467785491a11fc870ed45a6152d"
+    },
+    {
+      "path": "function/registration_live_confirmation_v1.xs",
+      "sha256": "fd8f5722abe82ded812a53cac4d68ecd0099c43fbc4ceb01ae34f9f033525161"
+    },
+    {
+      "path": "function/registration_live_send_confirmation_v1.xs",
+      "sha256": "d6451d74389c51bc87c8b29a036b42402c2d767b546172e644ccefe94cf11c0c"
+    },
+    {
+      "path": "function/registration_live_save_payment_method_v1.xs",
+      "sha256": "062922f5e865d090a0fba06241fa548195a28ca938a3531e03e4e98cb64ebe9c"
+    },
+    {
+      "path": "function/registration_live_guard_v1.xs",
+      "sha256": "3f386b53856b2d518b999aa155f060897aa8870d47896fb3e73a5459aba66e53"
+    }
+  ],
+  "apis": [
+    {
+      "path": "api/unified_registration/start_GET.xs",
+      "sha256": "ee19cf360f27a367aac394e3cd68759ea2040d3d14f497145abe1b611f24fc54"
+    },
+    {
+      "path": "api/unified_registration/quote_POST.xs",
+      "sha256": "548c98b056ea1b9cc0bbece822640049bd443acae69d7c81a1c194674dea9453"
+    },
+    {
+      "path": "api/unified_registration/checkout_POST.xs",
+      "sha256": "aa79dc71d6926875aab67873766c8d3fdc29b7a7d054df13e5fff4353aeadff7"
+    },
+    {
+      "path": "api/unified_registration/receipt_GET.xs",
+      "sha256": "73c36f3fac7e5e46278e8b56f8e610a9b80357bbf8f565422e1b82f2f6ae932b"
+    },
+    {
+      "path": "api/unified_registration/payment_events_POST.xs",
+      "sha256": "c47523db3b9bef27d4089dbd10e6926d85e1c232ea22b75f3fb9fab3df771880"
+    },
+    {
+      "path": "api/unified_registration/account_GET.xs",
+      "sha256": "e698896e819f6ad46aea7c8261bab97d6aff58dd5a8c6dacf87cb213856848f8"
+    },
+    {
+      "path": "api/unified_registration/resources_GET.xs",
+      "sha256": "28c2192eecfa32e6471ffa7143fa53f82bfe76d752bef213bf7773a4b084aa5c"
+    }
+  ],
+  "required_environment": {
+    "registration_runtime_mode": "unset until release; live to enable runtime",
+    "registration_checkout_enabled": "unset/false; true only when ready to accept new checkout",
+    "registration_confirmation_email_enabled": "unset/false; true at coordinated release",
+    "unified_registration_enabled": "unset/false; true closes old creation endpoints at coordinated release",
+    "registration_stripe_webhook_secret": "Dedicated live unified webhook signing secret; secure placement at release",
+    "registration_stripe_coupon_ids": "JSON percentage-to-validated live aid coupon IDs; entire current registration tuition scope including Labs",
+    "stripe_api_secret": "Existing production credential reference; never read/copied by this generator",
+    "sendgrid_api_key": "Existing production credential reference",
+    "sendgrid_from_email": "Existing verified sender reference"
+  },
+  "origin": "https://www.chickenshednyc.org",
+  "api_base": "https://xszy-vp96-kdkh.n7c.xano.io/api:registration26/registration",
+  "schema": "../order-fields.json",
+  "legacy_guards": "../legacy-guards/manifest.json",
+  "academic_semester_dates_required": false
+}

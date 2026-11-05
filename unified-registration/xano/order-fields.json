@@ -1,0 +1,9 @@
+{
+  "operation": "Add optional fields to the existing registration_orders table; do not replace or recreate it.",
+  "fields": [
+    {"name":"payment_preference","type":"text","nullable":true},
+    {"name":"covered_terms","type":"text","nullable":true},
+    {"name":"billing_followup","type":"text","nullable":true}
+  ],
+  "deployed_to_production": false
+}

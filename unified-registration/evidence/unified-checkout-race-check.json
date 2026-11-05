@@ -1,0 +1,14 @@
+{
+  "checked_at": "2026-11-05T00:57:38.622Z",
+  "ok": true,
+  "real_network": false,
+  "checks": [
+    "Checkout blocked synchronously during pricing, including dispatched clicks",
+    "Older quote response cannot unlock checkout",
+    "Latest quote controls total and submitted fingerprint",
+    "One checkout request on repeated clicks",
+    "Plan and cart controls locked while checkout opens",
+    "Retryable checkout failure restores controls and requotes",
+    "Failed pricing keeps checkout blocked"
+  ]
+}
