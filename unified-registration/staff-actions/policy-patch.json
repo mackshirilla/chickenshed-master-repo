@@ -1,0 +1,4 @@
+{
+  "old": "const order=orders.find(o=>o.id===row.registration_order_id&&o.owner_user_id===row.parent_user_id&&o.status==='paid');\n     const item=order?.quote?.items?.find(i=>i.student_id===row.student_id&&i.session_id===row.session_id&&i.program_id===row.program_id);\n     start=item?.coverage_start;end=item?.coverage_end;",
+  "patch": "const order=orders.find(o=>o.id===row.registration_order_id&&o.owner_user_id===row.parent_user_id);\n     if(order?.checkout_policy==='staff_manual_v1'&&order.status==='manual'&&order.manual_parent_id===row.parent_user_id&&!order.staff_validation_error){\n      start=session.Start_Date??session.start_date;end=session.End_Date??session.end_date;\n     }else{\n      const item=order?.status==='paid'?order?.quote?.items?.find(i=>i.student_id===row.student_id&&i.session_id===row.session_id&&i.program_id===row.program_id):null;\n      start=item?.coverage_start;end=item?.coverage_end;\n     }"
+}

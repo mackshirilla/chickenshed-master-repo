@@ -1,0 +1,19 @@
+{
+  "id": 5,
+  "entered_balance": 30,
+  "current_balance_cents": 3000,
+  "paid_cents": 2500,
+  "original_balance_cents": 7500,
+  "updated_by": "webdev@chickenshednyc.org",
+  "error": null,
+  "last_activity": {
+    "at": 1793855117635,
+    "by": "webdev@chickenshednyc.org",
+    "note": "TEST balance edit; no money received",
+    "action": "balance_updated",
+    "to_cents": 3000,
+    "from_cents": 5000
+  },
+  "queue_active": true,
+  "queue_function_valid": true
+}

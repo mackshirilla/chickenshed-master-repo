@@ -1,0 +1,34 @@
+{
+  "functions": [
+    {
+      "id": 351,
+      "name": "registration_staff_sync_v1"
+    },
+    {
+      "id": 352,
+      "name": "registration_staff_send_confirmation_v1"
+    },
+    {
+      "id": 353,
+      "name": "registration_staff_validate_delivery_v1"
+    },
+    {
+      "id": 354,
+      "name": "registration_staff_process_queue_v1"
+    }
+  ],
+  "triggers": [
+    {
+      "id": 42,
+      "name": "registration_staff_order_actions"
+    },
+    {
+      "id": 43,
+      "name": "registration_staff_link_refresh"
+    }
+  ],
+  "task": {
+    "id": 25,
+    "name": "registration_staff_queue"
+  }
+}

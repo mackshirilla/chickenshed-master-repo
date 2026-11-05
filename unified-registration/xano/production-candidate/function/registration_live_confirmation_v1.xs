@@ -43,9 +43,13 @@ function registration_live_confirmation_v1 {
     if(!session||Number(session.Parent_program??session.program_id)!==row.program_id||Number(session.Parent_workshop??session.workshop_id)!==row.workshop_id)return {...row,coverage_start:null,coverage_end:null};
     let start=null,end=null;
     if(row.registration_order_id){
-     const order=orders.find(o=>o.id===row.registration_order_id&&o.owner_user_id===row.parent_user_id&&o.status==='paid');
-     const item=order?.quote?.items?.find(i=>i.student_id===row.student_id&&i.session_id===row.session_id&&i.program_id===row.program_id);
-     start=item?.coverage_start;end=item?.coverage_end;
+     const order=orders.find(o=>o.id===row.registration_order_id&&o.owner_user_id===row.parent_user_id);
+     if(order?.checkout_policy==='staff_manual_v1'&&order.status==='manual'&&order.manual_parent_id===row.parent_user_id&&!order.staff_validation_error){
+      start=session.Start_Date??session.start_date;end=session.End_Date??session.end_date;
+     }else{
+      const item=order?.status==='paid'?order?.quote?.items?.find(i=>i.student_id===row.student_id&&i.session_id===row.session_id&&i.program_id===row.program_id):null;
+      start=item?.coverage_start;end=item?.coverage_end;
+     }
     }else{
      const subscription=subscriptions.find(s=>s.id===row.subscription_id&&s.user_id===row.parent_user_id);
      // Billing cadence does not shorten an Active registration's session coverage.

@@ -1,0 +1,13 @@
+{
+  "result": {
+    "status": "ok",
+    "timing": 0.45,
+    "result": {
+      "ok": true,
+      "validated": true,
+      "http_status": 200,
+      "delivered": false
+    }
+  },
+  "logs": []
+}

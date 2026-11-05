@@ -1,0 +1,17 @@
+{
+  "order_id": 5,
+  "registration_id": 1821,
+  "status": "manual",
+  "source": "staff_manual_v1",
+  "paid_cents": 2500,
+  "balance_cents": 7500,
+  "items_display_populated": true,
+  "can_prepare": {
+    "sent": false,
+    "ok": true,
+    "message": null,
+    "dry_run": true
+  },
+  "emails_sent": false,
+  "charges_created": false
+}

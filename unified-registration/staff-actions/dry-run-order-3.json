@@ -1,0 +1,13 @@
+{
+  "result": {
+    "status": "ok",
+    "timing": 0.27,
+    "result": {
+      "sent": false,
+      "ok": true,
+      "message": null,
+      "dry_run": true
+    }
+  },
+  "logs": []
+}

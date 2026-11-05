@@ -1,0 +1,32 @@
+[
+  {
+    "type": "functions",
+    "name": "registration_staff_sync_v1",
+    "file": "function/registration_staff_sync_v1.xs"
+  },
+  {
+    "type": "functions",
+    "name": "registration_staff_send_confirmation_v1",
+    "file": "function/registration_staff_send_confirmation_v1.xs"
+  },
+  {
+    "type": "functions",
+    "name": "registration_staff_validate_delivery_v1",
+    "file": "function/registration_staff_validate_delivery_v1.xs"
+  },
+  {
+    "type": "functions",
+    "name": "registration_staff_process_queue_v1",
+    "file": "function/registration_staff_process_queue_v1.xs"
+  },
+  {
+    "type": "triggers",
+    "name": "registration_staff_order_actions",
+    "file": "table-trigger/registration_staff_order_actions.xs"
+  },
+  {
+    "type": "triggers",
+    "name": "registration_staff_link_refresh",
+    "file": "table-trigger/registration_staff_link_refresh.xs"
+  }
+]

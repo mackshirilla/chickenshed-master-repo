@@ -10,35 +10,35 @@
     },
     {
       "path": "function/registration_live_quote_context_v1.xs",
-      "sha256": "089c74ccd9dd93e437fb9384870066ae06dc9913a32fa43fc6481c598621674b"
+      "sha256": "2a19a82e5aa96061f9bf55f9c5f809168f8132229972c71714f1eb3640366e8f"
     },
     {
       "path": "function/registration_live_quote_v1.xs",
-      "sha256": "4c9754f850384c02616f5950bd43db9feca106b78754556b2fbbaac38404b09c"
+      "sha256": "44438038301380aa928cd878653d95b90c257542475e195d7be486027b936673"
     },
     {
       "path": "function/registration_live_order_v1.xs",
-      "sha256": "0a55fed20ed98b2e13558cf7bf6149040adeeddfb859d662143c5febca81ea0d"
+      "sha256": "33ded2855e962ad0485a1774600f0909fcae0560d212db6e4e01c3e00b01d28d"
     },
     {
       "path": "function/registration_live_stripe_session_v1.xs",
-      "sha256": "f1440cb3dcdabf56e9e2d3a37e12ce34f3901bb20441e7fb768ad4ca9574827a"
+      "sha256": "0d58c9f465bde831aaef4b10b9ab57007edbc47caa03548024dd4b1dfe7f23a8"
     },
     {
       "path": "function/registration_live_verify_event_v1.xs",
-      "sha256": "63bdadfde11118b4a48309654b76af26c8421157adca4e426af08c58b1f9fdc9"
+      "sha256": "d6c828749e70914d5c0ba38421a25afec346b605f745478b421681cfaa923a99"
     },
     {
       "path": "function/registration_live_confirmation_v1.xs",
-      "sha256": "50b173a23a9cc14b7eb08566dde6c155abc84cdecb07ad87267d27eabf29fde0"
+      "sha256": "f0c774c64762f352298c07e043e9cfcb148f63393ca1349cbf746a17825defbc"
     },
     {
       "path": "function/registration_live_send_confirmation_v1.xs",
-      "sha256": "f606c81659b26b360c566aeddb0c171d0fb21d24d8ac52402f8c90d931307297"
+      "sha256": "5352b33a16666d2d51a43597d475255eb7dd1bc94723be73b999221672746bce"
     },
     {
       "path": "function/registration_live_save_payment_method_v1.xs",
-      "sha256": "2b07deae44995fe860b913bad161116d6bc5f004ec7ebab3e353d8eaab43814e"
+      "sha256": "5d065f1770699b5809af9a2d6b407f87ef5803a5019a68b4407a7f7718af8050"
     },
     {
       "path": "function/registration_orders_live_guard_v1.xs",
@@ -68,7 +68,7 @@
     },
     {
       "path": "api/unified_registration/account_GET.xs",
-      "sha256": "fb8dde745cc147cd025ef0cb9a6611f601ec0be3daf6c6c3d575d51dc2f4d904"
+      "sha256": "995a24db3b4517cf05a39b669ba3aaf9b914a0367d5e00020b4cc9e70a9bb510"
     },
     {
       "path": "api/unified_registration/resources_GET.xs",
