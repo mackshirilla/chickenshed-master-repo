@@ -1,5 +1,5 @@
 {
-  "prepared_at": "2026-11-05T01:54:16.452Z",
+  "prepared_at": "2026-11-05T02:21:18.276Z",
   "deployed": false,
   "production_changes": false,
   "operation": "Local files only; do not import until release approval",
@@ -10,7 +10,7 @@
     },
     {
       "path": "function/registration_live_quote_context_v1.xs",
-      "sha256": "d91f24e6a8081413addf5274816c0852e0be48a08546bbeec397d6b51df9622b"
+      "sha256": "089c74ccd9dd93e437fb9384870066ae06dc9913a32fa43fc6481c598621674b"
     },
     {
       "path": "function/registration_live_quote_v1.xs",
@@ -18,15 +18,15 @@
     },
     {
       "path": "function/registration_live_order_v1.xs",
-      "sha256": "5b46a853209abbb7d75e2adf54c5873c7809e193ec305bb218f70ef1a0fd7020"
+      "sha256": "0a55fed20ed98b2e13558cf7bf6149040adeeddfb859d662143c5febca81ea0d"
     },
     {
       "path": "function/registration_live_stripe_session_v1.xs",
-      "sha256": "35e926565102504fe52216f688188a2b50263cf5d57062e5c747d230c47eca86"
+      "sha256": "f1440cb3dcdabf56e9e2d3a37e12ce34f3901bb20441e7fb768ad4ca9574827a"
     },
     {
       "path": "function/registration_live_verify_event_v1.xs",
-      "sha256": "8762af3b015a1a859d57eb3189bdc70c81e3b838a3952c6fee1a8523a171df42"
+      "sha256": "63bdadfde11118b4a48309654b76af26c8421157adca4e426af08c58b1f9fdc9"
     },
     {
       "path": "function/registration_live_confirmation_v1.xs",
@@ -56,15 +56,15 @@
     },
     {
       "path": "api/unified_registration/checkout_POST.xs",
-      "sha256": "2bbb7903598ac54b2ecdb033d842dd8e8ed00c90156bb3a00602dc7e353834d2"
+      "sha256": "25d1ab87e77865c1313d261b400cd20314f77db8184fd481d788be208cc524af"
     },
     {
       "path": "api/unified_registration/receipt_GET.xs",
-      "sha256": "ccf63f85922fedb1125704a19ca0029e9a2386e480a6cc4b4c2af4c78955b741"
+      "sha256": "c9ec28b41a7c748c38f8780d63bf822476b859a916b2ca39ffa736b543ba4d39"
     },
     {
       "path": "api/unified_registration/payment_events_POST.xs",
-      "sha256": "c675cba6ee52721d60eb692fbb7737d630c1c8183cfc424a9df5ef9b7582963c"
+      "sha256": "b68c4cfd6b221cba59cf7e6a9978f5732fef74aa1fa38f889da7e2de4ee660e9"
     },
     {
       "path": "api/unified_registration/account_GET.xs",

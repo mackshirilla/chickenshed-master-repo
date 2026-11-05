@@ -1,9 +1,27 @@
 {
   "operation": "Add optional fields to the existing registration_orders table; do not replace or recreate it.",
   "fields": [
-    {"name":"payment_preference","type":"text","nullable":true},
-    {"name":"covered_terms","type":"text","nullable":true},
-    {"name":"billing_followup","type":"text","nullable":true}
+    {
+      "name": "payment_preference",
+      "type": "text",
+      "nullable": true
+    },
+    {
+      "name": "covered_terms",
+      "type": "text",
+      "nullable": true
+    },
+    {
+      "name": "billing_followup",
+      "type": "text",
+      "nullable": true
+    },
+    {
+      "name": "financial_aid_submission_id",
+      "type": "integer",
+      "nullable": true,
+      "reference": "financial_aid_submissions"
+    }
   ],
   "deployed_to_production": false
 }

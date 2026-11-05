@@ -7,7 +7,7 @@ generator=generator.replace("'session-registrations','native-order'","'session-r
 generator=generator.replace('../src/sandbox-origin.mjs','../test-model/sandbox-origin.mjs');
 generator=generator.replaceAll('summer_','registration_').replaceAll('summerSuccessUrl','registrationSuccessUrl').replaceAll('Summer Bridge Sandbox','Unified Registration Sandbox').replaceAll('registration_bridge_native','unified_registration').replaceAll('summer/','registration/').replaceAll('registration_family_v1','registration_order_v2').replaceAll('Summer ','Registration ').replaceAll('summer26','registration26').replaceAll('summer-camp-registration','registration-preview');
 generator=generator.replaceAll('registration_bridge_fixture_guard','summer_bridge_fixture_guard').replaceAll('registration_stripe_test_api_key','summer_stripe_test_api_key').replaceAll('registration_stripe_test_webhook_secret','summer_stripe_test_webhook_secret').replaceAll('registration_staff_user_ids','summer_staff_user_ids');
-generator=generator.replace("'observed_payment_intent_id'];","'observed_payment_intent_id','payment_preference','covered_terms','billing_followup'];");
+generator=generator.replace("'observed_payment_intent_id'];","'observed_payment_intent_id','payment_preference','covered_terms','billing_followup','financial_aid_submission_id'];");
 generator=generator.replaceAll('$db.Sessions.Parent_program == 13','($db.Sessions.Parent_program == 1 || $db.Sessions.Parent_program == 3 || $db.Sessions.Parent_program == 10 || $db.Sessions.Parent_program == 13)').replaceAll('$db.Products.id >= 73 && $db.Products.id <= 76','$db.Products.category == "Registration"');
 generator=generator.replaceAll("'  json items\\n  int aid_percent?=0'","'  json items\\n  int aid_percent?=0\\n  text? payment_preference?'").replaceAll("['items','aid_percent']","['items','aid_percent','payment_preference']").replaceAll("['items','aid_percent','aid_data','attempt_id','quote_fingerprint']","['items','aid_percent','aid_data','attempt_id','quote_fingerprint','payment_preference']");
 
@@ -25,6 +25,25 @@ db.query subscriptions {
 } as $placement_subscriptions
 db.query Workshops { return = {type:"list"} } as $placement_workshops`);
 generator=generator.replace('students:$var.placement_students})','students:$var.placement_students,enrollments:$var.placement_enrollments,orders:$var.placement_orders,subscriptions:$var.placement_subscriptions})');
+// Add the staff relationship without exposing the private intake or trusting client IDs.
+generator=generator.replace('data = {aid_intake:$aid_link}', 'data = {aid_intake:$aid_link,financial_aid_submission_id:$created_aid.id}');
+generator=generator.replace('    }\n   }\n  }\n  conditional {\n   if (($input.phase == "event"',`    }
+    conditional {
+     if ($aid_id > 0 && $order.financial_aid_submission_id != $aid_id) {
+      \${lambda(core+'\\n'+safe('return {ok:true,id:staffAidReference($var.order,$var.aid_existing)};'),'staff_aid_reference')}
+      \${check('staff_aid_reference','Financial aid link needs review.')}
+      db.edit registration_orders {
+       field_name = "id"
+       field_value = $order.id
+       data = {financial_aid_submission_id:$staff_aid_reference.id}
+      } as $staff_linked_order
+      var.update $order { value = $staff_linked_order }
+     }
+    }
+   }
+  }
+  conditional {
+   if (($input.phase == "event"`);
 // Record a settled payment even if membership changed while the customer was in Checkout.
 generator=generator.replace("${check('placement_plan','Registration registrations could not be linked. Please retry confirmation or contact Chickenshed.')}\n    foreach ($placement_plan.create)",`var $placement_create { value = [] }
 conditional {

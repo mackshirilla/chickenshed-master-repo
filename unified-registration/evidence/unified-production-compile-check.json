@@ -46,5 +46,13 @@
       "closed_guard_verified": true
     }
   ],
-  "limitation": "Native sandbox compilation and closed-gate requests; no live provider call, production import, or live credential validation."
+  "limitation": "Native sandbox compilation and closed-gate requests; no live provider call, production import, or live credential validation.",
+  "staff_aid_schema_compilation": {
+    "checked_at": "2026-11-05T02:28:01.442272+00:00",
+    "native_import_succeeded": true,
+    "readback_functions": 10,
+    "staff_aid_reference_present": true,
+    "same_unconditionally_closed_guard_verified": true,
+    "new_guard_requests_repeated": false
+  }
 }

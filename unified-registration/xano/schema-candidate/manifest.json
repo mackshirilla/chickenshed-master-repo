@@ -1,0 +1,29 @@
+{
+  "prepared_at": "2026-11-05T02:15:53.560Z",
+  "read_only": true,
+  "production_changes": false,
+  "workspace": 3,
+  "branch": "v1",
+  "table_id": 65,
+  "financial_aid_table_id": 21,
+  "schema_before_sha256": "108a2d4a3ed2cb9c7e2542f433119292596b1470be92dcadc8f25f75a2e6fc20",
+  "schema_after_sha256": "07bdea757d3c47d363d32703c8371394bd167671c97e5fdb8a9ae034fd1dbcaf",
+  "optional_fields": [
+    "payment_preference",
+    "covered_terms",
+    "billing_followup",
+    "financial_aid_submission_id"
+  ],
+  "backfill": [
+    {
+      "order_id": 3,
+      "owner_user_id": 306,
+      "financial_aid_submission_id": 74,
+      "before": null
+    }
+  ],
+  "skipped": [],
+  "records_to_create": 0,
+  "records_to_delete": 0,
+  "scope": "Existing aid links only; no household amounts/status/ownership edits. Snapshot and verify before-values before release."
+}

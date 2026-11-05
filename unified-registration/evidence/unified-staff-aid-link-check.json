@@ -1,0 +1,51 @@
+{
+  "checked_at": "2026-11-05T02:19:55.450Z",
+  "sandbox": "spgm-3uz8-a402",
+  "production_changes": false,
+  "existing_fictional_orders_updated": [
+    {
+      "order_id": 8,
+      "aid_id": 2
+    },
+    {
+      "order_id": 7,
+      "aid_id": 1
+    },
+    {
+      "order_id": 9,
+      "aid_id": 3
+    },
+    {
+      "order_id": 20,
+      "aid_id": 9
+    },
+    {
+      "order_id": 21,
+      "aid_id": 10
+    },
+    {
+      "order_id": 10,
+      "aid_id": 4
+    },
+    {
+      "order_id": 13,
+      "aid_id": 5
+    },
+    {
+      "order_id": 17,
+      "aid_id": 6
+    },
+    {
+      "order_id": 18,
+      "aid_id": 7
+    },
+    {
+      "order_id": 19,
+      "aid_id": 8
+    }
+  ],
+  "new_aid_records": 0,
+  "aid_amounts_status_ownership_changed": false,
+  "second_run_changes": 0,
+  "provider_calls": 0
+}

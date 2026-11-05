@@ -330,6 +330,16 @@ api.lambda {
     return changed||(existing.status==='Cancelled'&&phase==='replace')?{action:'edit',id,data:{...data,status:'Pending'}}:{action:'none'};
   }
   
+  // A real nullable relationship for staff tools, derived only from the existing
+  // server-created aid link. Household intake never becomes a public receipt field.
+  function staffAidReference(order,existing) {
+    requireValue(order&&['registration_order_v2','summer_family_v1'].includes(order.checkout_policy),'AID_RECORD','Financial aid link needs review.',503);
+    const id=order.aid_intake?.financial_aid_submission_id;
+    if(!id){requireValue(!order.financial_aid_submission_id,'AID_RECORD','Financial aid link needs review.',503);return null;}
+    requireValue(Number.isSafeInteger(id)&&id>0&&existing?.id===id&&existing.user_id===order.owner_user_id&&!existing.subscription_id&&(!order.financial_aid_submission_id||order.financial_aid_submission_id===id),'AID_RECORD','Financial aid link needs review.',503);
+    return id;
+  }
+  
   function planSessionRegistrations(order,existing,catalog){
    if(order?.status!=='paid')return {create:[],reused:0};
    requireValue(order.checkout_policy===POLICY&&order.quote?.policy===POLICY&&order.paid_cents===order.quote.totals.due_now_cents,'REGISTRATION_LINK','These registrations need staff review.',409);

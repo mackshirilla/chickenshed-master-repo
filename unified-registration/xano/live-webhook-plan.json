@@ -1,0 +1,31 @@
+{
+  "prepared_at": "2026-11-05T02:32:23.371Z",
+  "applied": false,
+  "production_changes": false,
+  "stripe_context": "acct_1LYZ6CDK5b8P0zFQ",
+  "livemode": true,
+  "existing_endpoints": "Preserve all five current destinations; no repurposing or event changes.",
+  "new_endpoint": {
+    "description": "Chickenshed NYC unified registration orders",
+    "url": "https://xszy-vp96-kdkh.n7c.xano.io/api:registration26/registration/payment-events",
+    "api_version": "2025-01-27.acacia",
+    "enabled_events": [
+      "checkout.session.completed",
+      "checkout.session.async_payment_succeeded",
+      "checkout.session.expired",
+      "checkout.session.async_payment_failed"
+    ]
+  },
+  "signing_secret": {
+    "destination": "Xano Chickenshed production workspace 3",
+    "variable": "registration_stripe_webhook_secret",
+    "handling": "Private supported UI transfer; never chat, logs, code, command arguments or files.",
+    "confirmation_required": "At action time for creating the live webhook and placing its secret; exposure could forge webhook requests."
+  },
+  "existing_credentials": {
+    "stripe": "stripe_api_secret (existing working production reference; validate required coupon/customer permissions before opening new checkout)",
+    "sendgrid": "sendgrid_api_key and sendgrid_from_email (existing working production references)"
+  },
+  "activation": "Install closed backend first, configure/verify signed events and providers, complete staff bindings, then switch page/assets and open new checkout."
+}
+
