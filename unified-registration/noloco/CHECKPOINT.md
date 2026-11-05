@@ -1,5 +1,24 @@
 # Noloco staff draft checkpoint — November 4, 2026
 
+## Approved live completion
+
+Mack approved the live cutover and personally published the prior draft. On resuming, the editor had one existing unpublished view; it was preserved. Root installed the four approved production fields and the order 3 → aid 74 relationship before these bindings were made. Supported Xano **Queue schema sync** completed successfully.
+
+- Noloco synced `paymentPreference` 8504915, `coveredTerms` 8504916, `billingFollowup` 8504917 and `financialAidSubmission` 8504918 (proper MANY_TO_ONE relationship).
+- Added computed text field **Payment option** (`paymentOption`, 8504920), using the supported Noloco formula builder and verified schema formula:
+  `IF({{paymentPreference}} = "full", "Pay in full", IF({{paymentPreference}} = "semester", "Pay per semester", IF({{paymentPreference}} = "monthly", "Monthly payments", "")))`.
+  It does not write back to Xano or change payment preference values.
+- Published list adds **Payment option** and **Payment follow-up** to the existing six friendly columns. All eight headers and columns fit the desktop full view. Preserved the user's current **Registration Orders - NEW** and **All Subscriptions - LEGACY** navigation labels.
+- Published Overview shows **Payment option**, **Registration coverage**, **Payment follow-up**, and **Financial aid submission**. Payment option is a read-only computed value; coverage and aid relationship have inline editing OFF. Payment follow-up has inline editing ON as a simple staff arrangement note/status. No permission or workflow changes.
+- Financial aid link explicitly opens the existing **FinAid Submissions** record page. Verified after publication and reload: order 3's link opens source aid 74, displays its existing parent/date title and **Cancelled** status, and has a working back-to-order link. Its status/amount/ownership were not modified.
+- Aid list preserves both historical predicates and adds a third OR: **registration_orders from financial_aid_submission collection is not empty**. Verified aid 74 appears despite its ordinary parent/date title.
+- Final pre-publication review: **3 views with unpublished changes, zero workflows**. Published under the approved live-cutover authorization with description: “Unified registration staff details: friendly payment option, registration coverage, editable arrangement follow-up and direct financial-aid link. Preserve historical aid visibility and existing shared view draft. No workflow or permission changes.”
+- Verified success: Publish button has no count; opening it explicitly says **Your app is up to date**. Published overview was reloaded and verified independently of editor preview. No workflow inspectors were opened in this resumed turn, no workflows run, and no production record/payment/aid edits made by this agent.
+- Historical Summer orders have blank payment option/coverage/follow-up because those fields were not backfilled; this is expected, not data loss. New unified orders will populate them. Field labels and direct aid navigation are live now.
+- Published order 3 overview left open at https://chickenshednyc.noloco.co/registration-orders/view/3/overview and marked deliverable. Root owns overall website/backend activation and final release verification.
+
+The earlier sections below record the pre-cutover draft state; the completion above supersedes their pending-binding/publication status.
+
 App: `chickenshednyc`, project 16471. Existing Xano production datasource: `xszy-vp96-kdkh/3`. Layout changes are saved **unpublished**. No production records, permissions or live workflows were changed. The connector is read-only (`mcp:read`, `canBuild: false`); layout work used the supported browser editor.
 
 ## Saved changes

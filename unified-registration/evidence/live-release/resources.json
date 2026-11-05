@@ -1,0 +1,93 @@
+{
+  "functions": [
+    {
+      "id": 341,
+      "name": "registration_orders_live_guard_v1"
+    },
+    {
+      "id": 342,
+      "name": "registration_live_context_v1"
+    },
+    {
+      "id": 343,
+      "name": "registration_live_quote_v1"
+    },
+    {
+      "id": 344,
+      "name": "registration_live_quote_context_v1"
+    },
+    {
+      "id": 345,
+      "name": "registration_live_stripe_session_v1"
+    },
+    {
+      "id": 346,
+      "name": "registration_live_verify_event_v1"
+    },
+    {
+      "id": 347,
+      "name": "registration_live_order_v1"
+    },
+    {
+      "id": 348,
+      "name": "registration_live_confirmation_v1"
+    },
+    {
+      "id": 349,
+      "name": "registration_live_save_payment_method_v1"
+    },
+    {
+      "id": 350,
+      "name": "registration_live_send_confirmation_v1"
+    }
+  ],
+  "apis": [
+    {
+      "id": 793,
+      "name": "registration/start",
+      "verb": "GET",
+      "group": 65
+    },
+    {
+      "id": 794,
+      "name": "registration/quote",
+      "verb": "POST",
+      "group": 65
+    },
+    {
+      "id": 795,
+      "name": "registration/checkout",
+      "verb": "POST",
+      "group": 65
+    },
+    {
+      "id": 796,
+      "name": "registration/receipt",
+      "verb": "GET",
+      "group": 65
+    },
+    {
+      "id": 797,
+      "name": "registration/payment-events",
+      "verb": "POST",
+      "group": 65
+    },
+    {
+      "id": 798,
+      "name": "registration/account",
+      "verb": "GET",
+      "group": 65
+    },
+    {
+      "id": 799,
+      "name": "registration/resources",
+      "verb": "GET",
+      "group": 65
+    }
+  ],
+  "group": {
+    "id": 65,
+    "name": "Unified Registration",
+    "canonical": "registration26"
+  }
+}

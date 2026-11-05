@@ -1,0 +1,102 @@
+{
+  "action": "backend",
+  "started_at": "2026-11-05T02:46:51.470Z",
+  "workspace": 3,
+  "branch": "v1",
+  "writes": [
+    {
+      "type": "create_function",
+      "id": 341,
+      "name": "registration_orders_live_guard_v1"
+    },
+    {
+      "type": "create_function",
+      "id": 342,
+      "name": "registration_live_context_v1"
+    },
+    {
+      "type": "create_function",
+      "id": 343,
+      "name": "registration_live_quote_v1"
+    },
+    {
+      "type": "create_function",
+      "id": 344,
+      "name": "registration_live_quote_context_v1"
+    },
+    {
+      "type": "create_function",
+      "id": 345,
+      "name": "registration_live_stripe_session_v1"
+    },
+    {
+      "type": "create_function",
+      "id": 346,
+      "name": "registration_live_verify_event_v1"
+    },
+    {
+      "type": "create_function",
+      "id": 347,
+      "name": "registration_live_order_v1"
+    },
+    {
+      "type": "create_function",
+      "id": 348,
+      "name": "registration_live_confirmation_v1"
+    },
+    {
+      "type": "create_function",
+      "id": 349,
+      "name": "registration_live_save_payment_method_v1"
+    },
+    {
+      "type": "create_function",
+      "id": 350,
+      "name": "registration_live_send_confirmation_v1"
+    },
+    {
+      "type": "create_api",
+      "id": 793,
+      "name": "registration/start",
+      "verb": "GET"
+    },
+    {
+      "type": "create_api",
+      "id": 794,
+      "name": "registration/quote",
+      "verb": "POST"
+    },
+    {
+      "type": "create_api",
+      "id": 795,
+      "name": "registration/checkout",
+      "verb": "POST"
+    },
+    {
+      "type": "create_api",
+      "id": 796,
+      "name": "registration/receipt",
+      "verb": "GET"
+    },
+    {
+      "type": "create_api",
+      "id": 797,
+      "name": "registration/payment-events",
+      "verb": "POST"
+    },
+    {
+      "type": "create_api",
+      "id": 798,
+      "name": "registration/account",
+      "verb": "GET"
+    },
+    {
+      "type": "create_api",
+      "id": 799,
+      "name": "registration/resources",
+      "verb": "GET"
+    }
+  ],
+  "ok": true,
+  "completed_at": "2026-11-05T02:47:22.659Z"
+}

@@ -1,0 +1,15 @@
+{
+  "id": "we_1UYGnpDK5b8P0zFQ7tjndkkP",
+  "mode": "live",
+  "account": "acct_1LYZ6CDK5b8P0zFQ",
+  "url": "https://xszy-vp96-kdkh.n7c.xano.io/api:registration26/registration/payment-events",
+  "api_version": "2025-01-27.acacia",
+  "events": [
+    "checkout.session.completed",
+    "checkout.session.async_payment_succeeded",
+    "checkout.session.expired",
+    "checkout.session.async_payment_failed"
+  ],
+  "secret_placement": "Privately saved to production workspace3 registration_stripe_webhook_secret. No secret retained in release artifacts.",
+  "existing_endpoints_preserved": true
+}

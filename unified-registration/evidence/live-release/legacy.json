@@ -1,0 +1,40 @@
+{
+  "action": "legacy",
+  "started_at": "2026-11-05T02:52:58.571Z",
+  "workspace": 3,
+  "branch": "v1",
+  "writes": [
+    {
+      "type": "publish_policy_guard",
+      "id": 176,
+      "group": 29
+    },
+    {
+      "type": "publish_policy_guard",
+      "id": 241,
+      "group": 29
+    },
+    {
+      "type": "publish_policy_guard",
+      "id": 284,
+      "group": 29
+    },
+    {
+      "type": "publish_policy_guard",
+      "id": 304,
+      "group": 29
+    },
+    {
+      "type": "publish_policy_guard",
+      "id": 345,
+      "group": 29
+    },
+    {
+      "type": "publish_policy_guard",
+      "id": 290,
+      "group": 30
+    }
+  ],
+  "ok": true,
+  "completed_at": "2026-11-05T02:53:18.294Z"
+}

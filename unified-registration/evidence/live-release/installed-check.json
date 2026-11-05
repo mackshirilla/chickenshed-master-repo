@@ -1,0 +1,342 @@
+{
+  "checked_at": "2026-11-05T02:56:56.819Z",
+  "workspace": 3,
+  "branch": "v1",
+  "orders_created": 0,
+  "payments_created": 0,
+  "context": {
+    "ok": true,
+    "students": [
+      {
+        "id": 209,
+        "status": "Approved"
+      },
+      {
+        "id": 210,
+        "status": "Approved"
+      }
+    ],
+    "sessions": [
+      {
+        "id": 53,
+        "program": 3,
+        "tuition": 0,
+        "deposit": 0,
+        "start": 1795478400000,
+        "end": 1797897600000
+      },
+      {
+        "id": 3,
+        "program": 1,
+        "tuition": 15,
+        "deposit": 14,
+        "start": 1789776000000,
+        "end": 1812240000000
+      },
+      {
+        "id": 19,
+        "program": 1,
+        "tuition": 33,
+        "deposit": 20,
+        "start": 1789430400000,
+        "end": 1811808000000
+      },
+      {
+        "id": 32,
+        "program": 10,
+        "tuition": 65,
+        "deposit": 0,
+        "start": 1806969600000,
+        "end": 1811808000000
+      },
+      {
+        "id": 26,
+        "program": 10,
+        "tuition": 41,
+        "deposit": 0,
+        "start": 1789776000000,
+        "end": 1793404800000
+      },
+      {
+        "id": 23,
+        "program": 10,
+        "tuition": 38,
+        "deposit": 0,
+        "start": 1789776000000,
+        "end": 1793404800000
+      },
+      {
+        "id": 2,
+        "program": 1,
+        "tuition": 13,
+        "deposit": 11,
+        "start": 1789430400000,
+        "end": 1811808000000
+      },
+      {
+        "id": 56,
+        "program": 3,
+        "tuition": 0,
+        "deposit": 0,
+        "start": 1791590400000,
+        "end": 1793404800000
+      },
+      {
+        "id": 1,
+        "program": 1,
+        "tuition": 12,
+        "deposit": 11,
+        "start": 1789776000000,
+        "end": 1812153600000
+      },
+      {
+        "id": 24,
+        "program": 10,
+        "tuition": 39,
+        "deposit": 0,
+        "start": 1794873600000,
+        "end": 1799712000000
+      },
+      {
+        "id": 21,
+        "program": 10,
+        "tuition": 36,
+        "deposit": 0,
+        "start": 1800057600000,
+        "end": 1804291200000
+      },
+      {
+        "id": 54,
+        "program": 3,
+        "tuition": 0,
+        "deposit": 0,
+        "start": 1809993600000,
+        "end": 1811808000000
+      },
+      {
+        "id": 52,
+        "program": 3,
+        "tuition": 0,
+        "deposit": 0,
+        "start": 1804550400000,
+        "end": 1806969600000
+      },
+      {
+        "id": 59,
+        "program": 3,
+        "tuition": 0,
+        "deposit": 0,
+        "start": 1791849600000,
+        "end": 1794873600000
+      },
+      {
+        "id": 55,
+        "program": 3,
+        "tuition": 0,
+        "deposit": 0,
+        "start": 1808524800000,
+        "end": 1810944000000
+      },
+      {
+        "id": 60,
+        "program": 3,
+        "tuition": 0,
+        "deposit": 0,
+        "start": 1801872000000,
+        "end": 1804291200000
+      },
+      {
+        "id": 9,
+        "program": 3,
+        "tuition": 27,
+        "deposit": 25,
+        "start": 1789430400000,
+        "end": 1811808000000
+      },
+      {
+        "id": 8,
+        "program": 3,
+        "tuition": 26,
+        "deposit": 25,
+        "start": 1789776000000,
+        "end": 1811548800000
+      },
+      {
+        "id": 7,
+        "program": 1,
+        "tuition": 21,
+        "deposit": 20,
+        "start": 1789776000000,
+        "end": 1812240000000
+      },
+      {
+        "id": 27,
+        "program": 10,
+        "tuition": 42,
+        "deposit": 0,
+        "start": 1768521600000,
+        "end": 1772755200000
+      },
+      {
+        "id": 4,
+        "program": 1,
+        "tuition": 16,
+        "deposit": 14,
+        "start": 1789430400000,
+        "end": 1811808000000
+      },
+      {
+        "id": 6,
+        "program": 1,
+        "tuition": 19,
+        "deposit": 17,
+        "start": 1789430400000,
+        "end": 1812240000000
+      },
+      {
+        "id": 57,
+        "program": 3,
+        "tuition": 0,
+        "deposit": 0,
+        "start": 1801526400000,
+        "end": 1803945600000
+      },
+      {
+        "id": 61,
+        "program": 3,
+        "tuition": 0,
+        "deposit": 0,
+        "start": 1799107200000,
+        "end": 1800921600000
+      },
+      {
+        "id": 58,
+        "program": 3,
+        "tuition": 0,
+        "deposit": 0,
+        "start": 1804896000000,
+        "end": 1807920000000
+      },
+      {
+        "id": 25,
+        "program": 10,
+        "tuition": 40,
+        "deposit": 0,
+        "start": 1805500800000,
+        "end": 1809734400000
+      },
+      {
+        "id": 22,
+        "program": 10,
+        "tuition": 37,
+        "deposit": 0,
+        "start": 1805500800000,
+        "end": 1809734400000
+      },
+      {
+        "id": 5,
+        "program": 1,
+        "tuition": 18,
+        "deposit": 17,
+        "start": 1789776000000,
+        "end": 1812240000000
+      },
+      {
+        "id": 63,
+        "program": 3,
+        "tuition": 0,
+        "deposit": 0,
+        "start": 1807574400000,
+        "end": 1809388800000
+      },
+      {
+        "id": 64,
+        "program": 13,
+        "tuition": 73,
+        "deposit": 76,
+        "start": 1817769600000,
+        "end": 1818115200000
+      },
+      {
+        "id": 62,
+        "program": 3,
+        "tuition": 0,
+        "deposit": 0,
+        "start": 1799452800000,
+        "end": 1801267200000
+      },
+      {
+        "id": 51,
+        "program": 3,
+        "tuition": 0,
+        "deposit": 0,
+        "start": 1794009600000,
+        "end": 1796428800000
+      },
+      {
+        "id": 65,
+        "program": 13,
+        "tuition": 74,
+        "deposit": 76,
+        "start": 1818374400000,
+        "end": 1819324800000
+      },
+      {
+        "id": 66,
+        "program": 13,
+        "tuition": 75,
+        "deposit": 76,
+        "start": 1817769600000,
+        "end": 1819324800000
+      }
+    ],
+    "existing_registrations": [
+      {
+        "student": 209,
+        "session": 64,
+        "status": "Pending"
+      },
+      {
+        "student": 210,
+        "session": 66,
+        "status": "Pending"
+      },
+      {
+        "student": 210,
+        "session": 2,
+        "status": "Cancelled"
+      }
+    ]
+  },
+  "quote_0": {
+    "ok": true,
+    "student_id": 209,
+    "session_id": 3,
+    "coupon_verified": null,
+    "totals": {
+      "tuition_cents": 199400,
+      "aid_cents": 0,
+      "net_tuition_cents": 199400,
+      "checkout_gross_cents": 199400,
+      "checkout_discount_cents": 0,
+      "due_now_cents": 199400,
+      "balance_after_checkout_cents": 0
+    }
+  },
+  "quote_10": {
+    "ok": true,
+    "student_id": 209,
+    "session_id": 3,
+    "coupon_verified": true,
+    "totals": {
+      "tuition_cents": 199400,
+      "aid_cents": 19940,
+      "net_tuition_cents": 179460,
+      "checkout_gross_cents": 199400,
+      "checkout_discount_cents": 19940,
+      "due_now_cents": 179460,
+      "balance_after_checkout_cents": 0
+    }
+  },
+  "ok": true
+}

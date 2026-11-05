@@ -1,0 +1,33 @@
+{
+  "action": "schema",
+  "started_at": "2026-11-05T02:46:17.241Z",
+  "workspace": 3,
+  "branch": "v1",
+  "writes": [
+    {
+      "type": "link_existing_aid",
+      "order_id": 3,
+      "aid_id": 74
+    }
+  ],
+  "schema_fields": [
+    {
+      "name": "payment_preference",
+      "exists": true
+    },
+    {
+      "name": "covered_terms",
+      "exists": true
+    },
+    {
+      "name": "billing_followup",
+      "exists": true
+    },
+    {
+      "name": "financial_aid_submission_id",
+      "exists": true
+    }
+  ],
+  "ok": true,
+  "completed_at": "2026-11-05T02:46:25.742Z"
+}

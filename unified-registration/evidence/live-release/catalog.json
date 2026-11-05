@@ -1,0 +1,25 @@
+{
+  "action": "catalog",
+  "started_at": "2026-11-05T02:51:34.652Z",
+  "workspace": 3,
+  "branch": "v1",
+  "writes": [
+    {
+      "type": "reviewed_catalog_fields",
+      "product_id": 15,
+      "fields": [
+        "Single_sale_price_id",
+        "Single_sale_price_amount"
+      ]
+    },
+    {
+      "type": "reviewed_catalog_fields",
+      "product_id": 38,
+      "fields": [
+        "Product_id"
+      ]
+    }
+  ],
+  "ok": true,
+  "completed_at": "2026-11-05T02:51:40.992Z"
+}
