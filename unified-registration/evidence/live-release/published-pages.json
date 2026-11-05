@@ -1,0 +1,68 @@
+{
+  "checked_at": "2026-11-05T03:08:32.142118+00:00",
+  "pages": [
+    {
+      "path": "/program-registration",
+      "http_status": 200,
+      "final_url": "https://www.chickenshednyc.org/program-registration",
+      "page_id": "6aebd7c3ed4d867d6c587300",
+      "version_1_1_1": true,
+      "config_count": 1,
+      "config_enabled": true
+    },
+    {
+      "path": "/checkout-success/registration-order",
+      "http_status": 200,
+      "final_url": "https://www.chickenshednyc.org/checkout-success/registration-order",
+      "page_id": "6aebd8842e86dea3667205c5",
+      "version_1_1_1": true,
+      "config_count": 1,
+      "config_enabled": true
+    },
+    {
+      "path": "/dashboard",
+      "http_status": 200,
+      "final_url": "https://www.chickenshednyc.org/dashboard",
+      "page_id": "667f7df2076d31f489193aa2",
+      "version_1_1_1": true,
+      "config_count": 1,
+      "config_enabled": true
+    },
+    {
+      "path": "/dashboard/registrations",
+      "http_status": 200,
+      "final_url": "https://www.chickenshednyc.org/dashboard/registrations",
+      "page_id": "66f31537410dc69b6b1dee1f",
+      "version_1_1_1": true,
+      "config_count": 1,
+      "config_enabled": true
+    },
+    {
+      "path": "/summer-camp-registration",
+      "http_status": 200,
+      "final_url": "https://www.chickenshednyc.org/summer-camp-registration",
+      "page_id": "6aea791777d89c8c541cedf3",
+      "version_1_1_1": true,
+      "config_count": 1,
+      "config_enabled": true
+    },
+    {
+      "path": "/lab-registration",
+      "http_status": 200,
+      "final_url": "https://www.chickenshednyc.org/lab-registration",
+      "page_id": "68b48a9e8c5e2e5839f40967",
+      "version_1_1_1": true,
+      "config_count": 1,
+      "config_enabled": true
+    },
+    {
+      "path": "/program-registration-legacy",
+      "http_status": 200,
+      "final_url": "https://www.chickenshednyc.org/program-registration-legacy",
+      "page_id": "67aa6c69d42e21217ae066a5",
+      "version_1_1_1": true,
+      "config_count": 0,
+      "config_enabled": null
+    }
+  ]
+}

@@ -1,0 +1,42 @@
+{
+  "version": "v.1.1.1",
+  "source_commit": "e156fdb",
+  "publication": {
+    "customDomains": [
+      {
+        "id": "68302cc97c4f9781e3b027ca",
+        "url": "chickenshednyc.org"
+      },
+      {
+        "id": "68302cc97c4f9781e3b027c1",
+        "url": "www.chickenshednyc.org"
+      }
+    ],
+    "publishToWebflowSubdomain": false,
+    "publishTaskId": "70b75caa-ba81-449d-a7ed-dc9591b07d4d",
+    "publishScope": "site"
+  },
+  "custom_domains": [
+    {
+      "domain": "chickenshednyc.org",
+      "published_at": "2026-11-05T03:08:13.538Z"
+    },
+    {
+      "domain": "www.chickenshednyc.org",
+      "published_at": "2026-11-05T03:08:13.538Z"
+    }
+  ],
+  "browser_verification": {
+    "canonical_page_initialized": true,
+    "single_enabled_config": true,
+    "empty_cart_checkout_disabled": true,
+    "legacy_backup_redirected": true,
+    "summer_entry_redirected": true,
+    "lab_entry_redirected": true,
+    "public_program_page_buttons_rewritten": true,
+    "old_zero_total_receipt_rendered": true
+  },
+  "noloco": "Published intended staff views. App reported up to date; no workflows or permissions changed.",
+  "remaining_validation": "Mack to complete a fresh controlled live 100% coupon order to confirm new unified fulfillment and recipient email end to end. Agent created no live order or charge.",
+  "rollback": "Close new checkout first; preserve fulfillment and receipts; restore recorded page/header/slugs and creation flags. Keep data and existing subscriptions."
+}

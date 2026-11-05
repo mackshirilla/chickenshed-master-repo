@@ -1,8 +1,8 @@
 # Unified registration release — v.1.1.1
 
-Mack approved the coordinated live cutover on November 4, 2026. The reviewed backend, additive schema, catalog corrections and legacy policy guards are installed in production. Live context, full-price quote and cart-specific aid coupon validation passed without creating an order or charge. The website and checkout gates are live. Full, semester and assigned-deposit prices, quote-update locking and the existing zero-total receipt were verified in the authenticated parent browser. The v.1.1.1 follow-up routes Webflow page-linked buttons from the preserved legacy slug to the unified entry. The production receiver is dedicated to registration26; existing subscriptions and Summer fulfillment remain in place. See `evidence/live-release/` for installed resource IDs and results.
+Mack approved the coordinated live cutover on November 4, 2026. The reviewed backend, additive schema, catalog corrections and legacy policy guards are installed in production. Live context, full-price quote and cart-specific aid coupon validation passed without creating an order or charge. The website and checkout gates are live. Full, semester and assigned-deposit prices, quote-update locking and the existing zero-total receipt were verified in the authenticated parent browser. The published v.1.1.1 follow-up routes Webflow page-linked buttons from the preserved legacy slug to the unified entry. The production receiver is dedicated to registration26; existing subscriptions and Summer fulfillment remain in place. See `evidence/live-release/` for installed resource IDs and results.
 
-## Ready for review
+## Implemented behavior and validation
 
 - Players, MLA, Summer and Labs share one order checkout. Explicit Single sale / one-time Semester / assigned Deposit mappings drive the available choices.
 - Semester is a payment arrangement for the actual session, with no invented academic cutoff or Semester 1/2 enrollment. Its assigned price is charged now; later semester payments need staff follow-up. The displayed order balance excludes those unpriced future payments.
@@ -13,7 +13,7 @@ Mack approved the coordinated live cutover on November 4, 2026. The reviewed bac
 - Pending students have a Pending approval pill above their names, and order summaries preserve the form row order. Cart-based aid was verified against two real, unpaid test Checkout sessions (orders 19 and 20), including mixed deposits and grouped quantity rounding. No payment was submitted for those checks.
 - Delayed and out-of-order quote checks, repeated clicks, checkout recovery, zero-total handling, saved-card ownership/default preservation and legacy isolation have focused evidence in `evidence/`. These do not substitute for a controlled live release smoke check.
 
-## Reviewed release checklist (original preparation sequence)
+## Reviewed release checklist (historical preparation sequence)
 
 1. Mack completed the local walkthrough at `http://127.0.0.1:4817/registration-test`, using **TEST Final Approved Child** and **TEST Final Pending Child**. The loopback server and temporary Stripe test listener must stay running. Test mail is restricted to mack@bigstachedesign.com. No real cards.
 2. Review the catalog corrections recorded in the audits: map CP2 Saturdays' verified existing one-time full price into Single sale; correct product 38's Stripe product ID. Keep conflicting/ended Acting Lab rows unavailable until their session/product mappings are corrected. Current Labs intentionally have full payment only; do not invent Semester or Deposit mappings.
@@ -31,3 +31,7 @@ Apply reviewed backend resources with runtime enabled but new checkout closed; c
 If release fails, close `registration_checkout_enabled` first. Keep live runtime, signed fulfillment, email journal and owned receipts running for already-created orders. Restore only the changed page slugs/configuration/assets and legacy creation gate, including the previous Summer new-checkout flag when reverting to that flow. Never roll back by deleting orders, registrations, aid submissions, saved-customer links or staff decisions, and never cancel existing subscriptions as part of rollback.
 
 The temporary local listener is development infrastructure; it is not the production webhook delivery mechanism.
+
+## Final live checkpoint
+
+Both custom domains published at 2026-11-05 03:08:13 UTC with v.1.1.1. All 40 CDN assets match the tagged build. The canonical page, parent registrations, existing zero-total order receipt and old entry redirects were verified in the authenticated browser. Noloco staff views are published. No new live order or charge was created by the agent. Mack should complete a fresh controlled 100% coupon checkout to confirm the new live webhook, linked records and email together.

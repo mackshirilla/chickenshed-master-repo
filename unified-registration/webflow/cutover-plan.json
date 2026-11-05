@@ -1,7 +1,7 @@
 {
   "prepared_at": "2026-11-05T02:24:19.669Z",
-  "applied": false,
-  "production_changes": false,
+  "applied": true,
+  "production_changes": true,
   "site_id": "667f080f36260b9afbdc46b2",
   "asset_version": "v.1.1.1",
   "header": {
@@ -72,5 +72,7 @@
       "after": "\n<script id=\"registration-orders-config\" type=\"application/json\">{\"enabled\":true,\"apiBase\":\"https://xszy-vp96-kdkh.n7c.xano.io/api:registration26/registration\"}</script>"
     }
   ],
-  "rollback": "Restore the exact recorded page code/header and original canonical registration slug; close new checkout first and preserve paid order fulfillment."
+  "rollback": "Restore the exact recorded page code/header and original canonical registration slug; close new checkout first and preserve paid order fulfillment.",
+  "applied_at": "2026-11-05T03:08:13.538Z",
+  "final_asset_version": "v.1.1.1"
 }
