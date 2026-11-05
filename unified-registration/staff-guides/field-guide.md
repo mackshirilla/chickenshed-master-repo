@@ -11,6 +11,7 @@ Staff links require your usual Noloco sign-in. The how-to links jump to the rele
 - [Open Financial Aid Submissions](https://chickenshednyc.noloco.co/financial-aid-submissions)
 - [How to update a balance](https://docs.google.com/document/d/12rCBkOAqYTtizLvBGmrOVZm2GT-DunIx4hOQn0LnT2k/edit?usp=drivesdk#heading=h.dh7vgitl6lzd)
 - [How to send a confirmation](https://docs.google.com/document/d/12rCBkOAqYTtizLvBGmrOVZm2GT-DunIx4hOQn0LnT2k/edit?usp=drivesdk#heading=h.tun9zfp52m4n)
+- [Change prices and payment options — step-by-step guide](https://docs.google.com/document/d/1LARJ9gp4CF5Blo4QRtIGPR0e35HBrSv3i80aKqaQpS8/edit?usp=drivesdk)
 
 ## The three things to remember
 

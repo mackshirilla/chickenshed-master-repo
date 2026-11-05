@@ -11,6 +11,7 @@ Family pages require the parent’s sign-in. The other guides explain the staff 
 - [Open the parent’s Student Profiles page](https://www.chickenshednyc.org/dashboard/student-profiles)
 - [Read the staff walkthroughs](https://docs.google.com/document/d/12rCBkOAqYTtizLvBGmrOVZm2GT-DunIx4hOQn0LnT2k/edit?usp=drivesdk)
 - [Look up a field or status](https://docs.google.com/document/d/1tWF2M5D-SyDreNPhiQLk5sTmGMahDkt5iC5xxfhL01k/edit?usp=drivesdk)
+- [Change prices and payment options — step-by-step guide](https://docs.google.com/document/d/1LARJ9gp4CF5Blo4QRtIGPR0e35HBrSv3i80aKqaQpS8/edit?usp=drivesdk)
 
 ## One place for new registrations
 

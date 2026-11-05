@@ -12,6 +12,7 @@ Staff links require your usual Noloco sign-in. Open the family’s order before 
 - [Add a Session Registration](https://chickenshednyc.noloco.co/session-registrations/new)
 - [Open Student Profiles](https://chickenshednyc.noloco.co/student-profiles)
 - [Open Financial Aid Submissions](https://chickenshednyc.noloco.co/financial-aid-submissions)
+- [Change prices and payment options — step-by-step guide](https://docs.google.com/document/d/1LARJ9gp4CF5Blo4QRtIGPR0e35HBrSv3i80aKqaQpS8/edit?usp=drivesdk)
 
 ## Before you start
 

@@ -21,12 +21,16 @@
       [
         "Look up a field or status",
         "https://docs.google.com/document/d/1tWF2M5D-SyDreNPhiQLk5sTmGMahDkt5iC5xxfhL01k/edit?usp=drivesdk"
+      ],
+      [
+        "Change prices and payment options — step-by-step guide",
+        "https://docs.google.com/document/d/1LARJ9gp4CF5Blo4QRtIGPR0e35HBrSv3i80aKqaQpS8/edit?usp=drivesdk"
       ]
     ],
     "notes": "Family pages require the parent’s sign-in. The other guides explain the staff steps.",
     "doc_url": "https://docs.google.com/document/d/1hue0PHPwDib2mVmUKZ_uELtTUZhVfz2P4cfUyRkZHmU/edit?usp=drivesdk",
     "inserted_at": 139,
-    "text": "Quick links\nFamily pages require the parent’s sign-in. The other guides explain the staff steps.\nOpen the family registration page\nOpen the parent’s registration dashboard\nOpen the parent’s Student Profiles page\nRead the staff walkthroughs\nLook up a field or status\n"
+    "text": "Quick links\nFamily pages require the parent’s sign-in. The other guides explain the staff steps.\nOpen the family registration page\nOpen the parent’s registration dashboard\nOpen the parent’s Student Profiles page\nRead the staff walkthroughs\nLook up a field or status\nChange prices and payment options — step-by-step guide\n"
   },
   {
     "file": "staff-tasks.md",
@@ -54,12 +58,16 @@
       [
         "Open Financial Aid Submissions",
         "https://chickenshednyc.noloco.co/financial-aid-submissions"
+      ],
+      [
+        "Change prices and payment options — step-by-step guide",
+        "https://docs.google.com/document/d/1LARJ9gp4CF5Blo4QRtIGPR0e35HBrSv3i80aKqaQpS8/edit?usp=drivesdk"
       ]
     ],
     "notes": "Staff links require your usual Noloco sign-in. Open the family’s order before editing it or sending a confirmation.",
     "doc_url": "https://docs.google.com/document/d/12rCBkOAqYTtizLvBGmrOVZm2GT-DunIx4hOQn0LnT2k/edit?usp=drivesdk",
     "inserted_at": 130,
-    "text": "Quick links\nStaff links require your usual Noloco sign-in. Open the family’s order before editing it or sending a confirmation.\nOpen Registration Orders\nCreate a manual order\nOpen All Session Registrations\nAdd a Session Registration\nOpen Student Profiles\nOpen Financial Aid Submissions\n"
+    "text": "Quick links\nStaff links require your usual Noloco sign-in. Open the family’s order before editing it or sending a confirmation.\nOpen Registration Orders\nCreate a manual order\nOpen All Session Registrations\nAdd a Session Registration\nOpen Student Profiles\nOpen Financial Aid Submissions\nChange prices and payment options — step-by-step guide\n"
   },
   {
     "file": "field-guide.md",
@@ -83,11 +91,15 @@
       [
         "How to send a confirmation",
         "https://docs.google.com/document/d/12rCBkOAqYTtizLvBGmrOVZm2GT-DunIx4hOQn0LnT2k/edit?usp=drivesdk#heading=h.tun9zfp52m4n"
+      ],
+      [
+        "Change prices and payment options — step-by-step guide",
+        "https://docs.google.com/document/d/1LARJ9gp4CF5Blo4QRtIGPR0e35HBrSv3i80aKqaQpS8/edit?usp=drivesdk"
       ]
     ],
     "notes": "Staff links require your usual Noloco sign-in. The how-to links jump to the relevant instructions.",
     "doc_url": "https://docs.google.com/document/d/1tWF2M5D-SyDreNPhiQLk5sTmGMahDkt5iC5xxfhL01k/edit?usp=drivesdk",
     "inserted_at": 154,
-    "text": "Quick links\nStaff links require your usual Noloco sign-in. The how-to links jump to the relevant instructions.\nOpen Registration Orders\nOpen All Session Registrations\nOpen Financial Aid Submissions\nHow to update a balance\nHow to send a confirmation\n"
+    "text": "Quick links\nStaff links require your usual Noloco sign-in. The how-to links jump to the relevant instructions.\nOpen Registration Orders\nOpen All Session Registrations\nOpen Financial Aid Submissions\nHow to update a balance\nHow to send a confirmation\nChange prices and payment options — step-by-step guide\n"
   }
 ]
