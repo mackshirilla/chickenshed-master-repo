@@ -168,7 +168,7 @@ export async function initializeRegistration(root) {
     const planSelect=select('Payment preference','Choose a payment option',[{id:'full',label:'Pay in full'},{id:'semester',label:'Pay per semester'},{id:'monthly',label:'Monthly payments'}],state.payment_preference,value=>{state.payment_preference=value;changed();},false);
     planSelect.id='registrationPaymentChoice';planSelect.required=true;planSelect.setAttribute('aria-describedby','registrationPaymentHelp');
     const labHelp=textElement('p','Labs require this student to have an Active Players 2, 3 or 4 registration covering the Lab, or a qualifying Players item in this checkout.','registration-eligibility-help u-text-small');labHelp.hidden=true;root.querySelector('#subscription_items_table').after(labHelp);
-    const planHelp=textElement('p','','u-text-small');planHelp.id='registrationPaymentHelp';planBox.append(planLabel,planSelect,planHelp);(submit.closest('.btn_component')||submit).before(planBox);
+    const planHelp=textElement('p','','u-text-small');planHelp.id='registrationPaymentHelp';planBox.append(planLabel,planSelect,planHelp);summaryCard.before(planBox);
     function selectedPlannedSessions(){return state.items.map(i=>catalog.sessions.find(s=>String(s.id)===String(i.session_id))).filter(s=>s&&paymentOptions(s).length>1);}
     function needsPlan(){return selectedPlannedSessions().length>0;}
     function renderPlan(){

@@ -1,0 +1,13 @@
+{
+  "payment_card_before_breakdown": true,
+  "payment_link_focuses_selector": true,
+  "webflow_delegated_scroll_suppressed": true,
+  "natural_option_sort": true,
+  "payment_choice_order": [
+    "full",
+    "semester",
+    "monthly"
+  ],
+  "production_build_passed": true,
+  "real_order_or_payment_created": false
+}
