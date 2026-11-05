@@ -194,7 +194,7 @@ export async function initializeRegistration(root) {
         const message=textElement('p',updating?'Calculating your total…':validationFailure?'Resolve the highlighted requirement to see your total.':quoteFailure?'Your total is temporarily unavailable. Please try again.':'Select a session and student for each row to see your payment.','muted');
         if(!updating&&!validationFailure&&!quoteFailure&&needsPlan()&&!state.payment_preference){
           const jump=textElement('a','Choose a payment option','registration-plan-link');jump.href='#registrationPaymentChoice';
-          jump.addEventListener('click',event=>{event.preventDefault();planSelect.scrollIntoView({behavior:window.matchMedia?.('(prefers-reduced-motion: reduce)').matches?'auto':'smooth',block:'center'});planSelect.focus({preventScroll:true});});
+          jump.addEventListener('click',event=>{event.preventDefault();event.stopPropagation();planSelect.scrollIntoView({behavior:window.matchMedia?.('(prefers-reduced-motion: reduce)').matches?'auto':'smooth',block:'center'});planSelect.focus({preventScroll:true});});
           message.replaceChildren(jump,document.createTextNode(' to see your total.'));
         }
         quoteNode.append(message);if(quoteFailure&&!validationFailure){const retry=textElement('button','Try again','registration-validation-edit');retry.type='button';retry.addEventListener('click',changed);quoteNode.append(retry);}return;

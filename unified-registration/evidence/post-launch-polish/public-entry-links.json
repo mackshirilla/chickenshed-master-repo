@@ -1,0 +1,549 @@
+{
+  "checked_at": "2026-11-05T03:39:05.937331+00:00",
+  "pages": [
+    {
+      "id": "6aebd8842e86dea3667205c5",
+      "title": "Registration Confirmation",
+      "path": "/checkout-success/registration-order",
+      "http_status": 200,
+      "obsolete_entry_links": [],
+      "version_1_1_2": true
+    },
+    {
+      "id": "6aebd7c3ed4d867d6c587300",
+      "title": "Program Registration",
+      "path": "/program-registration",
+      "http_status": 200,
+      "obsolete_entry_links": [],
+      "version_1_1_2": true
+    },
+    {
+      "id": "6aeac1cbf2e303d0a713f9f4",
+      "title": "Summer Camp Success",
+      "path": "/checkout-success/summer-camp-success",
+      "http_status": 200,
+      "obsolete_entry_links": [],
+      "version_1_1_2": true
+    },
+    {
+      "id": "6aea791777d89c8c541cedf3",
+      "title": "Summer Camp Registration",
+      "path": "/summer-camp-registration",
+      "http_status": 200,
+      "obsolete_entry_links": [],
+      "version_1_1_2": true
+    },
+    {
+      "id": "68b49d1a15f5b7b61ecf0b24",
+      "title": "Lab Registration",
+      "path": "/checkout-success/lab-registration",
+      "http_status": 200,
+      "obsolete_entry_links": [],
+      "version_1_1_2": true
+    },
+    {
+      "id": "68b48a9e8c5e2e5839f40967",
+      "title": "Lab Registration",
+      "path": "/lab-registration",
+      "http_status": 200,
+      "obsolete_entry_links": [],
+      "version_1_1_2": true
+    },
+    {
+      "id": "6823fb677277a83a64b98fdd",
+      "title": "Donation Details",
+      "path": "/donation-details",
+      "http_status": 200,
+      "obsolete_entry_links": [],
+      "version_1_1_2": true
+    },
+    {
+      "id": "6823bc349f97db13787b875d",
+      "title": "donation",
+      "path": "/checkout-success/donation",
+      "http_status": 200,
+      "obsolete_entry_links": [],
+      "version_1_1_2": true
+    },
+    {
+      "id": "68202dfcde3fede4f6ae0750",
+      "title": "tickets",
+      "path": "/checkout-success/tickets",
+      "http_status": 200,
+      "obsolete_entry_links": [],
+      "version_1_1_2": true
+    },
+    {
+      "id": "6819392d9623d4d16c2c5943",
+      "title": "Manage Subscription",
+      "path": "/dashboard/registration/manage-subscription",
+      "http_status": 200,
+      "obsolete_entry_links": [],
+      "version_1_1_2": true
+    },
+    {
+      "id": "681912b90113031750e02ee7",
+      "title": "Registration",
+      "path": "/checkout-success/registration",
+      "http_status": 200,
+      "obsolete_entry_links": [],
+      "version_1_1_2": true
+    },
+    {
+      "id": "67aa6c69d42e21217ae066a5",
+      "title": "Program Registration",
+      "path": "/program-registration-legacy",
+      "http_status": 200,
+      "obsolete_entry_links": [],
+      "version_1_1_2": true
+    },
+    {
+      "id": "67886e2eb2833f599afe5a6a",
+      "title": "Contact",
+      "path": "/contact",
+      "http_status": 200,
+      "obsolete_entry_links": [],
+      "version_1_1_2": true
+    },
+    {
+      "id": "6788669313a839391970a87a",
+      "title": "Opportunities",
+      "path": "/opportunities",
+      "http_status": 200,
+      "obsolete_entry_links": [],
+      "version_1_1_2": true
+    },
+    {
+      "id": "67886391a17b31d063e35b40",
+      "title": "Our Benefactors",
+      "path": "/supporters/our-benefactors",
+      "http_status": 200,
+      "obsolete_entry_links": [],
+      "version_1_1_2": true
+    },
+    {
+      "id": "67885eae80935c0baceb7d04",
+      "title": "Our Donors",
+      "path": "/supporters/our-donors",
+      "http_status": 200,
+      "obsolete_entry_links": [],
+      "version_1_1_2": true
+    },
+    {
+      "id": "6787452b45d89e765f5c8370",
+      "title": "Support Programs",
+      "path": "/support-programs",
+      "http_status": 200,
+      "obsolete_entry_links": [],
+      "version_1_1_2": true
+    },
+    {
+      "id": "67872e880ade87028ed8aea2",
+      "title": "FAQs",
+      "path": "/faqs",
+      "http_status": 200,
+      "obsolete_entry_links": [],
+      "version_1_1_2": true
+    },
+    {
+      "id": "67859f33c83aea3eecbd2f0d",
+      "title": "All Posts",
+      "path": "/all-posts",
+      "http_status": 200,
+      "obsolete_entry_links": [],
+      "version_1_1_2": true
+    },
+    {
+      "id": "678473e0702dd12b8a0f5d37",
+      "title": "Upcoming",
+      "path": "/upcoming",
+      "http_status": 200,
+      "obsolete_entry_links": [],
+      "version_1_1_2": true
+    },
+    {
+      "id": "676767ed0bf3e6e3af6739ba",
+      "title": "Programs",
+      "path": "/programs",
+      "http_status": 200,
+      "obsolete_entry_links": [],
+      "version_1_1_2": true
+    },
+    {
+      "id": "676755511d037159b01f5df3",
+      "title": "History",
+      "path": "/about/history",
+      "http_status": 200,
+      "obsolete_entry_links": [],
+      "version_1_1_2": true
+    },
+    {
+      "id": "676744c5eef1c83a0334c2cd",
+      "title": "Our People",
+      "path": "/about/our-people",
+      "http_status": 200,
+      "obsolete_entry_links": [],
+      "version_1_1_2": true
+    },
+    {
+      "id": "6767394736a137a01e3907b1",
+      "title": "Our Company",
+      "path": "/about/our-company",
+      "http_status": 200,
+      "obsolete_entry_links": [],
+      "version_1_1_2": true
+    },
+    {
+      "id": "672153d04ed43e5ed8095e24",
+      "title": "Ticket Order",
+      "path": "/ticket-order",
+      "http_status": 200,
+      "obsolete_entry_links": [],
+      "version_1_1_2": true
+    },
+    {
+      "id": "6721391359aa1d6225f46588",
+      "title": "Student Dashboard",
+      "path": "/student-dashboard",
+      "http_status": 200,
+      "obsolete_entry_links": [],
+      "version_1_1_2": true
+    },
+    {
+      "id": "670d82cc89de6c5de42e2480",
+      "title": "My Account",
+      "path": "/dashboard/my-account",
+      "http_status": 200,
+      "obsolete_entry_links": [],
+      "version_1_1_2": true
+    },
+    {
+      "id": "67072a4c112f313490cb7612",
+      "title": "profile",
+      "path": "/dashboard/student/profile",
+      "http_status": 200,
+      "obsolete_entry_links": [],
+      "version_1_1_2": true
+    },
+    {
+      "id": "6704482c5427e529a788e29a",
+      "title": "Donation",
+      "path": "/dashboard/donations/donation",
+      "http_status": 200,
+      "obsolete_entry_links": [],
+      "version_1_1_2": true
+    },
+    {
+      "id": "670446c6d223267dfd18d584",
+      "title": "Donations",
+      "path": "/dashboard/donations",
+      "http_status": 200,
+      "obsolete_entry_links": [],
+      "version_1_1_2": true
+    },
+    {
+      "id": "670411ab6702382a0f2a5780",
+      "title": "Ticket Order",
+      "path": "/dashboard/ticket-order/performance",
+      "http_status": 200,
+      "obsolete_entry_links": [],
+      "version_1_1_2": true
+    },
+    {
+      "id": "67040e372ae16470bce2aa55",
+      "title": "Ticket Orders",
+      "path": "/dashboard/ticket-orders",
+      "http_status": 200,
+      "obsolete_entry_links": [],
+      "version_1_1_2": true
+    },
+    {
+      "id": "670042b87c4f1d7dd9b1a421",
+      "title": "Session",
+      "path": "/dashboard/registration/session",
+      "http_status": 200,
+      "obsolete_entry_links": [],
+      "version_1_1_2": true
+    },
+    {
+      "id": "66ff20f017202163904a2165",
+      "title": "Workshop",
+      "path": "/dashboard/registration/workshop",
+      "http_status": 200,
+      "obsolete_entry_links": [],
+      "version_1_1_2": true
+    },
+    {
+      "id": "66fa0064b662efe575d19afe",
+      "title": "Program",
+      "path": "/dashboard/registration/program",
+      "http_status": 200,
+      "obsolete_entry_links": [],
+      "version_1_1_2": true
+    },
+    {
+      "id": "66f31537410dc69b6b1dee1f",
+      "title": "Registrations",
+      "path": "/dashboard/registrations",
+      "http_status": 200,
+      "obsolete_entry_links": [],
+      "version_1_1_2": true
+    },
+    {
+      "id": "66bc1420b7267d1e0ce6d170",
+      "title": "Success-old",
+      "path": "/checkout-success/success-old",
+      "http_status": 200,
+      "obsolete_entry_links": [],
+      "version_1_1_2": true
+    },
+    {
+      "id": "66915fd1b6c9da05990a2f90",
+      "title": "Make A Donation",
+      "path": "/make-a-donation",
+      "http_status": 200,
+      "obsolete_entry_links": [],
+      "version_1_1_2": true
+    },
+    {
+      "id": "66832738322442da20ea1a64",
+      "title": "Purchase Tickets",
+      "path": "/purchase-tickets",
+      "http_status": 200,
+      "obsolete_entry_links": [],
+      "version_1_1_2": true
+    },
+    {
+      "id": "6681c1429e8d7bd4b7e5e9bd",
+      "title": "Add Student Profile",
+      "path": "/students/add-student",
+      "http_status": 200,
+      "obsolete_entry_links": [],
+      "version_1_1_2": true
+    },
+    {
+      "id": "667fb00ab40940f4f36f4119",
+      "title": "Student Profiles",
+      "path": "/dashboard/student-profiles",
+      "http_status": 200,
+      "obsolete_entry_links": [],
+      "version_1_1_2": true
+    },
+    {
+      "id": "667f831865848048a8cd6101",
+      "title": "Complete Profile",
+      "path": "/create-account/complete-profile",
+      "http_status": 200,
+      "obsolete_entry_links": [],
+      "version_1_1_2": true
+    },
+    {
+      "id": "667f7df2076d31f489193aa2",
+      "title": "Dashboard",
+      "path": "/dashboard",
+      "http_status": 200,
+      "obsolete_entry_links": [],
+      "version_1_1_2": true
+    },
+    {
+      "id": "667f7cda19f970d71b40c49b",
+      "title": "Login",
+      "path": "/login",
+      "http_status": 200,
+      "obsolete_entry_links": [],
+      "version_1_1_2": true
+    },
+    {
+      "id": "667f739ff63d48d8d79ac223",
+      "title": "Forgot Password",
+      "path": "/forgot-password",
+      "http_status": 200,
+      "obsolete_entry_links": [],
+      "version_1_1_2": true
+    },
+    {
+      "id": "667f71b4f6b0a51c14743640",
+      "title": "Reset Password",
+      "path": "/create-account/reset-password",
+      "http_status": 200,
+      "obsolete_entry_links": [],
+      "version_1_1_2": true
+    },
+    {
+      "id": "667f71761ec75822e77d9c89",
+      "title": "Magic Link",
+      "path": "/create-account/magic-link",
+      "http_status": 200,
+      "obsolete_entry_links": [],
+      "version_1_1_2": true
+    },
+    {
+      "id": "667f2f7bd7c32c6e6893f8cf",
+      "title": "Create Account",
+      "path": "/create-account",
+      "http_status": 200,
+      "obsolete_entry_links": [],
+      "version_1_1_2": true
+    },
+    {
+      "id": "667f080f36260b9afbdc46aa",
+      "title": "404",
+      "path": "/404",
+      "http_status": 200,
+      "obsolete_entry_links": [],
+      "version_1_1_2": true
+    },
+    {
+      "id": "667f080f36260b9afbdc46a9",
+      "title": "Password",
+      "path": "/401",
+      "http_status": 200,
+      "obsolete_entry_links": [],
+      "version_1_1_2": true
+    },
+    {
+      "id": "667f080f36260b9afbdc46a7",
+      "title": "Home",
+      "path": "/",
+      "http_status": 200,
+      "obsolete_entry_links": [],
+      "version_1_1_2": true
+    },
+    {
+      "id": "67885e028bf2f80b0d6468f4",
+      "title": "Donors & Partners Template",
+      "path": "/donors-partners/anonymous-10",
+      "template": true,
+      "error": "HTTP Error 404: Not Found"
+    },
+    {
+      "id": "67872e44d5a4ea805d392efa",
+      "title": "FAQs Template",
+      "path": "/faqs/can-i-try-a-session",
+      "template": true,
+      "error": "HTTP Error 404: Not Found"
+    },
+    {
+      "id": "6767558d3150b0998071c49d",
+      "title": "History Template",
+      "path": "/history/2026",
+      "template": true,
+      "error": "HTTP Error 404: Not Found"
+    },
+    {
+      "id": "67674569fb8af106ec49c1c3",
+      "title": "Our People Template",
+      "path": "/our-people/sam-boeck",
+      "template": true,
+      "error": "HTTP Error 404: Not Found"
+    },
+    {
+      "id": "67673e77e55be10dc12e3aa7",
+      "title": "Resources Categories Template",
+      "path": "/resources-categories/playerbill",
+      "template": true,
+      "http_status": 200,
+      "obsolete_entry_links": [],
+      "version_1_1_2": true
+    },
+    {
+      "id": "67673e661a41100270842c2e",
+      "title": "Resources Template",
+      "path": "/resources/read-our-playerbills-the-tigon-the-liger",
+      "template": true,
+      "http_status": 200,
+      "obsolete_entry_links": [],
+      "version_1_1_2": true
+    },
+    {
+      "id": "67673ccf06432a90055abb81",
+      "title": "Hero Videos Template",
+      "path": "/hero-videos/resources-hero-video",
+      "template": true,
+      "error": "HTTP Error 404: Not Found"
+    },
+    {
+      "id": "67661cc044c92e27212875d3",
+      "title": "Testimonies Template",
+      "path": "/testimonies/parent-14",
+      "template": true,
+      "error": "HTTP Error 404: Not Found"
+    },
+    {
+      "id": "676203a232046d7398a32c5c",
+      "title": "Home Slider & Announcements Template",
+      "path": "/home-slider-announcements/everybody-sings-a-holiday-sing-along-2",
+      "template": true,
+      "error": "HTTP Error 404: Not Found"
+    },
+    {
+      "id": "6742a96f23b8518faf90f549",
+      "title": "Opportunities Template",
+      "path": "/opportunities/youth-internships",
+      "template": true,
+      "http_status": 200,
+      "obsolete_entry_links": [],
+      "version_1_1_2": true
+    },
+    {
+      "id": "66915f0eff070cc6f721d947",
+      "title": "Support Campaigns Template",
+      "path": "/support-campaigns/build-the-shed-2025",
+      "template": true,
+      "http_status": 200,
+      "obsolete_entry_links": [],
+      "version_1_1_2": true
+    },
+    {
+      "id": "66845b230fd96fb2fa672bf0",
+      "title": "Performances Template",
+      "path": "/performances/holiday-celebration",
+      "template": true,
+      "http_status": 200,
+      "obsolete_entry_links": [],
+      "version_1_1_2": true
+    },
+    {
+      "id": "66845b1d64a78e49e240b616",
+      "title": "Productions Template",
+      "path": "/productions/holiday-celebration",
+      "template": true,
+      "http_status": 200,
+      "obsolete_entry_links": [],
+      "version_1_1_2": true
+    },
+    {
+      "id": "6681f19d7ae13ba2e8a7ac0c",
+      "title": "Workshops Template",
+      "path": "/workshops/summer-shed-3-weeks",
+      "template": true,
+      "http_status": 200,
+      "obsolete_entry_links": [],
+      "version_1_1_2": true
+    },
+    {
+      "id": "6681f14fbdf37647c79b176d",
+      "title": "Programs Template",
+      "path": "/programs/summer-shed",
+      "template": true,
+      "http_status": 200,
+      "obsolete_entry_links": [],
+      "version_1_1_2": true
+    },
+    {
+      "id": "6681f0d6cb06d3d6d44f5352",
+      "title": "Locations Template",
+      "path": "/locations/feller-residence",
+      "template": true,
+      "error": "HTTP Error 404: Not Found"
+    },
+    {
+      "id": "6681f0803a6814dca719b69e",
+      "title": "Sessions Template",
+      "path": "/sessions/summer-shed-3-weeks",
+      "template": true,
+      "error": "HTTP Error 404: Not Found"
+    }
+  ],
+  "scope": "Static public pages and representative CMS pages; unpublished template-only URLs that return404 are listed separately."
+}

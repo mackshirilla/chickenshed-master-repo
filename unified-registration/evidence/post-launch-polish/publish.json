@@ -1,0 +1,35 @@
+{
+  "version": "v.1.1.2",
+  "publication": {
+    "customDomains": [
+      {
+        "id": "68302cc97c4f9781e3b027ca",
+        "url": "chickenshednyc.org"
+      },
+      {
+        "id": "68302cc97c4f9781e3b027c1",
+        "url": "www.chickenshednyc.org"
+      }
+    ],
+    "publishToWebflowSubdomain": false,
+    "publishTaskId": "255efa8b-8df8-4633-96ab-c02ea3b89613",
+    "publishScope": "site"
+  },
+  "public_entry_audit": {
+    "loaded_pages": 59,
+    "obsolete_entry_links": 0,
+    "unpublished_template_urls": 9
+  },
+  "mini_mobile_quote": {
+    "due_now_cents": 14000,
+    "payment_plan_hidden": true,
+    "checkout_ready": true
+  },
+  "desktop_and_mobile_selections_alphabetized": true,
+  "payment_options_preserved": [
+    "full",
+    "semester",
+    "monthly"
+  ],
+  "mobile_anchor_followup": "Webflow delegated smooth scrolling competed with the local handler; v.1.1.3 stops propagation and is validated separately."
+}
