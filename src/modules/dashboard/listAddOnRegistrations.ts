@@ -3,6 +3,7 @@
 import { WFDynamicList, WFComponent } from "@xatom/core";
 import { WFImage } from "@xatom/image";
 import { apiClient } from "../../api/apiConfig";
+import { renderExistingRegistrationCards } from "../registration-orders/dashboard.mjs";
 
 // ---------- Types ----------
 interface ProgramDetails {
@@ -137,7 +138,7 @@ export async function initializeDynamicAddOnRegistrationList(
       return an.localeCompare(bn);
     });
 
-    list.setData(uniqueByProgram);
+    if (!renderExistingRegistrationCards(uniqueByProgram, 'manual')) list.setData(uniqueByProgram);
   } catch (err) {
     console.error("Error loading add-on registrations:", err);
     list.setData([]);

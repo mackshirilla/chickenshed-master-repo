@@ -3,6 +3,7 @@
 import { WFDynamicList, WFComponent } from "@xatom/core";
 import { WFImage } from "@xatom/image";
 import { apiClient } from "../../api/apiConfig";
+import { renderExistingRegistrationCards } from "../registration-orders/dashboard.mjs";
 
 // Define the shape of the program_details object
 interface ProgramDetails {
@@ -152,7 +153,7 @@ export async function initializeDynamicSubscriptionList(
     );
 
     // Render into the list
-    list.setData(uniqueByProgram);
+    if (!renderExistingRegistrationCards(uniqueByProgram, 'subscription')) list.setData(uniqueByProgram);
 
     // Toggle buttons based on list length
     if (uniqueByProgram.length === 0) {

@@ -1,0 +1,11 @@
+# Staff follow-up scope
+
+The registration order's `paid` state confirms its Stripe checkout, including a zero-total coupon checkout. It does not mean every tuition balance or future semester payment is settled. Display **Checkout confirmed**, **Order balance / Balance after checkout**, **Payment option** and **Payment follow-up** separately. The balance is the confirmed checkout snapshot, not a ledger automatically reconciled against later staff charges. A semester arrangement can require follow-up even when the balance on the current order is zero.
+
+Manual enrollment should use the existing Session Registration form, deriving Parent from the selected Student and retaining the student/session/program relationships. It must not require a subscription. Creating an enrollment does not collect payment or create a Stripe-backed order. Existing no-order enrollments remain in the historical dashboard section; the new parent cards use order-linked registrations.
+
+Do not expose the raw Registration Order create form. Its quote, payment snapshot, owned student items, aid linkage and linked placements are produced together by the checkout/fulfillment pipeline. A future offline-payment workflow should explicitly record its source and payment state; it must not impersonate a Stripe checkout or invent a paid amount.
+
+The next small staff action should be **Resend confirmation**, with an audit entry and the order's existing confirmation content/link. It needs a distinct staff-authorized resend operation: the current confirmation function has an idempotent claim journal and intentionally will not resend an accepted message. Never reset the sent journal, replay the payment webhook, or rerun fulfillment to deliver an email. Do not create a public receipt URL that bypasses parent ownership. A separate Stripe receipt action can be deferred; confirmation already links to the authenticated order breakdown. No resend action is implemented or exercised by this cleanup.
+
+Money, quote snapshots, parent ownership and provider identifiers remain read-only. Existing registration status controls can be made easier to reach without widening role permissions. Any account-specific editing restriction still needs verification under the affected staff role.

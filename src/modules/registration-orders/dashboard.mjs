@@ -1,6 +1,19 @@
 import {transport,dollars,textElement} from './transport.mjs';
 import {installRegistrationDashboardStyles} from './styles.mjs';
 export function unifiedRegistrationEnabled(){try{return JSON.parse(document.querySelector('#registration-orders-config')?.textContent||'{}').enabled===true;}catch{return false;}}
+export function renderExistingRegistrationCards(rows,kind){
+ const list=document.querySelector('#registrationOrdersDashboard .registration-dashboard-list');if(!unifiedRegistrationEnabled()||!list)return false;
+ list.querySelectorAll(`[data-existing-kind="${kind}"]`).forEach(node=>node.remove());
+ for(const row of rows){
+  const programId=Number(kind==='subscription'?row.program:row.program_id);if(!Number.isSafeInteger(programId)||programId<=0)continue;
+  const card=textElement('article','','registration-order-card');card.dataset.existingKind=kind;
+  card.append(textElement('h3',row.program_details?.name||row.program_name||'Program registration'),textElement('p','Existing registration','registration-card-status'),textElement('p','View enrolled students and session details.'));
+  const actions=textElement('div','','registration-card-actions'),link=textElement('a','View registrations','registration-card-button');
+  const target=new URL('/dashboard/registration/program',location.origin);target.searchParams.set('program',String(programId));target.searchParams.set('subscription',kind==='subscription'?String(row.id):'none');link.href=target.href;actions.append(link);card.append(actions);list.append(card);
+ }
+ const notice=document.querySelector('#registrationOrdersDashboard .registration-dashboard-notice');if(list.children.length&&notice?.textContent==='Your confirmed registrations will appear here after checkout.')notice.textContent='';
+ return true;
+}
 export async function initializeRegistrationDashboard(root=document.querySelector('main')||document.body){
  if(!unifiedRegistrationEnabled()||root.querySelector('#registrationOrdersDashboard'))return;
  installRegistrationDashboardStyles();
@@ -9,6 +22,7 @@ export async function initializeRegistrationDashboard(root=document.querySelecto
  const register=textElement('a','Register for a program','btn_main_wrap');register.href=location.hostname==='127.0.0.1'?'/registration-preview':'/program-registration';heading.append(register);section.append(heading);
  const notice=textElement('p','Loading your registrations…','registration-dashboard-notice');notice.setAttribute('role','status');const list=textElement('div','','registration-dashboard-list');section.append(notice,list);
  const old=root.querySelector('#listRegistration');const anchor=old?.closest('.bento_box')||old;if(anchor?.parentElement)anchor.before(section);else root.prepend(section);
+ for(const id of ['listRegistration','listAddOnRegistration']){const oldList=root.querySelector('#'+id),surface=oldList?.closest('.bento_box')||oldList;if(surface&&!surface.contains(section)){surface.hidden=true;surface.style.display='none';}}
  root.querySelectorAll('#add-registration-button').forEach(el=>{el.style.display='';el.setAttribute('href',register.href);});
  try{const api=transport(root),data=await api('account');notice.textContent=data.registrations.length?'':'Your confirmed registrations will appear here after checkout.';
  for(const item of data.registrations){const card=textElement('article','','registration-order-card');
