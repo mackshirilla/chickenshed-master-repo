@@ -1,0 +1,16 @@
+{
+  "writes": [
+    {
+      "path": "function/344",
+      "before_sha256": "2090e5a8d7d646c157738c1324e93b58b7e8f7d541379c62d3d960e7f2de1fa3",
+      "after_sha256": "c9b0cba90e871b12f6b06cffbe5cc52476511e2ef15d970a3ad4c324d10a782b"
+    },
+    {
+      "path": "apigroup/65/api/793",
+      "before_sha256": "d01793010cc2640b902f3524233d5601859aafb3a48df020bdf26139979ed4dd",
+      "after_sha256": "387d4ff9ec386cb3c70adc6a45cc439323aedcfec16fac29850efba8faf5dc0b"
+    }
+  ],
+  "charges_created": false,
+  "emails_sent": false
+}

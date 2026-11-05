@@ -1,0 +1,72 @@
+{
+  "verified_at": "2026-11-05T07:34:36.396Z",
+  "field": "Offer_monthly_payments",
+  "default": false,
+  "enabled_session_ids": [
+    1,
+    2,
+    3,
+    4,
+    5,
+    6,
+    7,
+    8,
+    9,
+    19
+  ],
+  "quotes": [
+    {
+      "session_id": 3,
+      "student_status": "Approved",
+      "preference": "full",
+      "due_cents": 199400,
+      "options": [
+        "full",
+        "semester",
+        "monthly"
+      ]
+    },
+    {
+      "session_id": 3,
+      "student_status": "Approved",
+      "preference": "semester",
+      "due_cents": 99700,
+      "options": [
+        "full",
+        "semester",
+        "monthly"
+      ]
+    },
+    {
+      "session_id": 3,
+      "student_status": "Approved",
+      "preference": "monthly",
+      "due_cents": 2500,
+      "options": [
+        "full",
+        "semester",
+        "monthly"
+      ]
+    },
+    {
+      "session_id": 53,
+      "student_status": "Pending",
+      "preference": "full",
+      "due_cents": 2500,
+      "options": [
+        "full"
+      ]
+    },
+    {
+      "session_id": 53,
+      "student_status": "Approved",
+      "preference": "full",
+      "due_cents": 17500,
+      "options": [
+        "full"
+      ]
+    }
+  ],
+  "charges_created": false,
+  "emails_sent": false
+}

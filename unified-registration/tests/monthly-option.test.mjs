@@ -1,0 +1,33 @@
+import test from 'node:test';
+import assert from 'node:assert/strict';
+import {readFile} from 'node:fs/promises';
+import {fixtures} from '../test-model/fixtures.mjs';
+import {quoteFamily} from '../test-model/quote.mjs';
+
+test('catalog monthly checkbox is independent of the Pending deposit and semester price',async()=>{
+ const source=await readFile(new URL('../xano/production-candidate/api/unified_registration/start_GET.xs',import.meta.url),'utf8');
+ const catalog=Function('$var',source.match(/code\s*=\s*"""([\s\S]*?)"""/)[1]);
+ const authoritative=await readFile(new URL('../xano/production-candidate/function/registration_live_quote_context_v1.xs',import.meta.url),'utf8');
+ const backendOptions=Function('row','p','d',authoritative.match(/const payment_options=.*?;/)[0]+'return payment_options;');
+ const f=fixtures(),s=f.sessions[0],raw={id:s.id,Name:s.name,Parent_program:1,Parent_workshop:1,Tuition_product:12,Deposit_product:11,Offer_monthly_payments:false};
+ const base={students:[],sessions:[raw],programs:[],workshops:[],products:[{id:12,Semester_price_id:'price_semester'},{id:11,Single_sale_price_id:'price_deposit'}]};
+ const options=()=>{const result=catalog({base}).sessions[0].payment_options;assert.deepEqual(backendOptions(raw,base.products[0],base.products.find(p=>p.id===raw.Deposit_product)),result);return result;};
+ assert.deepEqual(options(),['full','semester']);
+ s.payment_options=options();
+ const quote=(student_id,preference)=>quoteFamily({items:[{student_id,session_id:s.id}],payment_preference:preference},f);
+ assert.equal(quote(9102,'full').items[0].due_now_cents,2500);
+ assert.equal(quote(9101,'full').items[0].due_now_cents,116250);
+ assert.equal(quote(9101,'semester').items[0].due_now_cents,58125);
+ assert.throws(()=>quote(9101,'monthly'),{code:'PAYMENT_UNAVAILABLE'});
+ raw.Offer_monthly_payments=true;s.payment_options=options();
+ assert.deepEqual(options(),['full','semester','monthly']);
+ assert.equal(quote(9101,'monthly').items[0].due_now_cents,2500);
+ delete raw.Offer_monthly_payments;
+ assert.deepEqual(options(),['full','semester']);
+ raw.Offer_monthly_payments=true;raw.Deposit_product=0;
+ assert.deepEqual(options(),['full','semester']);
+ raw.Deposit_product=11;raw.Parent_program=13;
+ assert.deepEqual(options(),['full']);
+ raw.Parent_program=3;raw.Parent_workshop=21;
+ assert.deepEqual(options(),['full']);
+});

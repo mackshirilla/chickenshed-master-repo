@@ -10,7 +10,7 @@
     },
     {
       "path": "function/registration_live_quote_context_v1.xs",
-      "sha256": "b9d40cfa0b4063a9e96f6f86b143d072d56cd45de4c001de03f79216744ab2c1"
+      "sha256": "be7dd15438342afff9c1cfda709006df64062fab09b8b53fd1f93d55ae3e2c27"
     },
     {
       "path": "function/registration_live_quote_v1.xs",
@@ -48,7 +48,7 @@
   "apis": [
     {
       "path": "api/unified_registration/start_GET.xs",
-      "sha256": "cd0e4650bbf5ec20ed6e5a0dd06d7abc403b15dda4e967a301ce9a45d1ae86e3"
+      "sha256": "fd10874fb65a247ae70990087ac89ee64fc5434378acf690d796102e08fcfaaf"
     },
     {
       "path": "api/unified_registration/quote_POST.xs",
