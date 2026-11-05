@@ -1,0 +1,17 @@
+{
+  "checked_at": "2026-11-05T04:16:14.858352+00:00",
+  "version": "v1.1.7",
+  "live_script_verified": true,
+  "dashboard_registration_cards": 4,
+  "old_subscription_section": {
+    "hidden": true,
+    "computed_display": "none"
+  },
+  "old_add_on_section": {
+    "hidden": true,
+    "computed_display": "none"
+  },
+  "existing_program_card_mapping": "Focused fixture checks preserve subscription and no-subscription detail links, without duplicate cards on repeat rendering",
+  "records_removed": false,
+  "charges_or_emails_triggered": false
+}

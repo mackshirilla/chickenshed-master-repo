@@ -65,3 +65,5 @@ Published on both custom domains at 2026-11-05 04:07:04 UTC. All 40 CDN assets m
 ## v1.1.7 single dashboard registration area
 
 Hides the old subscription and Add-On registration sections when unified registration is enabled. Their existing owned-data loaders now put any historical subscription/manual program cards into the new card area, preserving links to their existing student/session detail pages. No old records, subscriptions or enrollments are removed. New order-linked registrations keep individual student cards. Focused checks verify hidden duplicate wrapper, correct historical detail links and no duplicate cards on repeat rendering.
+
+Published v1.1.7 verified in authenticated live parent dashboard: four student cards remain; both old subscription and Add-On sections are hidden with computed display none. All 40 CDN assets matched. Historical program cards retain existing detail routes in focused fixture checks. No data deletion, order creation, charge or email.

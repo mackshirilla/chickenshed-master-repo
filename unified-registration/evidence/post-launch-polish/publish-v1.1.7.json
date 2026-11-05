@@ -1,0 +1,19 @@
+{
+  "label": "Publish single registration card area",
+  "action": "publish_site",
+  "result": {
+    "customDomains": [
+      {
+        "id": "68302cc97c4f9781e3b027ca",
+        "url": "chickenshednyc.org"
+      },
+      {
+        "id": "68302cc97c4f9781e3b027c1",
+        "url": "www.chickenshednyc.org"
+      }
+    ],
+    "publishToWebflowSubdomain": false,
+    "publishTaskId": "96699ad7-680f-496c-a84b-0a9a7fd0befb",
+    "publishScope": "site"
+  }
+}
