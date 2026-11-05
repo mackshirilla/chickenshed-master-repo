@@ -3,11 +3,11 @@
   "applied": false,
   "production_changes": false,
   "site_id": "667f080f36260b9afbdc46b2",
-  "asset_version": "v.1.1.0",
+  "asset_version": "v.1.1.1",
   "header": {
     "location": "head",
     "before": "<script src=\"https://www.google.com/recaptcha/api.js?render=6Lekaa8pAAAAAN6qiq0LSP5Akckql4Blg6K5ToUq\"></script>\n<script src=\"https://cdn.jsdelivr.net/gh/mackshirilla/chickenshed-master-repo@v.1.0.12/dist/app.js\" defer ></script>\n<!-- [Attributes by Finsweet] CMS Slider -->\n<script async src=\"https://cdn.jsdelivr.net/npm/@finsweet/attributes-cmsslider@1/cmsslider.js\"></script>\n<!-- [Attributes by Finsweet] Mirror click events -->\n<script defer src=\"https://cdn.jsdelivr.net/npm/@finsweet/attributes-mirrorclick@1/mirrorclick.js\"></script>",
-    "after": "<script src=\"https://www.google.com/recaptcha/api.js?render=6Lekaa8pAAAAAN6qiq0LSP5Akckql4Blg6K5ToUq\"></script>\n<script src=\"https://cdn.jsdelivr.net/gh/mackshirilla/chickenshed-master-repo@v.1.1.0/dist/app.js\" defer ></script>\n<!-- [Attributes by Finsweet] CMS Slider -->\n<script async src=\"https://cdn.jsdelivr.net/npm/@finsweet/attributes-cmsslider@1/cmsslider.js\"></script>\n<!-- [Attributes by Finsweet] Mirror click events -->\n<script defer src=\"https://cdn.jsdelivr.net/npm/@finsweet/attributes-mirrorclick@1/mirrorclick.js\"></script>"
+    "after": "<script src=\"https://www.google.com/recaptcha/api.js?render=6Lekaa8pAAAAAN6qiq0LSP5Akckql4Blg6K5ToUq\"></script>\n<script src=\"https://cdn.jsdelivr.net/gh/mackshirilla/chickenshed-master-repo@v.1.1.1/dist/app.js\" defer ></script>\n<!-- [Attributes by Finsweet] CMS Slider -->\n<script async src=\"https://cdn.jsdelivr.net/npm/@finsweet/attributes-cmsslider@1/cmsslider.js\"></script>\n<!-- [Attributes by Finsweet] Mirror click events -->\n<script defer src=\"https://cdn.jsdelivr.net/npm/@finsweet/attributes-mirrorclick@1/mirrorclick.js\"></script>"
   },
   "page_slug_changes": [
     {
@@ -74,4 +74,3 @@
   ],
   "rollback": "Restore the exact recorded page code/header and original canonical registration slug; close new checkout first and preserve paid order fulfillment."
 }
-

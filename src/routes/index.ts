@@ -1,7 +1,9 @@
 import { WFRoute, navigate } from "@xatom/core";
 import { validateUser } from "../auth/authServices";
+import { repairRegistrationEntryLinks } from "../modules/registration-orders/entry-links.mjs";
 
 export const app = () => {
+  if (repairRegistrationEntryLinks()) return;
   // Auth Routes
   new WFRoute("/create-account").execute(() => {
     import("../modules/forms/auth/signupForm").then(({ signupForm }) =>

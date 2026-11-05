@@ -1,6 +1,6 @@
-# Unified registration release — v.1.1.0
+# Unified registration release — v.1.1.1
 
-Mack approved the coordinated live cutover on November 4, 2026. The reviewed backend, additive schema, catalog corrections and legacy policy guards are installed in production. Live context, full-price quote and cart-specific aid coupon validation passed without creating an order or charge. Checkout remains closed until the website cutover is verified. The production receiver is dedicated to registration26; existing subscriptions and Summer fulfillment remain in place. See `evidence/live-release/` for installed resource IDs and results.
+Mack approved the coordinated live cutover on November 4, 2026. The reviewed backend, additive schema, catalog corrections and legacy policy guards are installed in production. Live context, full-price quote and cart-specific aid coupon validation passed without creating an order or charge. The website and checkout gates are live. Full, semester and assigned-deposit prices, quote-update locking and the existing zero-total receipt were verified in the authenticated parent browser. The v.1.1.1 follow-up routes Webflow page-linked buttons from the preserved legacy slug to the unified entry. The production receiver is dedicated to registration26; existing subscriptions and Summer fulfillment remain in place. See `evidence/live-release/` for installed resource IDs and results.
 
 ## Ready for review
 
