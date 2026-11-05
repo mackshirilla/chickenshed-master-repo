@@ -1,0 +1,19 @@
+{
+  "label": "Publish parent-facing registration cleanup",
+  "action": "publish_site",
+  "result": {
+    "customDomains": [
+      {
+        "id": "68302cc97c4f9781e3b027ca",
+        "url": "chickenshednyc.org"
+      },
+      {
+        "id": "68302cc97c4f9781e3b027c1",
+        "url": "www.chickenshednyc.org"
+      }
+    ],
+    "publishToWebflowSubdomain": false,
+    "publishTaskId": "67f11049-9181-4736-9cbc-b99e2c5963cf",
+    "publishScope": "site"
+  }
+}

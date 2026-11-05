@@ -1,0 +1,28 @@
+{
+  "checked_at": "2026-11-05T04:08:32.719417+00:00",
+  "version": "v1.1.6",
+  "custom_domains_published_at": "2026-11-05T04:07:04.855Z",
+  "desktop": {
+    "width": 1711,
+    "cards": 4,
+    "columns": 3,
+    "gap_px": 20,
+    "radius_px": 16
+  },
+  "mobile": {
+    "width": 390,
+    "document_scroll_width": 390,
+    "card_width": 318,
+    "single_column": true
+  },
+  "monthly_notice": {
+    "valid_deposit_quote_visible": true,
+    "background": "rgb(220, 235, 243)",
+    "full_payment_hides_notice": true,
+    "duplicate_registration_block_preserved": true
+  },
+  "viewport_reset": true,
+  "agent_quote_row_removed": true,
+  "order_or_charge_created": false,
+  "email_sent": false
+}
