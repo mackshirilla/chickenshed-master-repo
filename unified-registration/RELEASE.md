@@ -35,3 +35,9 @@ The temporary local listener is development infrastructure; it is not the produc
 ## Final live checkpoint
 
 Both custom domains published at 2026-11-05 03:08:13 UTC with v.1.1.1. All 40 CDN assets match the tagged build. The canonical page, parent registrations, existing zero-total order receipt and old entry redirects were verified in the authenticated browser. Noloco staff views are published. No new live order or charge was created by the agent. Mack should complete a fresh controlled 100% coupon checkout to confirm the new live webhook, linked records and email together.
+
+## v.1.1.2 registration polish and Mini Adventure
+
+The payment-choice prompt now links to and focuses the required selector. Program, workshop, session and student choices sort alphabetically with natural number sorting; payment options retain full/semester/monthly order. Ended sessions are hidden from new selections, with backend validation retained. Eighteen native entry-link elements across the program/workshop templates, program listing, parent dashboards, profile completion and confirmation pages point directly to unified registration. Historical entry routes retain a redirect safeguard; historical payment receipts remain intact.
+
+Twelve current/upcoming Mini Adventure blocks now have individual active one-time Stripe USD prices matching existing Webflow Sessions ($140 or $175), linked through Xano Registration products. They retain existing unassigned Semester/Deposit fields and offer full payment only. The Mini workshop inquiry-only flag is false in Webflow and Xano. All twelve live quotes and a combined 20% aid quote passed without creating an order or payment. Existing full-season MLA prices and subscriptions were not changed.

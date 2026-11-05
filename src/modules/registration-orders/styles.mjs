@@ -23,6 +23,9 @@ export function installRegistrationStyles(){
  [data-registration-mounted="true"] .registration-payment-preference label{display:block;margin:0;line-height:1.35}
  [data-registration-mounted="true"] .registration-payment-preference select{display:block;width:100%;max-width:none;min-width:0;min-height:3rem;margin:0;padding:.875rem 2.5rem .875rem 1rem;font:inherit;line-height:1.4}
  [data-registration-mounted="true"] .registration-payment-preference p{margin:0;line-height:1.6;text-align:left}
+ [data-registration-mounted="true"] #registrationPaymentChoice{scroll-margin-block:6rem}
+ [data-registration-mounted="true"] .registration-plan-link{display:inline-block;padding:.5rem 0;color:var(--swatch--brand-1,#009fce);text-decoration:underline;text-underline-offset:.2em;font-weight:600}
+ [data-registration-mounted="true"] .registration-plan-link:focus-visible{outline:2px solid currentColor;outline-offset:3px;border-radius:.2rem}
  [data-registration-mounted="true"] .registration-eligibility-help{margin:1.25rem 0 0;line-height:1.6}
  [data-summer-familiar-success][data-registration-mounted="true"] .registration-success-extra{display:grid;grid-template-columns:minmax(0,1fr);gap:1.5rem;margin:1.5rem 0 0;text-align:left}
  [data-summer-familiar-success][data-registration-mounted="true"] #summerOrderItems{margin:0}

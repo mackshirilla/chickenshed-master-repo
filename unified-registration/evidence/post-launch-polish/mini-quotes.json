@@ -1,0 +1,75 @@
+{
+  "checked_at": "2026-11-05T03:27:09.474Z",
+  "workspace": 3,
+  "sessions": [
+    {
+      "id": 51,
+      "cents": 14000,
+      "payment_choice_required": false
+    },
+    {
+      "id": 52,
+      "cents": 14000,
+      "payment_choice_required": false
+    },
+    {
+      "id": 53,
+      "cents": 17500,
+      "payment_choice_required": false
+    },
+    {
+      "id": 54,
+      "cents": 14000,
+      "payment_choice_required": false
+    },
+    {
+      "id": 55,
+      "cents": 17500,
+      "payment_choice_required": false
+    },
+    {
+      "id": 57,
+      "cents": 14000,
+      "payment_choice_required": false
+    },
+    {
+      "id": 58,
+      "cents": 17500,
+      "payment_choice_required": false
+    },
+    {
+      "id": 59,
+      "cents": 17500,
+      "payment_choice_required": false
+    },
+    {
+      "id": 60,
+      "cents": 14000,
+      "payment_choice_required": false
+    },
+    {
+      "id": 61,
+      "cents": 14000,
+      "payment_choice_required": false
+    },
+    {
+      "id": 62,
+      "cents": 14000,
+      "payment_choice_required": false
+    },
+    {
+      "id": 63,
+      "cents": 14000,
+      "payment_choice_required": false
+    }
+  ],
+  "new_order_or_payment": false,
+  "mixed_blocks_aid": {
+    "tuition_cents": 182000,
+    "aid_percent": 20,
+    "aid_cents": 36400,
+    "due_cents": 145600,
+    "coupon_verified": true
+  },
+  "ok": true
+}

@@ -1,0 +1,411 @@
+{
+  "checked_at": "2026-11-05T03:35:51.684Z",
+  "scope": "Public static pages plus a published sample for each public CMS template, and shared component links. Some nonpublic template samples return404; headless bulk reads encountered rate limits, followed by targeted reads.",
+  "native_links": [
+    {
+      "id": {
+        "component": "6681f14fbdf37647c79b176d",
+        "element": "25671bda-b157-bfa4-bb12-92f1684056f7"
+      },
+      "text": "Begin Registration",
+      "link": {
+        "linkType": "page",
+        "pageId": "67aa6c69d42e21217ae066a5"
+      },
+      "page": "6681f14fbdf37647c79b176d",
+      "title": "Programs Template",
+      "path": "/programs",
+      "draft": false
+    },
+    {
+      "id": {
+        "component": "6681f14fbdf37647c79b176d",
+        "element": "3017be7e-404c-b100-776a-5353559d371a"
+      },
+      "text": "Begin Registration",
+      "link": {
+        "linkType": "page",
+        "pageId": "68b48a9e8c5e2e5839f40967"
+      },
+      "page": "6681f14fbdf37647c79b176d",
+      "title": "Programs Template",
+      "path": "/programs",
+      "draft": false
+    },
+    {
+      "id": {
+        "component": "6681f14fbdf37647c79b176d",
+        "element": "c24d6225-a3a0-55e5-83df-867ca9c08a36"
+      },
+      "text": "Begin Registraion",
+      "link": {
+        "linkType": "page",
+        "pageId": "67aa6c69d42e21217ae066a5"
+      },
+      "page": "6681f14fbdf37647c79b176d",
+      "title": "Programs Template",
+      "path": "/programs",
+      "draft": false
+    }
+  ],
+  "additional": [
+    {
+      "page": "676767ed0bf3e6e3af6739ba",
+      "title": "Programs",
+      "native": [
+        {
+          "id": {
+            "component": "676767ed0bf3e6e3af6739ba",
+            "element": "f626643d-f7e9-9067-5f41-17a087fdfd8e"
+          },
+          "link": {
+            "linkType": "page",
+            "pageId": "67aa6c69d42e21217ae066a5"
+          },
+          "text": "Begin Registraion"
+        }
+      ],
+      "instances": []
+    },
+    {
+      "page": "66f31537410dc69b6b1dee1f",
+      "title": "Registrations",
+      "native": [
+        {
+          "id": {
+            "component": "66f31537410dc69b6b1dee1f",
+            "element": "689ec1c4-bc8b-e9f5-7e07-950848558fcc"
+          },
+          "link": {
+            "linkType": "page",
+            "pageId": "67aa6c69d42e21217ae066a5"
+          },
+          "text": "+ Add Registration"
+        },
+        {
+          "id": {
+            "component": "66f31537410dc69b6b1dee1f",
+            "element": "689ec1c4-bc8b-e9f5-7e07-950848558ff8"
+          },
+          "link": {
+            "linkType": "page",
+            "pageId": "67aa6c69d42e21217ae066a5"
+          },
+          "text": "+ Add Registration"
+        }
+      ],
+      "instances": []
+    },
+    {
+      "page": "667f7df2076d31f489193aa2",
+      "title": "Dashboard",
+      "native": [
+        {
+          "id": {
+            "component": "667f7df2076d31f489193aa2",
+            "element": "02ea2ad3-86f0-d0c9-22f5-7d1821aed449"
+          },
+          "link": {
+            "linkType": "page",
+            "pageId": "67aa6c69d42e21217ae066a5"
+          },
+          "text": "+ Add Registration"
+        },
+        {
+          "id": {
+            "component": "667f7df2076d31f489193aa2",
+            "element": "5b072991-e1b7-3fb4-3b56-2ae1f35c831b"
+          },
+          "link": {
+            "linkType": "page",
+            "pageId": "67aa6c69d42e21217ae066a5"
+          },
+          "text": "+ Add Registration"
+        }
+      ],
+      "instances": []
+    },
+    {
+      "page": "6681c1429e8d7bd4b7e5e9bd",
+      "title": "Add Student Profile",
+      "native": [],
+      "instances": [
+        {
+          "id": {
+            "component": "6681c1429e8d7bd4b7e5e9bd",
+            "element": "22a5c77e-49b5-081c-63eb-77ca204f99a3"
+          },
+          "props": [
+            {
+              "propId": "4fa15075-375e-7ce1-bb00-ff7d2b9cfddb",
+              "value": true,
+              "hasOverride": false,
+              "name": "Visibility"
+            },
+            {
+              "propId": "b100e00b-f61b-b97d-cc3b-2189323ae4f7",
+              "value": "Register For Summer Camp",
+              "hasOverride": true,
+              "name": "Text"
+            },
+            {
+              "propId": "271434eb-c234-e441-a0cd-96ac18c35257",
+              "value": {
+                "mode": "page",
+                "to": {
+                  "pageId": "6aea791777d89c8c541cedf3"
+                }
+              },
+              "hasOverride": true,
+              "name": "Link"
+            },
+            {
+              "propId": "0b9faeab-53fa-8354-5de4-305698d413c0",
+              "value": "secondary",
+              "hasOverride": true,
+              "name": "Button Style"
+            },
+            {
+              "propId": "b1646a77-4a40-1df3-26fa-95429dcb36cb",
+              "value": "",
+              "hasOverride": false,
+              "name": "Button ID"
+            }
+          ]
+        },
+        {
+          "id": {
+            "component": "6681c1429e8d7bd4b7e5e9bd",
+            "element": "11c065b1-7105-22f6-c41c-daccc956807c"
+          },
+          "props": [
+            {
+              "propId": "4fa15075-375e-7ce1-bb00-ff7d2b9cfddb",
+              "value": true,
+              "hasOverride": false,
+              "name": "Visibility"
+            },
+            {
+              "propId": "b100e00b-f61b-b97d-cc3b-2189323ae4f7",
+              "value": "Register For Regular Programs",
+              "hasOverride": true,
+              "name": "Text"
+            },
+            {
+              "propId": "271434eb-c234-e441-a0cd-96ac18c35257",
+              "value": {
+                "mode": "page",
+                "to": {
+                  "pageId": "67aa6c69d42e21217ae066a5"
+                }
+              },
+              "hasOverride": true,
+              "name": "Link"
+            },
+            {
+              "propId": "0b9faeab-53fa-8354-5de4-305698d413c0",
+              "value": "secondary",
+              "hasOverride": true,
+              "name": "Button Style"
+            },
+            {
+              "propId": "b1646a77-4a40-1df3-26fa-95429dcb36cb",
+              "value": "",
+              "hasOverride": false,
+              "name": "Button ID"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "page": "66bc1420b7267d1e0ce6d170",
+      "title": "Success-old",
+      "native": [],
+      "instances": [
+        {
+          "id": {
+            "component": "66bc1420b7267d1e0ce6d170",
+            "element": "4b54da7e-75f2-e412-e972-00ff7ed9f012"
+          },
+          "props": [
+            {
+              "propId": "4fa15075-375e-7ce1-bb00-ff7d2b9cfddb",
+              "value": true,
+              "hasOverride": false,
+              "name": "Visibility"
+            },
+            {
+              "propId": "b100e00b-f61b-b97d-cc3b-2189323ae4f7",
+              "value": "Register For Program",
+              "hasOverride": true,
+              "name": "Text"
+            },
+            {
+              "propId": "271434eb-c234-e441-a0cd-96ac18c35257",
+              "value": {
+                "mode": "page",
+                "to": {
+                  "pageId": "6681ebb64b3aa2bf9f10bf55"
+                }
+              },
+              "hasOverride": true,
+              "name": "Link"
+            },
+            {
+              "propId": "0b9faeab-53fa-8354-5de4-305698d413c0",
+              "value": "secondary",
+              "hasOverride": true,
+              "name": "Button Style"
+            },
+            {
+              "propId": "b1646a77-4a40-1df3-26fa-95429dcb36cb",
+              "value": "",
+              "hasOverride": false,
+              "name": "Button ID"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "page": "6aebd8842e86dea3667205c5",
+      "title": "Registration Confirmation",
+      "native": [],
+      "instances": []
+    },
+    {
+      "page": "6aeac1cbf2e303d0a713f9f4",
+      "title": "Summer Camp Success",
+      "native": [],
+      "instances": []
+    }
+  ],
+  "props": [
+    {
+      "page": "6823bc349f97db13787b875d",
+      "title": "donation",
+      "element_id": {
+        "component": "6823bc349f97db13787b875d",
+        "element": "4b54da7e-75f2-e412-e972-00ff7ed9f012"
+      },
+      "props": [
+        {
+          "propId": "4fa15075-375e-7ce1-bb00-ff7d2b9cfddb",
+          "value": true,
+          "hasOverride": false,
+          "name": "Visibility"
+        },
+        {
+          "propId": "b100e00b-f61b-b97d-cc3b-2189323ae4f7",
+          "value": "Register For Program",
+          "hasOverride": true,
+          "name": "Text"
+        },
+        {
+          "propId": "271434eb-c234-e441-a0cd-96ac18c35257",
+          "value": {
+            "mode": "page",
+            "to": {
+              "pageId": "6681ebb64b3aa2bf9f10bf55"
+            }
+          },
+          "hasOverride": true,
+          "name": "Link"
+        },
+        {
+          "propId": "0b9faeab-53fa-8354-5de4-305698d413c0",
+          "value": "secondary",
+          "hasOverride": true,
+          "name": "Button Style"
+        },
+        {
+          "propId": "b1646a77-4a40-1df3-26fa-95429dcb36cb",
+          "value": "",
+          "hasOverride": false,
+          "name": "Button ID"
+        }
+      ]
+    },
+    {
+      "page": "68202dfcde3fede4f6ae0750",
+      "title": "tickets",
+      "element_id": {
+        "component": "68202dfcde3fede4f6ae0750",
+        "element": "4b54da7e-75f2-e412-e972-00ff7ed9f012"
+      },
+      "props": [
+        {
+          "propId": "4fa15075-375e-7ce1-bb00-ff7d2b9cfddb",
+          "value": true,
+          "hasOverride": false,
+          "name": "Visibility"
+        },
+        {
+          "propId": "b100e00b-f61b-b97d-cc3b-2189323ae4f7",
+          "value": "Register For Program",
+          "hasOverride": true,
+          "name": "Text"
+        },
+        {
+          "propId": "271434eb-c234-e441-a0cd-96ac18c35257",
+          "value": {
+            "mode": "page",
+            "to": {
+              "pageId": "6681ebb64b3aa2bf9f10bf55"
+            }
+          },
+          "hasOverride": true,
+          "name": "Link"
+        },
+        {
+          "propId": "0b9faeab-53fa-8354-5de4-305698d413c0",
+          "value": "secondary",
+          "hasOverride": true,
+          "name": "Button Style"
+        },
+        {
+          "propId": "b1646a77-4a40-1df3-26fa-95429dcb36cb",
+          "value": "",
+          "hasOverride": false,
+          "name": "Button ID"
+        }
+      ]
+    }
+  ],
+  "success_links": [
+    {
+      "page": "6aebd8842e86dea3667205c5",
+      "links": [
+        {
+          "id": {
+            "component": "6aebd8842e86dea3667205c5",
+            "element": "4a386d58-636c-862e-9a0a-8f9978028f09"
+          },
+          "before": {
+            "linkType": "url",
+            "href": "/summer-camp-registration"
+          }
+        }
+      ]
+    },
+    {
+      "page": "6aeac1cbf2e303d0a713f9f4",
+      "links": [
+        {
+          "id": {
+            "component": "6aeac1cbf2e303d0a713f9f4",
+            "element": "4a386d58-636c-862e-9a0a-8f9978028f09"
+          },
+          "before": {
+            "linkType": "url",
+            "href": "/summer-camp-registration"
+          }
+        }
+      ]
+    }
+  ],
+  "target": "/program-registration",
+  "native_elements_updated": 18,
+  "old_payment_receipt_routes_preserved": true
+}

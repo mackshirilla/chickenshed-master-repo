@@ -1,0 +1,251 @@
+{
+  "started_at": "2026-11-05T03:23:21.134Z",
+  "workspace": 3,
+  "writes": [
+    {
+      "type": "create_registration_product",
+      "id": 78,
+      "session_id": 51
+    },
+    {
+      "type": "assign_tuition_product",
+      "session_id": 51,
+      "product_id": 78
+    },
+    {
+      "type": "create_registration_product",
+      "id": 79,
+      "session_id": 52
+    },
+    {
+      "type": "assign_tuition_product",
+      "session_id": 52,
+      "product_id": 79
+    },
+    {
+      "type": "create_registration_product",
+      "id": 80,
+      "session_id": 53
+    },
+    {
+      "type": "assign_tuition_product",
+      "session_id": 53,
+      "product_id": 80
+    },
+    {
+      "type": "create_registration_product",
+      "id": 81,
+      "session_id": 54
+    },
+    {
+      "type": "assign_tuition_product",
+      "session_id": 54,
+      "product_id": 81
+    },
+    {
+      "type": "create_registration_product",
+      "id": 82,
+      "session_id": 55
+    },
+    {
+      "type": "assign_tuition_product",
+      "session_id": 55,
+      "product_id": 82
+    },
+    {
+      "type": "create_registration_product",
+      "id": 83,
+      "session_id": 57
+    },
+    {
+      "type": "assign_tuition_product",
+      "session_id": 57,
+      "product_id": 83
+    },
+    {
+      "type": "create_registration_product",
+      "id": 84,
+      "session_id": 58
+    },
+    {
+      "type": "assign_tuition_product",
+      "session_id": 58,
+      "product_id": 84
+    },
+    {
+      "type": "create_registration_product",
+      "id": 85,
+      "session_id": 59
+    },
+    {
+      "type": "assign_tuition_product",
+      "session_id": 59,
+      "product_id": 85
+    },
+    {
+      "type": "create_registration_product",
+      "id": 86,
+      "session_id": 60
+    },
+    {
+      "type": "assign_tuition_product",
+      "session_id": 60,
+      "product_id": 86
+    },
+    {
+      "type": "create_registration_product",
+      "id": 87,
+      "session_id": 61
+    },
+    {
+      "type": "assign_tuition_product",
+      "session_id": 61,
+      "product_id": 87
+    },
+    {
+      "type": "create_registration_product",
+      "id": 88,
+      "session_id": 62
+    },
+    {
+      "type": "assign_tuition_product",
+      "session_id": 62,
+      "product_id": 88
+    },
+    {
+      "type": "create_registration_product",
+      "id": 89,
+      "session_id": 63
+    },
+    {
+      "type": "assign_tuition_product",
+      "session_id": 63,
+      "product_id": 89
+    }
+  ],
+  "sessions": [
+    {
+      "session_id": 51,
+      "product_id": 78,
+      "price_id": "price_1UYHEYDK5b8P0zFQ6AEJTNMK",
+      "amount_cents": 14000,
+      "payment_options": [
+        "full"
+      ],
+      "deposit_product": 0
+    },
+    {
+      "session_id": 52,
+      "product_id": 79,
+      "price_id": "price_1UYHEzDK5b8P0zFQtYO9KRI1",
+      "amount_cents": 14000,
+      "payment_options": [
+        "full"
+      ],
+      "deposit_product": 0
+    },
+    {
+      "session_id": 53,
+      "product_id": 80,
+      "price_id": "price_1UYHF0DK5b8P0zFQWTajnPqC",
+      "amount_cents": 17500,
+      "payment_options": [
+        "full"
+      ],
+      "deposit_product": 0
+    },
+    {
+      "session_id": 54,
+      "product_id": 81,
+      "price_id": "price_1UYHF0DK5b8P0zFQfIlZgZcI",
+      "amount_cents": 14000,
+      "payment_options": [
+        "full"
+      ],
+      "deposit_product": 0
+    },
+    {
+      "session_id": 55,
+      "product_id": 82,
+      "price_id": "price_1UYHF1DK5b8P0zFQJb2zakTS",
+      "amount_cents": 17500,
+      "payment_options": [
+        "full"
+      ],
+      "deposit_product": 0
+    },
+    {
+      "session_id": 57,
+      "product_id": 83,
+      "price_id": "price_1UYHF2DK5b8P0zFQ8JCDxLM4",
+      "amount_cents": 14000,
+      "payment_options": [
+        "full"
+      ],
+      "deposit_product": 0
+    },
+    {
+      "session_id": 58,
+      "product_id": 84,
+      "price_id": "price_1UYHF3DK5b8P0zFQJ5aj1nFn",
+      "amount_cents": 17500,
+      "payment_options": [
+        "full"
+      ],
+      "deposit_product": 0
+    },
+    {
+      "session_id": 59,
+      "product_id": 85,
+      "price_id": "price_1UYHF4DK5b8P0zFQZ2cXyANH",
+      "amount_cents": 17500,
+      "payment_options": [
+        "full"
+      ],
+      "deposit_product": 0
+    },
+    {
+      "session_id": 60,
+      "product_id": 86,
+      "price_id": "price_1UYHF5DK5b8P0zFQ0ah4aunB",
+      "amount_cents": 14000,
+      "payment_options": [
+        "full"
+      ],
+      "deposit_product": 0
+    },
+    {
+      "session_id": 61,
+      "product_id": 87,
+      "price_id": "price_1UYHF5DK5b8P0zFQcw29HmME",
+      "amount_cents": 14000,
+      "payment_options": [
+        "full"
+      ],
+      "deposit_product": 0
+    },
+    {
+      "session_id": 62,
+      "product_id": 88,
+      "price_id": "price_1UYHF6DK5b8P0zFQXkRgnZ2T",
+      "amount_cents": 14000,
+      "payment_options": [
+        "full"
+      ],
+      "deposit_product": 0
+    },
+    {
+      "session_id": 63,
+      "product_id": 89,
+      "price_id": "price_1UYHF7DK5b8P0zFQ54zYce7l",
+      "amount_cents": 14000,
+      "payment_options": [
+        "full"
+      ],
+      "deposit_product": 0
+    }
+  ],
+  "no_order_or_payment_created": true,
+  "ok": true,
+  "completed_at": "2026-11-05T03:23:32.443Z"
+}

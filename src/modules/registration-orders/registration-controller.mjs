@@ -1,5 +1,6 @@
 import { transport, dollars, textElement } from './transport.mjs';
 import { quoteIdentity, paymentOptions } from './quote.mjs';
+import { orderedRegistrationOptions, selectableRegistrationSessions } from './selection-order.mjs';
 export async function initializeRegistration(root) {
   const KEY = 'registrationOrders:v2';
   const error = root.querySelector('#registration_checkout_error');
@@ -16,6 +17,7 @@ export async function initializeRegistration(root) {
   status('Loading your registration…','loading');
   try {
     const api = transport(root), catalog = await api('start');
+    catalog.sessions=selectableRegistrationSessions(catalog.sessions);
     if (!catalog.students.length) {
       const message = 'Add a student profile before registering. If your existing profiles are unavailable, contact Chickenshed NYC.';
       error.textContent = message;
@@ -117,10 +119,10 @@ export async function initializeRegistration(root) {
       }
       return button;
     }
-    function select(name, placeholder, options, value, change) {
+    function select(name, placeholder, options, value, change, alphabetize=true) {
       const input = document.createElement('select'); input.setAttribute('aria-label', name);input.className='registration_select form_main_field_input';
       const first = textElement('option', placeholder); first.value = ''; input.append(first);
-      for (const option of options) { const node = textElement('option', option.label); node.value = option.id; input.append(node); }
+      for (const option of alphabetize?orderedRegistrationOptions(options):options) { const node = textElement('option', option.label); node.value = option.id; input.append(node); }
       input.value = value || ''; input.addEventListener('change', () => change(input.value)); return input;
     }
     function renderRows() {
@@ -163,7 +165,7 @@ export async function initializeRegistration(root) {
     }
     const planBox=textElement('div','','registration-payment-preference bento_box');planBox.id='registrationPaymentPreference';
     const planLabel=textElement('label','How would you like to pay?');planLabel.htmlFor='registrationPaymentChoice';planLabel.className='u-text-h6';
-    const planSelect=select('Payment preference','Choose a payment option',[{id:'full',label:'Pay in full'},{id:'semester',label:'Pay per semester'},{id:'monthly',label:'Monthly payments'}],state.payment_preference,value=>{state.payment_preference=value;changed();});
+    const planSelect=select('Payment preference','Choose a payment option',[{id:'full',label:'Pay in full'},{id:'semester',label:'Pay per semester'},{id:'monthly',label:'Monthly payments'}],state.payment_preference,value=>{state.payment_preference=value;changed();},false);
     planSelect.id='registrationPaymentChoice';planSelect.required=true;planSelect.setAttribute('aria-describedby','registrationPaymentHelp');
     const labHelp=textElement('p','Labs require this student to have an Active Players 2, 3 or 4 registration covering the Lab, or a qualifying Players item in this checkout.','registration-eligibility-help u-text-small');labHelp.hidden=true;root.querySelector('#subscription_items_table').after(labHelp);
     const planHelp=textElement('p','','u-text-small');planHelp.id='registrationPaymentHelp';planBox.append(planLabel,planSelect,planHelp);(submit.closest('.btn_component')||submit).before(planBox);
@@ -188,7 +190,15 @@ export async function initializeRegistration(root) {
       const hasAid=shown?.aid_percent>0;
       const existingDue=root.querySelector('#total_amount_due');
       if(existingDue){existingDue.textContent=shown?dollars(shown.totals.due_now_cents):'—';existingDue.setAttribute('aria-busy',String(updating));}
-      if (!shown) { quoteNode.append(textElement('p', updating?'Calculating your total…':validationFailure?'Resolve the highlighted requirement to see your total.':quoteFailure?'Your total is temporarily unavailable. Please try again.':needsPlan()&&!state.payment_preference?'Choose a payment option to see your total.':'Select a session and student for each row to see your payment.', 'muted'));if(quoteFailure&&!validationFailure){const retry=textElement('button','Try again','registration-validation-edit');retry.type='button';retry.addEventListener('click',changed);quoteNode.append(retry);} return; }
+      if (!shown) {
+        const message=textElement('p',updating?'Calculating your total…':validationFailure?'Resolve the highlighted requirement to see your total.':quoteFailure?'Your total is temporarily unavailable. Please try again.':'Select a session and student for each row to see your payment.','muted');
+        if(!updating&&!validationFailure&&!quoteFailure&&needsPlan()&&!state.payment_preference){
+          const jump=textElement('a','Choose a payment option','registration-plan-link');jump.href='#registrationPaymentChoice';
+          jump.addEventListener('click',event=>{event.preventDefault();planSelect.scrollIntoView({behavior:window.matchMedia?.('(prefers-reduced-motion: reduce)').matches?'auto':'smooth',block:'center'});planSelect.focus({preventScroll:true});});
+          message.replaceChildren(jump,document.createTextNode(' to see your total.'));
+        }
+        quoteNode.append(message);if(quoteFailure&&!validationFailure){const retry=textElement('button','Try again','registration-validation-edit');retry.type='button';retry.addEventListener('click',changed);quoteNode.append(retry);}return;
+      }
       for (const item of shown.items) {
         const node = textElement('div', '', 'item-line');
         if(item.student_status==='Pending')node.append(textElement('span','Pending approval','registration-status-pill'));
