@@ -6,7 +6,7 @@ function registration_live_confirmation_v1 {
   json args?
  }
  stack {
- function.run registration_live_guard_v1 { input = {} } as $guard
+ function.run registration_orders_live_guard_v1 { input = {} } as $guard
  var $result { value = {claimed:false,mail_id:null,status:null} }
  db.transaction {
  stack {

@@ -2,7 +2,7 @@ function registration_live_quote_v1 {
  input { json request
  json context }
  stack {
- function.run registration_live_guard_v1 { input = {} } as $guard
+ function.run registration_orders_live_guard_v1 { input = {} } as $guard
  api.lambda { code = """
 const POLICY='registration_order_v2';
 const AID_RATES=Object.freeze([0,10,20,35,50,75]);
@@ -74,13 +74,24 @@ function quoteFamily(request,{actorId,students,sessions,coupons,enrollments=[],n
   const gross=deposit?session.deposit.cents:tuitionCents,discount=deposit?0:aidCents,due=gross-discount;
   requireValue(net>=due,'CATALOG_INVALID','Please contact Chickenshed NYC about this session’s deposit.',503);
   return {student_id:student.id,student_name:student.full_name,student_status:student.Status,session_id:session.id,package_name:session.name,session_time:session.time||'',program_id:session.program_id,program_name:session.program_name,workshop_name:session.workshop_name||'',workshop_id:session.workshop_id,registration_kind:lab?'lab':'program',payment_preference:paymentPreference,coverage_key:coverage.key,coverage_label:coverage.label,coverage_start:coverage.start||null,coverage_end:coverage.end||null,tuition_period:coverage.period,deposit_reason:!deposit?null:pending?(monthly?'review_and_monthly':'student_review'):(monthly?'monthly':null),tuition_product:tuition.product_id,tuition_price:tuition.price_id,deposit_product:session.deposit?.product_id||null,deposit_price:session.deposit?.price_id||null,payment_option:deposit?'deposit':'full',aid_percent:lineAid,tuition_cents:tuitionCents,aid_cents:aidCents,net_tuition_cents:net,checkout_gross_cents:gross,checkout_discount_cents:discount,due_now_cents:due,paid_cents:0,balance_after_checkout_cents:net-due,charge_price:deposit?session.deposit.price_id:tuition.price_id,charge_product:deposit?session.deposit.product_id:tuition.product_id};
- }).sort((a,b)=>a.student_id-b.student_id||a.session_id-b.session_id);
+ });
  const cart=items.map(i=>({...i,will_be_active:i.student_status==='Approved'}));
  for(const item of items.filter(isLab))requireValue(labEligibility(item.student_id,item,{actorId,enrollments,cart}),'LAB_ELIGIBILITY','Labs require this student to have an Active Players 2, 3 or 4 registration covering the Lab’s dates. You may add a qualifying Players registration for an Approved student in this checkout.',409);
+ // Stripe discounts grouped price/quantity lines. Allocate any fractional-cent
+ // remainder in cart order so the displayed child amounts equal the charge.
+ const chargedTuition=new Map();
+ for(const item of items.filter(i=>i.payment_option!=='deposit')){const group=chargedTuition.get(item.charge_price)||[];group.push(item);chargedTuition.set(item.charge_price,group);}
+ for(const group of chargedTuition.values()){
+  const discount=Math.round(group.reduce((n,i)=>n+i.checkout_gross_cents,0)*aidPercent/100),each=Math.floor(discount/group.length),remainder=discount%group.length;
+  group.forEach((item,index)=>{item.aid_cents=each+(index<remainder?1:0);item.checkout_discount_cents=item.aid_cents;item.net_tuition_cents=item.tuition_cents-item.aid_cents;item.due_now_cents=item.checkout_gross_cents-item.aid_cents;item.balance_after_checkout_cents=0;});
+ }
  const effectiveAid=aidPercent;
  const sum=f=>items.reduce((n,i)=>n+i[f],0),totals=Object.fromEntries(['tuition_cents','aid_cents','net_tuition_cents','checkout_gross_cents','checkout_discount_cents','due_now_cents','balance_after_checkout_cents'].map(f=>[f,sum(f)]));
  const lines=new Map();for(const item of items){const line=lines.get(item.charge_price)||{price:item.charge_price,product:item.charge_product,quantity:0,amount_subtotal:0,amount_discount:0,amount_total:0};line.quantity++;line.amount_subtotal+=item.checkout_gross_cents;line.amount_discount+=item.checkout_discount_cents;line.amount_total+=item.due_now_cents;lines.set(line.price,line);}
- let couponId=null;if(totals.checkout_discount_cents>0){const coupon=coupons.find(c=>c.percent_off===aidPercent),eligible=[...new Set(sessions.flatMap(s=>[s.tuition?.product_id,s.semester?.product_id]).filter(Boolean))].sort();requireValue(coupon?.valid&&coupon.duration==='once'&&Array.isArray(coupon.products)&&JSON.stringify([...coupon.products].sort())===JSON.stringify(eligible),'AID_UNAVAILABLE','Financial aid pricing is temporarily unavailable.',503);couponId=coupon.id;}
+ let couponId=null;if(totals.checkout_discount_cents>0){
+  const coupon=coupons.find(c=>c.percent_off===aidPercent),charged=items.filter(i=>i.checkout_discount_cents>0).map(i=>i.charge_product),deposits=items.filter(i=>i.payment_option==='deposit').map(i=>i.charge_product);
+  requireValue(coupon?.id&&coupon.valid&&coupon.duration==='once'&&Array.isArray(coupon.products)&&charged.every(p=>coupon.products.includes(p))&&deposits.every(p=>!coupon.products.includes(p)),'AID_UNAVAILABLE','Financial aid pricing is temporarily unavailable.',503);couponId=coupon.id;
+ }
  return {policy:POLICY,currency:'usd',payment_preference:preference,aid_percent:effectiveAid,items,totals,lines:[...lines.values()].sort((a,b)=>a.price.localeCompare(b.price)),coupon_id:couponId};
 }
 function quoteIdentity(q){return JSON.stringify({policy:q.policy,preference:q.payment_preference,coupon:q.coupon_id,items:q.items.map(i=>[i.student_id,i.session_id,i.student_status,i.tuition_price,i.deposit_price,i.payment_preference,i.coverage_key,i.coverage_start,i.coverage_end,i.workshop_id,i.payment_option,i.aid_percent,i.tuition_cents,i.aid_cents,i.net_tuition_cents,i.checkout_gross_cents,i.checkout_discount_cents,i.due_now_cents,i.balance_after_checkout_cents])});}

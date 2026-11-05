@@ -9,7 +9,7 @@ test('unpublished production pack parses, matches manifest, and gates new checko
  for(const entry of [...manifest.functions,...manifest.apis]){
   const s=await readFile(new URL(entry.path,base),'utf8');assert.equal(createHash('sha256').update(s).digest('hex'),entry.sha256);
   assert.doesNotMatch(s,/spgm-3uz8-a402|summer_bridge_fixture_guard|http:\/\/127\.0\.0\.1|mack@bigstachedesign\.com|cs_test_|unified_test_aid_/);
-  if(!entry.path.endsWith('registration_live_guard_v1.xs'))assert.match(s,/function.run registration_live_guard_v1/);
+  if(!entry.path.endsWith('registration_orders_live_guard_v1.xs'))assert.match(s,/function.run registration_orders_live_guard_v1/);
   for(const m of s.matchAll(/code\s*=\s*"""([\s\S]*?)"""/g))new AsyncFunction('$input','$var','$env','$auth',m[1]);
  }
  const checkout=await readFile(new URL('api/unified_registration/checkout_POST.xs',base),'utf8'),events=await readFile(new URL('api/unified_registration/payment_events_POST.xs',base),'utf8');

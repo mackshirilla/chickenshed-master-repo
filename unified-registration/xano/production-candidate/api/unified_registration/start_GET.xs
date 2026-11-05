@@ -6,7 +6,7 @@ query "registration/start" verb=GET {
 
  }
  stack {
-function.run registration_live_guard_v1 { input = {} } as $sandbox_guard
+function.run registration_orders_live_guard_v1 { input = {} } as $sandbox_guard
 function.run registration_live_context_v1 { input = {actor_id:$auth.id} } as $base
 api.lambda {
  code = """

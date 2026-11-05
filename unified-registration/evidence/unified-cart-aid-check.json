@@ -1,0 +1,31 @@
+{
+  "checked_at": "2026-11-05T01:46:27.698Z",
+  "sandbox": "spgm-3uz8-a402",
+  "production_changes": false,
+  "real_funds_moved": false,
+  "payments_executed": false,
+  "checks": [
+    {
+      "scenario": "mixed",
+      "request_order_preserved": true,
+      "order_id": 19,
+      "status": "pending",
+      "coupon_id": "reg_aid_v2_20_d172a536035c65d7ec7077e1",
+      "due_cents": 66500,
+      "discount_cents": 16000,
+      "deposit_cents": 2500,
+      "stripe_canonical_validation_passed": true
+    },
+    {
+      "scenario": "quantity",
+      "request_order_preserved": true,
+      "order_id": 20,
+      "status": "pending",
+      "coupon_id": "reg_aid_v2_35_a0031e51c93296e17e974634",
+      "due_cents": 151125,
+      "discount_cents": 81375,
+      "deposit_cents": 0,
+      "stripe_canonical_validation_passed": true
+    }
+  ]
+}

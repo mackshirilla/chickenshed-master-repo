@@ -3,7 +3,7 @@ query "registration/account" verb=GET {
  auth = "users"
  input {}
  stack {
- function.run registration_live_guard_v1 { input = {} } as $guard
+ function.run registration_orders_live_guard_v1 { input = {} } as $guard
  db.query registration_orders {
  where = $db.registration_orders.owner_user_id == $auth.id
  return = {type:"list"}

@@ -4,7 +4,7 @@ function registration_live_send_confirmation_v1 {
   int order_id
  }
  stack {
- function.run registration_live_guard_v1 { input = {} } as $guard
+ function.run registration_orders_live_guard_v1 { input = {} } as $guard
  function.run registration_live_save_payment_method_v1 { input = {order_id:$input.order_id} } as $saved_payment_method
  api.lambda {
  code = """

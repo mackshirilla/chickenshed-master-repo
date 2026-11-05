@@ -1,0 +1,9 @@
+{
+  "prepared_only": true,
+  "production_changes": false,
+  "strategy": "Create or reuse an immutable percent-off coupon from the current cart's charged tuition products. Deterministic ID includes policy, rate and product IDs. No fixed catalog allowlist or manual coupon-ID environment map.",
+  "deposits": "Excluded from automatic aid. Deposit-only checkout creates no aid coupon.",
+  "customer_entered_promotion_codes": "Available without financial aid, including 100%; follow Stripe's configured coupon restrictions with no added product restriction.",
+  "provider_permission": "Coupons Write is needed for the runtime credential. The existing test key was approved and verified with Coupons Write; live scope must be reviewed at release.",
+  "retained": "Existing coupons are not modified or deleted."
+}

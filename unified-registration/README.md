@@ -29,3 +29,5 @@ Apply reviewed `xano/legacy-guards` candidates only as part of that coordinated 
 Webflow page/configuration/slug/redirect changes, a versioned asset release, and Noloco bindings/publication still require the final coordinated release review. The unrelated existing Noloco draft must not be accidentally published. No subscriptions are cancelled or migrated here.
 
 The local walkthrough lives at `http://127.0.0.1:4817/registration-test` while the temporary server/login and Stripe test listener are running. Use fresh fictional profiles `TEST Final Approved Child` and `TEST Final Pending Child`. Never open files through `file://`.
+
+Automatic financial aid follows charged tuition in the current cart, with no maintained product allowlist. Deposits are excluded only from automatic aid. With no aid, Stripe promotion codes may discount any items allowed by their Stripe settings, including deposits and 100% discounts. The existing test key has approved Coupons Write permission; verify the live credential’s scope at release.

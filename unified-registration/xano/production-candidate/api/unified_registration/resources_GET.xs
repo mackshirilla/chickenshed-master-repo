@@ -3,7 +3,7 @@ query "registration/resources" verb=GET {
  auth = "users"
  input { int registration_id }
  stack {
- function.run registration_live_guard_v1 { input = {} } as $guard
+ function.run registration_orders_live_guard_v1 { input = {} } as $guard
  db.query session_registrations {
  where = $db.session_registrations.id == $input.registration_id && $db.session_registrations.parent_user_id == $auth.id && $db.session_registrations.registration_order_id > 0 && $db.session_registrations.status == "Active"
  return = {type:"single"}

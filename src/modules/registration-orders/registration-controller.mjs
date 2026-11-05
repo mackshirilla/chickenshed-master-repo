@@ -123,6 +123,7 @@ export async function initializeRegistration(root) {
         else for(const part of (session?.time||'—').split(' · '))time.append(textElement('span',part,'summer-row-time'));row.append(time);
         const studentCell = document.createElement('td');
         studentCell.dataset.label='Student';
+        if(student?.Status==='Pending')studentCell.append(textElement('span','Pending approval','registration-status-pill'));
         if(isEditing)studentCell.append(select(`Student for registration ${index + 1}`, 'Select Student', catalog.students.map(student => ({ id: student.id, label: student.full_name })), item.student_id,
           value => { item.student_id = value; changed(); }));
         else studentCell.append(textElement('span',student?.full_name||'Selected student','summer-row-value'));
@@ -166,7 +167,9 @@ export async function initializeRegistration(root) {
       if(existingDue){existingDue.textContent=shown?dollars(shown.totals.due_now_cents):'—';existingDue.setAttribute('aria-busy',String(updating));}
       if (!shown) { quoteNode.append(textElement('p', updating?'Calculating your total…':quoteFailure?'We could not update your total. Change a selection to try again.':needsPlan()&&!state.payment_preference?'Choose a payment option to see your total.':'Select a session and student for each row to see your payment.', 'muted')); return; }
       for (const item of shown.items) {
-        const node = textElement('div', '', 'item-line'); node.append(textElement('strong', `${item.student_name} · ${item.package_name}`));
+        const node = textElement('div', '', 'item-line');
+        if(item.student_status==='Pending')node.append(textElement('span','Pending approval','registration-status-pill'));
+        node.append(textElement('strong', `${item.student_name} · ${item.package_name}`));
         node.append(textElement('p',item.coverage_label||'', 'u-text-small'));
         node.append(line(item.payment_option === 'deposit' ? 'Deposit due today' : item.tuition_period==='semester'?'Semester tuition due today':'Tuition due today', item.due_now_cents));
         if (hasAid&&item.aid_cents) node.append(line(`Financial aid on tuition (${item.aid_percent}%)`, -item.aid_cents));

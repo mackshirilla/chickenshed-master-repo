@@ -1,0 +1,50 @@
+{
+  "checked_at": "2026-11-05T01:46:48.799Z",
+  "sandbox": "spgm-3uz8-a402",
+  "production_changes": false,
+  "provider_calls": false,
+  "compiled_functions": 10,
+  "compiled_authenticated_routes": 6,
+  "compiled_signed_event_route": 1,
+  "server_readback_database_statements_intact": true,
+  "compile_only_guard": "unconditionally false; not controlled by any env flag",
+  "working_sandbox_preserved": true,
+  "checks": [
+    {
+      "route": "start",
+      "http_status": 403,
+      "closed_guard_verified": true
+    },
+    {
+      "route": "quote",
+      "http_status": 403,
+      "closed_guard_verified": true
+    },
+    {
+      "route": "checkout",
+      "http_status": 403,
+      "closed_guard_verified": true
+    },
+    {
+      "route": "receipt",
+      "http_status": 403,
+      "closed_guard_verified": true
+    },
+    {
+      "route": "account",
+      "http_status": 403,
+      "closed_guard_verified": true
+    },
+    {
+      "route": "resources",
+      "http_status": 403,
+      "closed_guard_verified": true
+    },
+    {
+      "route": "payment-events",
+      "http_status": 403,
+      "closed_guard_verified": true
+    }
+  ],
+  "limitation": "Native sandbox compilation and closed-gate requests; no live provider call, production import, or live credential validation."
+}

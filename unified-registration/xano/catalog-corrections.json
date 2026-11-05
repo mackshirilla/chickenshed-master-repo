@@ -1,0 +1,49 @@
+{
+  "prepared_at": "2026-11-05T01:19:21.992172+00:00",
+  "applied": false,
+  "requires_release_approval": true,
+  "operation": "Update only these fields after checking before-values still match; preserve legacy Annual/Monthly fields and existing prices.",
+  "changes": [
+    {
+      "table": "Products",
+      "id": 15,
+      "name": "CP2 - Saturdays Tuition 2026-27",
+      "before": {
+        "Single_sale_price_id": "",
+        "Single_sale_price_amount": 0
+      },
+      "after": {
+        "Single_sale_price_id": "price_1TWKPyDK5b8P0zFQF07ZIHYb",
+        "Single_sale_price_amount": 1994
+      },
+      "verified_price": {
+        "livemode": true,
+        "active": true,
+        "type": "one_time",
+        "currency": "usd",
+        "unit_amount": 199400,
+        "product": "prod_SMXeUZ7JHosv8A"
+      }
+    },
+    {
+      "table": "Products",
+      "id": 38,
+      "name": "Vocal Lab - Fall 2026 (Saturdays)",
+      "before": {
+        "Product_id": "price_1S2euxDK5b8P0zFQ0Rir6o9h"
+      },
+      "after": {
+        "Product_id": "prod_Syc9m1u9bSZRLc"
+      },
+      "verified_price": {
+        "id": "price_1TSNAiDK5b8P0zFQL0Li0OyK",
+        "livemode": true,
+        "active": true,
+        "type": "one_time",
+        "currency": "usd",
+        "unit_amount": 17500,
+        "product": "prod_Syc9m1u9bSZRLc"
+      }
+    }
+  ]
+}

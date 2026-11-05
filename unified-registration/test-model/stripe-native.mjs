@@ -1,4 +1,4 @@
-import { requireValue, POLICY, SummerError } from './quote.mjs';
+import { requireValue, POLICY, SummerError, AID_RATES } from './quote.mjs';
 
 export const STRIPE_ACCOUNT = 'acct_1LYZ6CDK5b8P0zFQ';
 // Match the existing test destinations; this does not change the account API version.
@@ -111,11 +111,12 @@ export class StripeTestClient {
     const routes = {
       price:['GET',`/v1/prices/${safeId?id:''}`],product:['GET',`/v1/products/${safeId?id:''}`],
       coupon:['GET',`/v1/coupons/${safeId?id:''}`],session:['GET',`/v1/checkout/sessions/${safeId?id:''}`],
+      coupon_create:['POST','/v1/coupons'],
       customer_update:['POST',`/v1/customers/${safeId?id:''}`],
       lines:['GET',`/v1/checkout/sessions/${safeId?id:''}/line_items`],
       create:['POST','/v1/checkout/sessions'],expire:['POST',`/v1/checkout/sessions/${safeId?id:''}/expire`]
     };
-    requireValue(routes[action] && (action==='create' || safeId), 'STRIPE_OPERATION', 'Unsupported payment request.', 400);
+    requireValue(routes[action] && (['create','coupon_create'].includes(action) || safeId), 'STRIPE_OPERATION', 'Unsupported payment request.', 400);
     const [method,path]=routes[action], url=new URL('https://api.stripe.com'+path);
     const headers={Authorization:`Bearer ${this.key}`,'Stripe-Version':STRIPE_API_VERSION};
     if(idempotencyKey)headers['Idempotency-Key']=idempotencyKey;
@@ -150,4 +151,30 @@ export async function verifyNativeEvent(rawBody,header,secret,now=Math.floor(Dat
   return {ok:true,event_id:event.id,event_type:event.type,object_id:event.data.object.id,
     order_reference:event.data.object.metadata?.order_reference||'',policy:event.data.object.metadata?.checkout_policy||'',
     supported:PAYMENT_EVENTS.includes(event.type)};
+}
+
+// Automatic tuition aid follows the actual cart; no maintained product allowlist.
+// The deterministic ID makes equivalent carts reuse the same immutable discount.
+export async function aidCouponSpec(percent,products) {
+  const ids=[...new Set(products)].sort();
+  requireValue(AID_RATES.includes(percent)&&percent>0&&ids.length>0&&ids.length<=30&&ids.every(id=>/^prod_[a-zA-Z0-9_]+$/.test(id)), 'AID_UNAVAILABLE','Financial aid pricing is temporarily unavailable.',503);
+  const bytes=await crypto.subtle.digest('SHA-256',new TextEncoder().encode(JSON.stringify([POLICY,'usd',percent,ids])));
+  const hash=[...new Uint8Array(bytes)].map(b=>b.toString(16).padStart(2,'0')).join('').slice(0,24);
+  return {id:`reg_aid_v2_${percent}_${hash}`,name:`Chickenshed NYC tuition aid ${percent}%`,duration:'once',percent_off:percent,applies_to:{products:ids},metadata:{checkout_policy:POLICY,scope:'cart_tuition_v1'}};
+}
+export async function ensureAidCoupon(client,spec) {
+  const read=()=>client.request('coupon',spec.id,{expand:['applies_to']});
+  let coupon;
+  try{coupon=await read();}catch(e){
+    if(e.provider_status!==404)throw e;
+    try{await client.request('coupon_create',null,spec,spec.id);}catch(createError){
+      // Another checkout may be creating this same deterministic coupon.
+      if(![409].includes(createError.provider_status)&&!['resource_already_exists','idempotency_key_in_use'].includes(createError.provider_code))throw createError;
+    }
+    for(let attempt=0;attempt<3;attempt++){
+      try{coupon=await read();break;}catch(e){if(e.provider_status!==404||attempt===2)throw e;await new Promise(resolve=>setTimeout(resolve,100*(attempt+1)));}
+    }
+  }
+  requireValue(coupon?.valid===true&&coupon.id===spec.id&&coupon.duration==='once'&&coupon.percent_off===spec.percent_off&&JSON.stringify([...(coupon.applies_to?.products||[])].sort())===JSON.stringify(spec.applies_to.products),'AID_UNAVAILABLE','Financial aid pricing is temporarily unavailable.',503);
+  return {id:coupon.id,valid:true,duration:coupon.duration,percent_off:coupon.percent_off,products:coupon.applies_to.products};
 }

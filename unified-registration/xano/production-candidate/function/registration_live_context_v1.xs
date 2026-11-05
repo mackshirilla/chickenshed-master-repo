@@ -4,7 +4,7 @@ function registration_live_context_v1 {
   int actor_id
  }
  stack {
-function.run registration_live_guard_v1 { input = {} } as $sandbox_guard
+function.run registration_orders_live_guard_v1 { input = {} } as $sandbox_guard
 db.get users {
  field_name = "id"
  field_value = $input.actor_id

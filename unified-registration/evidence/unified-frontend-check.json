@@ -1,8 +1,9 @@
 {
-  "checked_at": "2026-11-05T00:57:52.398Z",
+  "checked_at": "2026-11-05T01:38:24.255Z",
   "ok": true,
   "real_network": false,
   "checks": [
+    "Pending approval pills appear above selected Pending names only; summary matches registration row order",
     "Closed gate makes no requests",
     "Regular cart requires an explicit payment preference",
     "Semester price and session coverage match backend",
@@ -12,5 +13,13 @@
     "Free monthly receipt explains follow-up without aid wording or placeholders",
     "Parent dashboard shows student registration status and owned order links",
     "Blue pending-student notice names selected Pending profiles and stays hidden for Approved-only carts"
-  ]
+  ],
+  "visual_check": {
+    "local_preview": true,
+    "desktop_pending_pill_above_name": true,
+    "summary_matches_cart_order": true,
+    "mobile_width": 390,
+    "mobile_document_width": 390,
+    "production_changes": false
+  }
 }

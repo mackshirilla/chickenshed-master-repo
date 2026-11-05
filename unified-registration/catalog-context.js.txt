@@ -20,14 +20,15 @@ for(const row of base.sessions.filter(s=>selected.has(s.id))){
  requireValue(tuition?.product_id===p.Product_id&&(!deposit||deposit.product_id===d.Product_id),'CATALOG_INVALID','This session’s product mapping needs review.');
  sessions.push({id:row.id,name:row.Name,time:[row.Weekday,row.Time_block].filter(Boolean).join(' · '),program_id:row.Parent_program,program_name:program.name,workshop_id:row.Parent_workshop,workshop_name:base.workshops.find(w=>w.id===row.Parent_workshop)?.Name||row.Name,start_date:row.Start_Date,end_date:row.End_Date,tuition:preference==='semester'?null:tuition,semester:preference==='semester'?tuition:null,deposit,payment_options,draft:false,archived:false,add_on:lab});
 }
-const percent=Number($input.request.aid_percent||0),coupons=[];
-if(percent&&($input.request.items||[]).some(item=>{
- const s=sessions.find(s=>s.id===Number(item.session_id));return s&&base.students.some(st=>st.id===Number(item.student_id)&&st.Status==='Approved')&&($input.request.payment_preference!=='monthly'||s.payment_options.length===1);
-})){
- const coupon=await client.request('coupon','unified_test_aid_'+percent+'_20261104_v3',{expand:['applies_to']});
- const expected=[...new Set(base.products.filter(p=>base.sessions.some(s=>s.Tuition_product===p.id&&[1,3,10,13].includes(s.Parent_program))).map(p=>p.Product_id))].sort();
- requireValue(JSON.stringify([...(coupon.applies_to?.products||[])].sort())===JSON.stringify(expected),'AID_UNAVAILABLE','Financial aid catalog scope needs review.');
- coupons.push({id:coupon.id,valid:coupon.valid,duration:coupon.duration,percent_off:coupon.percent_off,products:[...new Set(sessions.flatMap(s=>[s.tuition?.product_id,s.semester?.product_id]).filter(Boolean))]});
+const percent=Number($input.request.aid_percent||0),enrollments=enrollmentCoverage(base.enrollments,{sessions:base.coverage_sessions,orders:base.orders,subscriptions:base.subscriptions});
+const context={actorId:base.actor.id,students:base.students,sessions,coupons:[],enrollments,now:Date.now()};
+// Validate ownership, selection, plans and Lab eligibility before any coupon write.
+// This temporary descriptor is server-only and is never sent to Stripe.
+const tuitionProducts=[...new Set(sessions.flatMap(s=>[s.tuition?.product_id,s.semester?.product_id]).filter(Boolean))];
+const preview=quoteFamily($input.request,{...context,coupons:[{id:'aid_preview',valid:true,duration:'once',percent_off:percent,products:tuitionProducts}]});
+if(preview.totals.checkout_discount_cents>0){
+ const products=[...new Set(preview.items.filter(i=>i.checkout_discount_cents>0).map(i=>i.charge_product))];
+ const spec=await aidCouponSpec(percent,products);
+ context.coupons.push($input.ensure_aid_coupon===true?await ensureAidCoupon(client,spec):{id:spec.id,valid:true,duration:spec.duration,percent_off:spec.percent_off,products:spec.applies_to.products});
 }
-const enrollments=enrollmentCoverage(base.enrollments,{sessions:base.coverage_sessions,orders:base.orders,subscriptions:base.subscriptions});
-return {ok:true,actor:base.actor,context:{actorId:base.actor.id,students:base.students,sessions,coupons,enrollments,now:Date.now()}};
+return {ok:true,actor:base.actor,context};

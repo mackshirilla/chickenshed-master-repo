@@ -1,78 +1,78 @@
 {
-  "prepared_at": "2026-11-05T01:00:09.112Z",
+  "prepared_at": "2026-11-05T01:39:48.532Z",
   "deployed": false,
   "production_changes": false,
   "operation": "Local files only; do not import until release approval",
   "functions": [
     {
       "path": "function/registration_live_context_v1.xs",
-      "sha256": "65f7198be2624f684e333fae5d580b4e2e6533879b10183d10ac8fb65100cc08"
+      "sha256": "03b325b8d0609fdcc67188b1d27f7af6f81bbb6c3a3b83da4f65cd7a6f52af23"
     },
     {
       "path": "function/registration_live_quote_context_v1.xs",
-      "sha256": "528b3f1be691efa028fdd89303f110c6109f5d7b33c969aad8c3e75181acb986"
+      "sha256": "af4fbd6438700dca377029d75e3d67c0c5200cf07a94ee97e7f3420725a4f5a7"
     },
     {
       "path": "function/registration_live_quote_v1.xs",
-      "sha256": "405ddd94543f31965bd61344e8d062960ceeb646d06b03c66aa29766cf5de4a1"
+      "sha256": "d1a501b4f0eb71dc23686034d431ac01588e403bc6fb8782e2572046d6e32969"
     },
     {
       "path": "function/registration_live_order_v1.xs",
-      "sha256": "afa4f771a0179b3d31a09444bf13ce8bb16c69897ceb5b3ef64f120329d0234b"
+      "sha256": "873b1d5b3378f9cf1df46e456a8b257c290750ed023c9e03c3e441b96d1cd580"
     },
     {
       "path": "function/registration_live_stripe_session_v1.xs",
-      "sha256": "40a7bd886d330364651d122c69af34e2bb8710035f43571c5d7fb5d361497f3d"
+      "sha256": "77d65947a5558655aa7a24544f0d594c0a2f621d5f038b5b5674a865a1cbccfd"
     },
     {
       "path": "function/registration_live_verify_event_v1.xs",
-      "sha256": "9e3027dd88e80820f6650d5062720948c8d4e467785491a11fc870ed45a6152d"
+      "sha256": "95a3235be920ca4c9b414cab1aeea5ec36f0aa9eb11d704f76c9a13aff24bbfd"
     },
     {
       "path": "function/registration_live_confirmation_v1.xs",
-      "sha256": "fd8f5722abe82ded812a53cac4d68ecd0099c43fbc4ceb01ae34f9f033525161"
+      "sha256": "50b173a23a9cc14b7eb08566dde6c155abc84cdecb07ad87267d27eabf29fde0"
     },
     {
       "path": "function/registration_live_send_confirmation_v1.xs",
-      "sha256": "d6451d74389c51bc87c8b29a036b42402c2d767b546172e644ccefe94cf11c0c"
+      "sha256": "f606c81659b26b360c566aeddb0c171d0fb21d24d8ac52402f8c90d931307297"
     },
     {
       "path": "function/registration_live_save_payment_method_v1.xs",
-      "sha256": "062922f5e865d090a0fba06241fa548195a28ca938a3531e03e4e98cb64ebe9c"
+      "sha256": "6cdf2ff4feb84a4def718590c0161677b333d13ebd73845b78f4d12c0a3cf077"
     },
     {
-      "path": "function/registration_live_guard_v1.xs",
-      "sha256": "3f386b53856b2d518b999aa155f060897aa8870d47896fb3e73a5459aba66e53"
+      "path": "function/registration_orders_live_guard_v1.xs",
+      "sha256": "1d2d7ff971845220a07f20bea7b6152f004e53c65f21ee2ae598efe62407372d"
     }
   ],
   "apis": [
     {
       "path": "api/unified_registration/start_GET.xs",
-      "sha256": "ee19cf360f27a367aac394e3cd68759ea2040d3d14f497145abe1b611f24fc54"
+      "sha256": "6fba49c8b9525e73116d52c2341bf83e562521584ea5a7bc60c0de99950e7ea2"
     },
     {
       "path": "api/unified_registration/quote_POST.xs",
-      "sha256": "548c98b056ea1b9cc0bbece822640049bd443acae69d7c81a1c194674dea9453"
+      "sha256": "67318b5f81f611003172c9e7c2e8cf4af411cfe810eca59a71b7859f12a3cda9"
     },
     {
       "path": "api/unified_registration/checkout_POST.xs",
-      "sha256": "aa79dc71d6926875aab67873766c8d3fdc29b7a7d054df13e5fff4353aeadff7"
+      "sha256": "5e5d3c3290090fc7c7c0edb154e818eb9854dd51c047359b6ec3b535c304bea5"
     },
     {
       "path": "api/unified_registration/receipt_GET.xs",
-      "sha256": "73c36f3fac7e5e46278e8b56f8e610a9b80357bbf8f565422e1b82f2f6ae932b"
+      "sha256": "09cf333bdb4be048c4472b9d141664acf38f3d4cc1f441e6dce4f444eecdf390"
     },
     {
       "path": "api/unified_registration/payment_events_POST.xs",
-      "sha256": "c47523db3b9bef27d4089dbd10e6926d85e1c232ea22b75f3fb9fab3df771880"
+      "sha256": "3db4be188cd4346f0aa21cbd251f15c5e6658bd61d329459d1e0579d7b748d07"
     },
     {
       "path": "api/unified_registration/account_GET.xs",
-      "sha256": "e698896e819f6ad46aea7c8261bab97d6aff58dd5a8c6dacf87cb213856848f8"
+      "sha256": "fb8dde745cc147cd025ef0cb9a6611f601ec0be3daf6c6c3d575d51dc2f4d904"
     },
     {
       "path": "api/unified_registration/resources_GET.xs",
-      "sha256": "28c2192eecfa32e6471ffa7143fa53f82bfe76d752bef213bf7773a4b084aa5c"
+      "sha256": "19a791f9e56eb8bc290272b96e93cc347c70b007fd6d55d1c7315e8cba8305f6"
     }
   ],
   "required_environment": {
@@ -81,7 +81,6 @@
     "registration_confirmation_email_enabled": "unset/false; true at coordinated release",
     "unified_registration_enabled": "unset/false; true closes old creation endpoints at coordinated release",
     "registration_stripe_webhook_secret": "Dedicated live unified webhook signing secret; secure placement at release",
-    "registration_stripe_coupon_ids": "JSON percentage-to-validated live aid coupon IDs; entire current registration tuition scope including Labs",
     "stripe_api_secret": "Existing production credential reference; never read/copied by this generator",
     "sendgrid_api_key": "Existing production credential reference",
     "sendgrid_from_email": "Existing verified sender reference"

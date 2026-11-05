@@ -1,0 +1,37 @@
+{
+  "checked_at": "2026-11-05T01:45:28.121Z",
+  "read_only": true,
+  "production_changes": false,
+  "workspace": 3,
+  "branch": "v1",
+  "function_count": 86,
+  "group_count": 15,
+  "function_name_collisions": [],
+  "canonical_collision": [],
+  "group_name_collision": [],
+  "summer_group": [
+    {
+      "id": 64,
+      "name": "Summer Registration",
+      "canonical": "summer26"
+    }
+  ],
+  "order_table": {
+    "id": 65,
+    "name": "registration_orders",
+    "optional_fields": [
+      {
+        "name": "payment_preference",
+        "exists": false
+      },
+      {
+        "name": "covered_terms",
+        "exists": false
+      },
+      {
+        "name": "billing_followup",
+        "exists": false
+      }
+    ]
+  }
+}

@@ -1,5 +1,5 @@
 // Closed by default. No provider credential is accessed before this guard.
-function registration_live_guard_v1 {
+function registration_orders_live_guard_v1 {
  input {}
  stack {
   api.lambda { code = "return $env.registration_runtime_mode === 'live';"
