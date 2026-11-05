@@ -1,0 +1,93 @@
+[
+  {
+    "file": "start-here.md",
+    "links": [
+      [
+        "Open the family registration page",
+        "https://www.chickenshednyc.org/program-registration"
+      ],
+      [
+        "Open the parent’s registration dashboard",
+        "https://www.chickenshednyc.org/dashboard/registrations"
+      ],
+      [
+        "Open the parent’s Student Profiles page",
+        "https://www.chickenshednyc.org/dashboard/student-profiles"
+      ],
+      [
+        "Read the staff walkthroughs",
+        "https://docs.google.com/document/d/12rCBkOAqYTtizLvBGmrOVZm2GT-DunIx4hOQn0LnT2k/edit?usp=drivesdk"
+      ],
+      [
+        "Look up a field or status",
+        "https://docs.google.com/document/d/1tWF2M5D-SyDreNPhiQLk5sTmGMahDkt5iC5xxfhL01k/edit?usp=drivesdk"
+      ]
+    ],
+    "notes": "Family pages require the parent’s sign-in. The other guides explain the staff steps.",
+    "doc_url": "https://docs.google.com/document/d/1hue0PHPwDib2mVmUKZ_uELtTUZhVfz2P4cfUyRkZHmU/edit?usp=drivesdk",
+    "inserted_at": 139,
+    "text": "Quick links\nFamily pages require the parent’s sign-in. The other guides explain the staff steps.\nOpen the family registration page\nOpen the parent’s registration dashboard\nOpen the parent’s Student Profiles page\nRead the staff walkthroughs\nLook up a field or status\n"
+  },
+  {
+    "file": "staff-tasks.md",
+    "links": [
+      [
+        "Open Registration Orders",
+        "https://chickenshednyc.noloco.co/registration-orders"
+      ],
+      [
+        "Create a manual order",
+        "https://chickenshednyc.noloco.co/registration-orders/new"
+      ],
+      [
+        "Open All Session Registrations",
+        "https://chickenshednyc.noloco.co/session-registrations"
+      ],
+      [
+        "Add a Session Registration",
+        "https://chickenshednyc.noloco.co/session-registrations/new"
+      ],
+      [
+        "Open Student Profiles",
+        "https://chickenshednyc.noloco.co/student-profiles"
+      ],
+      [
+        "Open Financial Aid Submissions",
+        "https://chickenshednyc.noloco.co/financial-aid-submissions"
+      ]
+    ],
+    "notes": "Staff links require your usual Noloco sign-in. Open the family’s order before editing it or sending a confirmation.",
+    "doc_url": "https://docs.google.com/document/d/12rCBkOAqYTtizLvBGmrOVZm2GT-DunIx4hOQn0LnT2k/edit?usp=drivesdk",
+    "inserted_at": 130,
+    "text": "Quick links\nStaff links require your usual Noloco sign-in. Open the family’s order before editing it or sending a confirmation.\nOpen Registration Orders\nCreate a manual order\nOpen All Session Registrations\nAdd a Session Registration\nOpen Student Profiles\nOpen Financial Aid Submissions\n"
+  },
+  {
+    "file": "field-guide.md",
+    "links": [
+      [
+        "Open Registration Orders",
+        "https://chickenshednyc.noloco.co/registration-orders"
+      ],
+      [
+        "Open All Session Registrations",
+        "https://chickenshednyc.noloco.co/session-registrations"
+      ],
+      [
+        "Open Financial Aid Submissions",
+        "https://chickenshednyc.noloco.co/financial-aid-submissions"
+      ],
+      [
+        "How to update a balance",
+        "https://docs.google.com/document/d/12rCBkOAqYTtizLvBGmrOVZm2GT-DunIx4hOQn0LnT2k/edit?usp=drivesdk#heading=h.dh7vgitl6lzd"
+      ],
+      [
+        "How to send a confirmation",
+        "https://docs.google.com/document/d/12rCBkOAqYTtizLvBGmrOVZm2GT-DunIx4hOQn0LnT2k/edit?usp=drivesdk#heading=h.tun9zfp52m4n"
+      ]
+    ],
+    "notes": "Staff links require your usual Noloco sign-in. The how-to links jump to the relevant instructions.",
+    "doc_url": "https://docs.google.com/document/d/1tWF2M5D-SyDreNPhiQLk5sTmGMahDkt5iC5xxfhL01k/edit?usp=drivesdk",
+    "inserted_at": 154,
+    "text": "Quick links\nStaff links require your usual Noloco sign-in. The how-to links jump to the relevant instructions.\nOpen Registration Orders\nOpen All Session Registrations\nOpen Financial Aid Submissions\nHow to update a balance\nHow to send a confirmation\n"
+  }
+]

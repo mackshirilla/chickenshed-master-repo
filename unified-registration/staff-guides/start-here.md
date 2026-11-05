@@ -2,6 +2,16 @@
 
 A guide for Elaine, Elliot and the Chickenshed NYC team. Prepared for review • November 5, 2026.
 
+## Quick links
+
+Family pages require the parent’s sign-in. The other guides explain the staff steps.
+
+- [Open the family registration page](https://www.chickenshednyc.org/program-registration)
+- [Open the parent’s registration dashboard](https://www.chickenshednyc.org/dashboard/registrations)
+- [Open the parent’s Student Profiles page](https://www.chickenshednyc.org/dashboard/student-profiles)
+- [Read the staff walkthroughs](https://docs.google.com/document/d/12rCBkOAqYTtizLvBGmrOVZm2GT-DunIx4hOQn0LnT2k/edit?usp=drivesdk)
+- [Look up a field or status](https://docs.google.com/document/d/1tWF2M5D-SyDreNPhiQLk5sTmGMahDkt5iC5xxfhL01k/edit?usp=drivesdk)
+
 ## One place for new registrations
 
 Families now use one registration page for Players, My Little Adventure, Mini Adventure, Labs and Summer Shed. They can register more than one child and choose more than one session before paying.

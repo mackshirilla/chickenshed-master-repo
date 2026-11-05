@@ -2,6 +2,16 @@
 
 Keep this beside the staff guide when a label is unclear. Prepared for review • November 5, 2026.
 
+## Quick links
+
+Staff links require your usual Noloco sign-in. The how-to links jump to the relevant instructions.
+
+- [Open Registration Orders](https://chickenshednyc.noloco.co/registration-orders)
+- [Open All Session Registrations](https://chickenshednyc.noloco.co/session-registrations)
+- [Open Financial Aid Submissions](https://chickenshednyc.noloco.co/financial-aid-submissions)
+- [How to update a balance](https://docs.google.com/document/d/12rCBkOAqYTtizLvBGmrOVZm2GT-DunIx4hOQn0LnT2k/edit?usp=drivesdk#heading=h.dh7vgitl6lzd)
+- [How to send a confirmation](https://docs.google.com/document/d/12rCBkOAqYTtizLvBGmrOVZm2GT-DunIx4hOQn0LnT2k/edit?usp=drivesdk#heading=h.tun9zfp52m4n)
+
 ## The three things to remember
 
 - Order = the family’s payment record. Registration = one child in one session. Student Profile = the child’s details and approval.

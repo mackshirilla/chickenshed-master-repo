@@ -2,7 +2,7 @@
   "created_at": "2026-11-05",
   "account": "mack@bigstachedesign.com",
   "folder_url": "https://drive.google.com/drive/folders/1MtVNjosVcgvyrWyOWaRo2jYWM97G3SfH",
-  "sharing": "Private; owner-only verified. Do not share until Mack approves.",
+  "sharing": "Existing commenter access for Elliot and Elaine observed during the link update; no sharing action performed in this update.",
   "docs": [
     {
       "title": "Start here: Chickenshed NYC registration",
@@ -26,5 +26,13 @@
   "intended_commenters_after_approval": [
     "elliot@chickenshednyc.org",
     "elaine@chickenshednyc.org"
-  ]
+  ],
+  "last_permission_observation": {
+    "owner": "mack@bigstachedesign.com",
+    "commenters": [
+      "elliot@chickenshednyc.org",
+      "elaine@chickenshednyc.org"
+    ],
+    "changed_by_this_update": false
+  }
 }

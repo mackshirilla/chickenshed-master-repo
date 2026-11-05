@@ -2,6 +2,17 @@
 
 Use this guide in Noloco, the staff website. Prepared for review • November 5, 2026.
 
+## Quick links
+
+Staff links require your usual Noloco sign-in. Open the family’s order before editing it or sending a confirmation.
+
+- [Open Registration Orders](https://chickenshednyc.noloco.co/registration-orders)
+- [Create a manual order](https://chickenshednyc.noloco.co/registration-orders/new)
+- [Open All Session Registrations](https://chickenshednyc.noloco.co/session-registrations)
+- [Add a Session Registration](https://chickenshednyc.noloco.co/session-registrations/new)
+- [Open Student Profiles](https://chickenshednyc.noloco.co/student-profiles)
+- [Open Financial Aid Submissions](https://chickenshednyc.noloco.co/financial-aid-submissions)
+
 ## Before you start
 
 An order is the family’s payment record. A registration is one child’s place in one session. One order can contain several registrations.
